@@ -5,11 +5,8 @@ class ProductCreate(BaseModel):
     name: str
     unit: str
 
-class ProductResponse(BaseModel):
+class ProductResponse(ProductCreate):
     id: int
-    sku: str
-    name: str
-    unit: str
 
     class Config:
         orm_mode = True
