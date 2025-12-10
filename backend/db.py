@@ -1,12 +1,15 @@
-from fastapi import FastAPI
-from db import Base, engine
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
-app = FastAPI()
+DATABASE_URL = "your_db_url"
 
-# DB 테이블 자동 생성
-Base.metadata.create_all(bind=engine)
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-@app.get("/")
-def root():
-    return {"msg": "pars-wms server OK (DB connected)"}
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
