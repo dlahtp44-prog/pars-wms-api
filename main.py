@@ -1,7 +1,2 @@
-from fastapi import FastAPI
+from backend.app import app
 
-app = FastAPI()
-
-@app.get("/")
-def root():
-    return {"msg": "pars-wms server OK"}
