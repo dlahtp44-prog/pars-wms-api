@@ -6,12 +6,10 @@ import schemas
 
 app = FastAPI()
 
-# 기본 테스트용 API
 @app.get("/")
 def read_root():
     return {"msg": "pars-wms backend ok"}
 
-# 상품 등록 API
 @app.post("/products", response_model=schemas.ProductResponse)
 def create_product(product: schemas.ProductCreate, db: Session = Depends(get_db)):
     return crud.create_product(db, product)
