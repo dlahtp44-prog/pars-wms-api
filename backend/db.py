@@ -1,12 +1,12 @@
-import os
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
+from fastapi import FastAPI
+from db import Base, engine
 
-# Render 환경변수에서 DATABASE_URL 읽기
-DATABASE_URL = os.getenv("DATABASE_URL")
+app = FastAPI()
 
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# DB 테이블 자동 생성
+Base.metadata.create_all(bind=engine)
 
-Base = declarative_base()
+@app.get("/")
+def root():
+    return {"msg": "pars-wms server OK (DB connected)"}
 
