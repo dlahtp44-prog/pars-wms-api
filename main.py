@@ -575,6 +575,9 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 @app.get("/inbound")
 def inbound_page():
     return FileResponse("static/inbound.html")
+@app.get("/outbound")
+def outbound_page():
+    return FileResponse("static/outbound.html")
 
 
 
