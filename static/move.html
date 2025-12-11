@@ -1,1 +1,139 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>이동 등록 - PARS WMS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        body {
+            margin: 0;
+            background: #f0f0f0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 30px;
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 450px;
+            background: #fff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0px 2px 8px rgba(0,0,0,0.15);
+        }
+
+        label {
+            font-size: 15px;
+            display: block;
+            margin-top: 12px;
+            margin-bottom: 5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+
+        button {
+            margin-top: 20px;
+            width: 100%;
+            padding: 14px;
+            font-size: 18px;
+            background: #2980b9;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1f6391;
+        }
+
+        .back-btn {
+            margin-top: 15px;
+            width: 100%;
+            padding: 12px;
+            background: #888;
+            font-size: 16px;
+            color: #fff;
+            border-radius: 10px;
+            text-align: center;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>🔄 이동 등록</h2>
+
+    <div class="container">
+
+        <label>출발 창고</label>
+        <input id="warehouse_from" placeholder="예: WH01">
+
+        <label>출발 LOCATION</label>
+        <input id="location_from" placeholder="예: A01-01">
+
+        <label>도착 창고</label>
+        <input id="warehouse_to" placeholder="예: WH01">
+
+        <label>도착 LOCATION</label>
+        <input id="location_to" placeholder="예: B02-03">
+
+        <label>품번</label>
+        <input id="item_code" placeholder="품번 입력">
+
+        <label>LOT 번호</label>
+        <input id="lot_no" placeholder="없으면 비워두세요">
+
+        <label>이동 수량(QTY)</label>
+        <input id="qty" type="number" placeholder="0 이상 숫자 입력">
+
+        <label>비고</label>
+        <input id="remark" placeholder="선택 입력">
+
+        <button onclick="submitMove()">이동 등록</button>
+
+        <a class="back-btn" href="/">⬅ 메인으로</a>
+    </div>
+
+    <script>
+        async function submitMove() {
+            const data = {
+                warehouse_from: document.getElementById("warehouse_from").value,
+                location_from: document.getElementById("location_from").value,
+                warehouse_to: document.getElementById("warehouse_to").value,
+                location_to: document.getElementById("location_to").value,
+                item_code: document.getElementById("item_code").value,
+                lot_no: document.getElementById("lot_no").value,
+                qty: Number(document.getElementById("qty").value),
+                remark: document.getElementById("remark").value
+            };
+
+            const response = await fetch("/api/inventory/move", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+            alert(result.msg ? result.msg : JSON.stringify(result));
+        }
+    </script>
+
+</body>
+</html>
 
