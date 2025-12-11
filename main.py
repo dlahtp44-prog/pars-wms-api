@@ -566,21 +566,36 @@ def get_item_name_api(item_code: str = Query(...)):
 
 
 # ---------------------- STATIC 파일 제공 ----------------------
-from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
 
-# static 폴더 연결
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# 메인 대시보드 (home)
+@app.get("/")
+def index_page():
+    return FileResponse("static/index.html")
 
+# 입고 페이지
 @app.get("/inbound")
 def inbound_page():
     return FileResponse("static/inbound.html")
+
+# 출고 페이지
 @app.get("/outbound")
 def outbound_page():
     return FileResponse("static/outbound.html")
+
+# 이동 페이지
 @app.get("/move")
 def move_page():
     return FileResponse("static/move.html")
+
+# 재고 조회 페이지
+@app.get("/inventory")
+def inventory_page():
+    return FileResponse("static/inventory.html")
+
+# 거래 이력 조회 페이지
+@app.get("/history")
+def history_page():
+    return FileResponse("static/history.html")
 
 
 
