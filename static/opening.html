@@ -1,1 +1,208 @@
 
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>기초재고 입력 - PARS WMS</title>
+
+    <style>
+        body {
+            margin: 0;
+            background: #eef2f5;
+            font-family: Arial, sans-serif;
+        }
+
+        /* ------------------ NAVIGATION ------------------ */
+        .navbar {
+            background: #2c3e50;
+            color: white;
+            padding: 12px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar-title {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .menu-icon {
+            display: none;
+            font-size: 28px;
+            cursor: pointer;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+        }
+
+        @media (max-width: 768px) {
+            .menu-icon {
+                display: block;
+            }
+            .nav-links {
+                display: none;
+                flex-direction: column;
+                background: #34495e;
+                padding: 10px;
+                width: 100%;
+                margin-top: 12px;
+            }
+            .nav-links a {
+                padding: 8px 5px;
+                font-size: 18px;
+            }
+        }
+
+        /* ------------------ FORM CARD ------------------ */
+        .container {
+            max-width: 450px;
+            margin: 30px auto;
+            background: #fff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        label {
+            margin-top: 12px;
+            display: block;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-top: 5px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            font-size: 18px;
+            margin-top: 20px;
+            background: #2980b9;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1f6391;
+        }
+
+        .back-btn {
+            margin-top: 15px;
+            display: block;
+            background: #7f8c8d;
+            padding: 12px;
+            border-radius: 8px;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+        }
+    </style>
+
+    <script>
+        function toggleMenu() {
+            const menu = document.getElementById("nav-menu");
+            menu.style.display = (menu.style.display === "flex" ? "none" : "flex");
+        }
+
+        async function submitOpening() {
+            const data = {
+                warehouse: document.getElementById("warehouse").value,
+                location: document.getElementById("location").value,
+                item_code: document.getElementById("item_code").value,
+                item_name: document.getElementById("item_name").value,
+                lot_no: document.getElementById("lot_no").value,
+                qty: Number(document.getElementById("qty").value),
+                remark: document.getElementById("remark").value
+            };
+
+            if (!data.warehouse || !data.location || !data.item_code || !data.qty) {
+                alert("필수 항목을 입력하세요.");
+                return;
+            }
+
+            const res = await fetch("/api/opening", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            });
+
+            const result = await res.json();
+            alert(result.msg || JSON.stringify(result));
+        }
+    </script>
+</head>
+
+<body>
+
+    <!-- NAVIGATION BAR -->
+    <div class="navbar">
+        <div class="navbar-title">기초재고 입력</div>
+        <div class="menu-icon" onclick="toggleMenu()">☰</div>
+
+        <div class="nav-links" id="nav-menu">
+            <a href="/">메인</a>
+            <a href="/inbound">입고</a>
+            <a href="/outbound">출고</a>
+            <a href="/move">이동</a>
+            <a href="/inventory">재고조회</a>
+            <a href="/history">이력조회</a>
+            <a href="/admin">관리자</a>
+        </div>
+    </div>
+
+
+    <div class="container">
+        <h2>기초재고 입력</h2>
+
+        <label>창고</label>
+        <input id="warehouse" placeholder="예: WH01">
+
+        <label>LOCATION</label>
+        <input id="location" placeholder="예: A01-01">
+
+        <label>품번</label>
+        <input id="item_code" placeholder="품번 입력">
+
+        <label>품명(선택)</label>
+        <input id="item_name" placeholder="품명 입력">
+
+        <label>LOT 번호(없으면 비우기)</label>
+        <input id="lot_no" placeholder="예: L001">
+
+        <label>기초 수량</label>
+        <input id="qty" type="number" placeholder="수량 입력">
+
+        <label>비고</label>
+        <input id="remark" placeholder="선택 입력">
+
+        <button onclick="submitOpening()">기초재고 저장</button>
+
+        <a href="/" class="back-btn">⬅ 메인으로</a>
+    </div>
+
+</body>
+</html>
