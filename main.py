@@ -601,5 +601,9 @@ def history_page():
 def inventory_page_alias():
     return FileResponse("static/inventory.html")
 
+@app.get("/admin")
+def admin_page():
+    return FileResponse("static/admin.html")
+
 
 
