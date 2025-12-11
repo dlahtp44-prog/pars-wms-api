@@ -2,148 +2,167 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>PARS WMS 메인 대시보드</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PARS WMS 메인</title>
 
     <style>
         body {
             margin: 0;
-            font-family: Arial, sans-serif;
-            background: #eef2f3;
+            background: #eef2f5;
+            font-family: 'Arial', sans-serif;
         }
 
-        /* 상단 네비게이션 */
+        /* ------------------- 상단 네비게이션 ------------------- */
         .navbar {
-            width: 100%;
             background: #2c3e50;
-            padding: 12px 0;
+            padding: 12px 15px;
             display: flex;
-            justify-content: center;
-            gap: 40px;
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 10;
+            justify-content: space-between;
+            align-items: center;
+            color: #fff;
         }
-        .navbar a {
-            color: white;
-            font-size: 15px;
-            text-decoration: none;
+
+        .navbar-title {
+            font-size: 20px;
             font-weight: bold;
         }
-        .navbar a:hover {
-            color: #1abc9c;
+
+        .menu-icon {
+            font-size: 28px;
+            cursor: pointer;
+            display: none;
         }
 
-        /* 타이틀 */
-        .title {
+        .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+        }
+
+        /* 모바일 메뉴 */
+        @media (max-width: 768px) {
+            .menu-icon {
+                display: block;
+            }
+
+            .nav-links {
+                display: none;
+                flex-direction: column;
+                background: #34495e;
+                width: 100%;
+                padding: 15px;
+                margin-top: 10px;
+            }
+
+            .nav-links a {
+                padding: 8px 5px;
+                font-size: 18px;
+            }
+        }
+
+        /* ------------------- 메인 타이틀 ------------------- */
+        .main-title {
             text-align: center;
-            margin-top: 90px;
-            font-size: 24px;
+            font-size: 26px;
+            margin-top: 25px;
             font-weight: bold;
             color: #2c3e50;
         }
 
-        /* 카드 컨테이너 */
-        .grid {
-            width: 90%;
+        /* ------------------- 버튼 카드 레이아웃 (2단/1단 반응형) ------------------- */
+        .grid-container {
             max-width: 900px;
-            margin: 30px auto;
+            margin: auto;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(2, 1fr); /* PC 기본 2열 */
             gap: 25px;
+            padding: 25px;
         }
 
-        /* 개별 카드 */
+        /* 카드 공통 스타일 */
         .card {
             background: white;
             padding: 30px 20px;
             border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            box-shadow: 0px 2px 6px rgba(0,0,0,0.15);
             text-align: center;
             cursor: pointer;
-            text-decoration: none;
-            color: #333;
             transition: 0.2s;
         }
         .card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            transform: translateY(-3px);
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.20);
         }
-
         .card img {
             width: 60px;
-            opacity: 0.9;
+            margin-bottom: 12px;
         }
 
-        .card p {
-            margin-top: 15px;
-            font-size: 18px;
+        .card-title {
+            font-size: 20px;
             font-weight: bold;
         }
 
-        /* 푸터 */
-        .footer {
+        /* ★★★ 모바일(600px 이하) 1열로 자동변경 ★★★ */
+        @media (max-width: 600px) {
+            .grid-container {
+                grid-template-columns: 1fr; /* 모바일 1열 */
+                gap: 18px;
+            }
+
+            .card {
+                padding: 22px 15px;
+            }
+
+            .card-title {
+                font-size: 18px;
+            }
+        }
+
+        footer {
             text-align: center;
-            margin: 40px 0;
-            font-size: 13px;
-            color: #666;
+            padding: 20px;
+            font-size: 14px;
+            color: #777;
         }
     </style>
+
+    <script>
+        function toggleMenu() {
+            const menu = document.getElementById("nav-menu");
+            menu.style.display = (menu.style.display === "flex" ? "none" : "flex");
+        }
+    </script>
 </head>
+
 <body>
 
-    <!-- 🔹 상단 네비게이션 -->
+    <!-- 상단 네비게이션 -->
     <div class="navbar">
-        <a href="/">메인</a>
-        <a href="/inbound">입고</a>
-        <a href="/outbound">출고</a>
-        <a href="/move">이동</a>
-        <a href="/inventory">재고조회</a>
-        <a href="/history">이력조회</a>
+        <div class="navbar-title">📦 PARS WMS</div>
+        <div class="menu-icon" onclick="toggleMenu()">☰</div>
+
+        <div class="nav-links" id="nav-menu">
+            <a href="/">메인</a>
+            <a href="/inbound">입고</a>
+            <a href="/outbound">출고</a>
+            <a href="/move">이동</a>
+            <a href="/inventory">재고조회</a>
+            <a href="/history">이력조회</a>
+            <a href="/admin">관리자</a>
+        </div>
     </div>
 
-    <!-- 🔹 메인 타이틀 -->
-    <div class="title">PARS WMS 메인 대시보드</div>
+    <!-- 메인 타이틀 -->
+    <div class="main-title">PARS WMS 메인 대시보드</div>
 
-    <!-- 🔹 기능 카드 영역 -->
-    <div class="grid">
+    <!-- 2단/1단 반응형 그리드 -->
+    <div class="grid-container">
 
-        <a href="/inbound" class="card">
-            <img src="https://cdn-icons-png.flaticon.com/512/992/992651.png">
-            <p>입고 등록</p>
-        </a>
-
-        <a href="/outbound" class="card">
-            <img src="https://cdn-icons-png.flaticon.com/512/992/992665.png">
-            <p>출고 등록</p>
-        </a>
-
-        <a href="/move" class="card">
-            <img src="https://cdn-icons-png.flaticon.com/512/992/992683.png">
-            <p>이동 처리</p>
-        </a>
-
-        <a href="/inventory" class="card">
-            <img src="https://cdn-icons-png.flaticon.com/512/5567/5567473.png">
-            <p>재고 조회</p>
-        </a>
-
-        <a href="/history" class="card">
-            <img src="https://cdn-icons-png.flaticon.com/512/2088/2088617.png">
-            <p>거래 이력</p>
-        </a>
-
-        <a class="card" style="opacity:0.5; cursor:default;">
-            <img src="https://cdn-icons-png.flaticon.com/512/992/992603.png">
-            <p>관리자 메뉴 (준비중)</p>
-        </a>
-    </div>
-
-    <!-- 🔹 푸터 -->
-    <div class="footer">
-        © 2025 PARS WMS System — All Rights Reserved.
-    </div>
-
-</body>
-</html>
+        <div class="card" onclick="location.href='/inbound'">
+            <img src="https://img.icons8.com
