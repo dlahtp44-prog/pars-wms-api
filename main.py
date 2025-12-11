@@ -605,5 +605,8 @@ def inventory_page_alias():
 def admin_page():
     return FileResponse("static/admin.html")
 
+@app.get("/opening")
+def opening_page():
+    return FileResponse("static/opening.html")
 
 
