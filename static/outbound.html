@@ -5,21 +5,39 @@
     <title>출고 등록 - PARS WMS</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <!-- Top Navigation -->
     <style>
-        body {
-            margin: 0;
-            background: #f0f0f0;
-            font-family: Arial, sans-serif;
+        .topnav {
+            width: 100%;
+            background: #2c3e50;
+            padding: 12px 0;
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding-top: 30px;
+            justify-content: center;
+            gap: 25px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 999;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
         }
+        .topnav a {
+            color: #ecf0f1;
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: bold;
+            padding: 6px 10px;
+            border-radius: 6px;
+            transition: 0.2s;
+        }
+        .topnav a:hover {
+            background: #34495e;
+        }
+        body { padding-top: 55px; margin: 0; font-family: Arial, sans-serif; background: #f0f0f0; }
+    </style>
 
-        h2 {
-            color: #333;
-            margin-bottom: 20px;
-        }
+    <!-- Page Style -->
+    <style>
+        h2 { color: #333; text-align: center; margin-bottom: 20px; }
 
         .container {
             width: 90%;
@@ -27,6 +45,7 @@
             background: #fff;
             padding: 25px;
             border-radius: 12px;
+            margin: auto;
             box-shadow: 0px 2px 8px rgba(0,0,0,0.15);
         }
 
@@ -34,52 +53,43 @@
             font-size: 15px;
             display: block;
             margin-top: 12px;
-            margin-bottom: 5px;
         }
 
         input {
-            width: 100%;
-            padding: 12px;
-            font-size: 16px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            box-sizing: border-box;
+            width: 100%; padding: 12px;
+            margin-top: 5px; font-size: 16px;
+            border-radius: 8px; border: 1px solid #ccc;
         }
 
         button {
-            margin-top: 20px;
-            width: 100%;
-            padding: 14px;
-            font-size: 18px;
-            background: #e74c3c;
-            color: white;
-            border: none;
-            border-radius: 10px;
+            margin-top: 20px; width: 100%;
+            padding: 14px; font-size: 18px;
+            background: #e74c3c; color: white;
+            border: none; border-radius: 10px;
             cursor: pointer;
         }
-
         button:hover {
             background: #c0392b;
-        }
-
-        .back-btn {
-            margin-top: 15px;
-            width: 100%;
-            padding: 12px;
-            background: #888;
-            font-size: 16px;
-            color: #fff;
-            border-radius: 10px;
-            text-align: center;
-            text-decoration: none;
         }
     </style>
 </head>
 
 <body>
+
+    <!-- Navigation -->
+    <div class="topnav">
+        <a href="/">메인</a>
+        <a href="/inbound">입고</a>
+        <a href="/outbound">출고</a>
+        <a href="/move">이동</a>
+        <a href="/inventory_page">재고조회</a>
+        <a href="/history_page">이력조회</a>
+    </div>
+
     <h2>📤 출고 등록</h2>
 
     <div class="container">
+
         <label>창고</label>
         <input id="warehouse" placeholder="예: WH01">
 
@@ -90,7 +100,7 @@
         <input id="item_code" placeholder="품번 입력">
 
         <label>LOT 번호</label>
-        <input id="lot_no" placeholder="없으면 비워두세요">
+        <input id="lot_no" placeholder="LOT 번호 입력">
 
         <label>출고 수량(QTY)</label>
         <input id="qty" type="number" placeholder="0 이상 숫자 입력">
@@ -100,30 +110,11 @@
 
         <button onclick="submitOutbound()">출고 등록</button>
 
-        <a class="back-btn" href="/">⬅ 메인으로</a>
     </div>
 
     <script>
         async function submitOutbound() {
+
             const data = {
-                warehouse: document.getElementById("warehouse").value,
-                location: document.getElementById("location").value,
-                item_code: document.getElementById("item_code").value,
-                lot_no: document.getElementById("lot_no").value,
-                qty: Number(document.getElementById("qty").value),
-                remark: document.getElementById("remark").value
-            };
-
-            const response = await fetch("/api/inventory/out", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data)
-            });
-
-            const result = await response.json();
-            alert(result.msg ? result.msg : JSON.stringify(result));
-        }
-    </script>
-
-</body>
-</html>
+                warehouse: document.getElementById("warehouse").value.trim(),
+                location: document.getElementById("location").value.trim(),
