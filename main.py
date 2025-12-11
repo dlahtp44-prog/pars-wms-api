@@ -578,6 +578,9 @@ def inbound_page():
 @app.get("/outbound")
 def outbound_page():
     return FileResponse("static/outbound.html")
+@app.get("/move")
+def move_page():
+    return FileResponse("static/move.html")
 
 
 
