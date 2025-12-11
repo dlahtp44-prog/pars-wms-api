@@ -597,5 +597,9 @@ def inventory_page():
 def history_page():
     return FileResponse("static/history.html")
 
+@app.get("/inventory_page")
+def inventory_page_alias():
+    return FileResponse("static/inventory.html")
+
 
 
