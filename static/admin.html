@@ -2,208 +2,277 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>관리자 메뉴 - PARS WMS</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PARS WMS 관리자 메뉴</title>
 
     <style>
         body {
             margin: 0;
+            background: #eef2f5;
             font-family: Arial, sans-serif;
-            background: #eef2f3;
         }
 
-        /* 네비게이션 */
+        /* ------------------------ NAVIGATION ------------------------ */
         .navbar {
-            width: 100%;
             background: #2c3e50;
-            padding: 12px 0;
-            display: flex;
-            justify-content: center;
-            gap: 40px;
-        }
-        .navbar a {
             color: white;
-            font-size: 15px;
-            text-decoration: none;
+            padding: 12px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar-title {
+            font-size: 20px;
             font-weight: bold;
         }
-        .navbar a:hover {
-            color: #1abc9c;
+
+        .menu-icon {
+            display: none;
+            font-size: 28px;
+            cursor: pointer;
         }
 
-        /* 타이틀 */
+        .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+        }
+
+        @media (max-width: 768px) {
+            .menu-icon {
+                display: block;
+            }
+            .nav-links {
+                display: none;
+                flex-direction: column;
+                background: #34495e;
+                padding: 10px;
+                width: 100%;
+                margin-top: 12px;
+            }
+            .nav-links a {
+                padding: 8px 5px;
+                font-size: 18px;
+            }
+        }
+
+        /* ------------------------ PAGE TITLE ------------------------ */
         .title {
             text-align: center;
+            font-size: 26px;
             margin-top: 25px;
-            font-size: 24px;
             font-weight: bold;
             color: #2c3e50;
         }
 
-        /* 카드 컨테이너 */
-        .container {
-            width: 90%;
-            max-width: 700px;
-            margin: 25px auto;
+        /* ------------------------ ADMIN SECTION ------------------------ */
+        .section {
+            max-width: 900px;
+            margin: auto;
+            margin-top: 30px;
             background: white;
             padding: 25px;
             border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            box-shadow: 0px 2px 6px rgba(0,0,0,0.15);
         }
 
-        label {
-            font-size: 15px;
-            margin-top: 12px;
-            display: block;
+        .section-title {
+            font-size: 20px;
+            margin-bottom: 15px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        /* INPUT & BUTTON */
+        .input-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
         }
 
         input {
-            width: 100%;
-            padding: 12px;
-            font-size: 16px;
-            border-radius: 8px;
+            padding: 10px;
+            border-radius: 6px;
             border: 1px solid #ccc;
-            margin-top: 5px;
+            flex: 1;
         }
 
         button {
-            margin-top: 20px;
-            width: 100%;
-            padding: 14px;
-            font-size: 17px;
-            background: #27ae60;
+            background: #2980b9;
             color: white;
+            padding: 10px 14px;
             border: none;
-            border-radius: 10px;
+            border-radius: 6px;
             cursor: pointer;
-        }
-        button:hover {
-            background: #1e8449;
+            white-space: nowrap;
         }
 
-        /* 리스트 테이블 */
+        button:hover {
+            background: #1f6391;
+        }
+
+        /* TABLE STYLE */
         table {
             width: 100%;
-            margin-top: 25px;
             border-collapse: collapse;
+            margin-top: 15px;
         }
+
         th, td {
-            border-bottom: 1px solid #ccc;
+            border: 1px solid #ddd;
             padding: 10px;
             text-align: center;
         }
+
         th {
-            background: #f9f9f9;
+            background: #f4f6f8;
         }
-        .del-btn {
-            color: red;
-            cursor: pointer;
-            font-weight: bold;
+
+        .delete-btn {
+            background: #e74c3c;
+            padding: 6px 10px;
+            border-radius: 5px;
+        }
+        .delete-btn:hover {
+            background: #c0392b;
+        }
+
+        /* MOBILE TABLE SCROLL */
+        @media (max-width: 600px) {
+            table {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+            .input-row {
+                flex-direction: column;
+            }
+            button {
+                width: 100%;
+            }
         }
     </style>
-</head>
-
-<body>
-
-    <!-- 상단 네비게이션 -->
-    <div class="navbar">
-        <a href="/">메인</a>
-        <a href="/inbound">입고</a>
-        <a href="/outbound">출고</a>
-        <a href="/move">이동</a>
-        <a href="/inventory">재고조회</a>
-        <a href="/history">이력조회</a>
-        <a style="color:#1abc9c;">관리자</a>
-    </div>
-
-    <div class="title">관리자 메뉴</div>
-
-    <div class="container">
-
-        <h3>📦 창고 / LOCATION 등록</h3>
-
-        <label>창고 코드 (예: WH01)</label>
-        <input id="wh" placeholder="입력">
-
-        <label>LOCATION (예: A01-01)</label>
-        <input id="loc" placeholder="입력">
-
-        <button onclick="addLocation()">등록하기</button>
-
-        <h3 style="margin-top:30px;">📋 등록된 Location 목록</h3>
-
-        <table id="locTable">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>창고</th>
-                    <th>Location</th>
-                    <th>삭제</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-
-    </div>
 
     <script>
-        // --- Location 등록 ---
+        function toggleMenu() {
+            const menu = document.getElementById("nav-menu");
+            menu.style.display = (menu.style.display === "flex" ? "none" : "flex");
+        }
+
+        /* ---------------- LOCATION CRUD ---------------- */
+
+        async function loadLocations() {
+            const res = await fetch("/api/location");
+            const data = await res.json();
+
+            const tbody = document.getElementById("location-body");
+            tbody.innerHTML = "";
+
+            data.forEach(row => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${row.id}</td>
+                    <td>${row.warehouse}</td>
+                    <td>${row.location}</td>
+                    <td><button class="delete-btn" onclick="deleteLocation(${row.id})">삭제</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
         async function addLocation() {
-            const warehouse = document.getElementById("wh").value.trim();
-            const location = document.getElementById("loc").value.trim();
+            const warehouse = document.getElementById("loc-warehouse").value;
+            const location = document.getElementById("loc-location").value;
 
             if (!warehouse || !location) {
-                alert("창고와 Location 모두 입력하세요.");
+                alert("창고명과 LOCATION을 입력하세요.");
                 return;
             }
 
             const res = await fetch("/api/location", {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({ warehouse, location })
+                body: JSON.stringify({warehouse, location})
             });
 
-            const data = await res.json();
-            alert(data.msg || "등록 완료");
+            const result = await res.json();
+            alert(result.msg || JSON.stringify(result));
+
             loadLocations();
         }
 
-        // --- Location 목록 조회 ---
-        async function loadLocations() {
-            const res = await fetch("/api/location");
-            const list = await res.json();
-
-            const tbody = document.querySelector("#locTable tbody");
-            tbody.innerHTML = "";
-
-            list.forEach(row => {
-                const tr = document.createElement("tr");
-
-                tr.innerHTML = `
-                    <td>${row.id}</td>
-                    <td>${row.warehouse}</td>
-                    <td>${row.location}</td>
-                    <td><span class="del-btn" onclick="deleteLocation(${row.id})">삭제</span></td>
-                `;
-
-                tbody.appendChild(tr);
-            });
-        }
-
-        // --- Location 삭제 ---
         async function deleteLocation(id) {
-            if (!confirm("정말 삭제하시겠습니까?")) return;
+            if (!confirm("삭제하시겠습니까?")) return;
 
             const res = await fetch(`/api/location/${id}`, { method: "DELETE" });
-            const data = await res.json();
-            alert(data.msg);
+            const result = await res.json();
+
+            alert(result.msg);
             loadLocations();
         }
 
-        // 초기 로딩
-        loadLocations();
+        window.onload = function() {
+            loadLocations();
+        };
     </script>
+
+</head>
+
+<body>
+
+    <!-- NAVIGATION BAR -->
+    <div class="navbar">
+        <div class="navbar-title">⚙ 관리자 메뉴</div>
+        <div class="menu-icon" onclick="toggleMenu()">☰</div>
+
+        <div class="nav-links" id="nav-menu">
+            <a href="/">메인</a>
+            <a href="/inbound">입고</a>
+            <a href="/outbound">출고</a>
+            <a href="/move">이동</a>
+            <a href="/inventory">재고조회</a>
+            <a href="/history">이력조회</a>
+            <a href="/admin">관리자</a>
+        </div>
+    </div>
+
+    <!-- PAGE TITLE -->
+    <div class="title">PARS WMS 관리자 기능</div>
+
+    <!-- ---------------- LOCATION 관리 ---------------- -->
+    <div class="section">
+        <div class="section-title">📍 LOCATION 관리</div>
+
+        <div class="input-row">
+            <input id="loc-warehouse" placeholder="창고 (예: WH01)">
+            <input id="loc-location" placeholder="LOCATION (예: A01-01)">
+            <button onclick="addLocation()">추가</button>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>창고</th>
+                    <th>LOCATION</th>
+                    <th>관리</th>
+                </tr>
+            </thead>
+            <tbody id="location-body">
+            </tbody>
+        </table>
+    </div>
+
+    <!-- FOOTER -->
+    <footer style="text-align:center; padding:20px; margin-top:30px; color:#777;">
+        © 2025 PARS WMS System — All Rights Reserved.
+    </footer>
 
 </body>
 </html>
-
