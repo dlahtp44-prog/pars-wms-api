@@ -566,6 +566,9 @@ def get_item_name_api(item_code: str = Query(...)):
 
 
 # ---------------------- STATIC 파일 제공 ----------------------
+from fastapi.staticfiles import StaticFiles
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # 메인 대시보드 (home)
 @app.get("/")
