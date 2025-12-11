@@ -5,21 +5,45 @@
     <title>이동 등록 - PARS WMS</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <!-- 🔷 상단 네비게이션 -->
     <style>
-        body {
-            margin: 0;
-            background: #f0f0f0;
-            font-family: Arial, sans-serif;
+        .topnav {
+            width: 100%;
+            background: #2c3e50;
+            padding: 12px 0;
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding-top: 30px;
+            justify-content: center;
+            gap: 25px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 999;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+        .topnav a {
+            color: #ecf0f1;
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: bold;
+            padding: 6px 10px;
+            border-radius: 6px;
+            transition: 0.15s;
+        }
+        .topnav a:hover {
+            background: #34495e;
         }
 
-        h2 {
-            color: #333;
-            margin-bottom: 20px;
+        body { 
+            padding-top: 55px; 
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f0f0f0; 
         }
+    </style>
+
+    <!-- 🔷 페이지 기본 스타일 -->
+    <style>
+        h2 { color: #333; text-align: center; margin-bottom: 20px; }
 
         .container {
             width: 90%;
@@ -27,6 +51,7 @@
             background: #fff;
             padding: 25px;
             border-radius: 12px;
+            margin: auto;
             box-shadow: 0px 2px 8px rgba(0,0,0,0.15);
         }
 
@@ -34,22 +59,17 @@
             font-size: 15px;
             display: block;
             margin-top: 12px;
-            margin-bottom: 5px;
         }
 
         input {
-            width: 100%;
-            padding: 12px;
-            font-size: 16px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            box-sizing: border-box;
+            width: 100%; padding: 12px;
+            margin-top: 5px; font-size: 16px;
+            border-radius: 8px; border: 1px solid #ccc;
         }
 
         button {
             margin-top: 20px;
-            width: 100%;
-            padding: 14px;
+            width: 100%; padding: 14px;
             font-size: 18px;
             background: #2980b9;
             color: white;
@@ -57,26 +77,22 @@
             border-radius: 10px;
             cursor: pointer;
         }
-
-        button:hover {
-            background: #1f6391;
-        }
-
-        .back-btn {
-            margin-top: 15px;
-            width: 100%;
-            padding: 12px;
-            background: #888;
-            font-size: 16px;
-            color: #fff;
-            border-radius: 10px;
-            text-align: center;
-            text-decoration: none;
-        }
+        button:hover { background: #1f6391; }
     </style>
 </head>
 
 <body>
+
+    <!-- 🔷 네비게이션 -->
+    <div class="topnav">
+        <a href="/">메인</a>
+        <a href="/inbound">입고</a>
+        <a href="/outbound">출고</a>
+        <a href="/move">이동</a>
+        <a href="/inventory_page">재고조회</a>
+        <a href="/history_page">이력조회</a>
+    </div>
+
     <h2>🔄 이동 등록</h2>
 
     <div class="container">
@@ -97,7 +113,7 @@
         <input id="item_code" placeholder="품번 입력">
 
         <label>LOT 번호</label>
-        <input id="lot_no" placeholder="없으면 비워두세요">
+        <input id="lot_no" placeholder="LOT 번호 입력">
 
         <label>이동 수량(QTY)</label>
         <input id="qty" type="number" placeholder="0 이상 숫자 입력">
@@ -107,63 +123,48 @@
 
         <button onclick="submitMove()">이동 등록</button>
 
-        <a class="back-btn" href="/">⬅ 메인으로</a>
     </div>
 
     <script>
         async function submitMove() {
 
-            const warehouse_from = document.getElementById("warehouse_from").value.trim();
-            const location_from = document.getElementById("location_from").value.trim();
-            const warehouse_to = document.getElementById("warehouse_to").value.trim();
-            const location_to = document.getElementById("location_to").value.trim();
-            const item_code = document.getElementById("item_code").value.trim();
-            const lot_no = document.getElementById("lot_no").value.trim();
-            const qty = Number(document.getElementById("qty").value);
-            const remark = document.getElementById("remark").value.trim();
+            const data = {
+                warehouse_from: document.getElementById("warehouse_from").value.trim(),
+                location_from: document.getElementById("location_from").value.trim(),
+                warehouse_to: document.getElementById("warehouse_to").value.trim(),
+                location_to: document.getElementById("location_to").value.trim(),
+                item_code: document.getElementById("item_code").value.trim(),
+                lot_no: document.getElementById("lot_no").value.trim(),
+                qty: Number(document.getElementById("qty").value),
+                remark: document.getElementById("remark").value.trim()
+            };
 
-            // --- 필수 입력값 검증 ---
-            if (!warehouse_from || !location_from) {
+            // 🔍 필수값 검증 추가
+            if (!data.warehouse_from || !data.location_from) {
                 alert("출발 창고와 LOCATION을 입력하세요.");
                 return;
             }
-            if (!warehouse_to || !location_to) {
+            if (!data.warehouse_to || !data.location_to) {
                 alert("도착 창고와 LOCATION을 입력하세요.");
                 return;
             }
-            if (!item_code) {
+            if (!data.item_code) {
                 alert("품번을 입력하세요.");
                 return;
             }
-            if (!qty || qty <= 0) {
-                alert("이동 수량(QTY)은 1 이상 숫자로 입력하세요.");
+            if (!data.qty || data.qty <= 0) {
+                alert("이동 수량은 1 이상 입력하세요.");
                 return;
             }
 
-            const data = {
-                warehouse_from,
-                location_from,
-                warehouse_to,
-                location_to,
-                item_code,
-                lot_no,
-                qty,
-                remark
-            };
+            const response = await fetch("/api/inventory/move", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            });
 
-            try {
-                const response = await fetch("/api/inventory/move", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(data)
-                });
-
-                const result = await response.json();
-                alert(result.msg ? result.msg : JSON.stringify(result));
-
-            } catch (error) {
-                alert("서버와 통신 중 오류가 발생했습니다.");
-            }
+            const result = await response.json();
+            alert(result.msg ?? JSON.stringify(result));
         }
     </script>
 
