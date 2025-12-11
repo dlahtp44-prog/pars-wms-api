@@ -1,1 +1,9 @@
+from fastapi import APIRouter
+from fastapi.responses import FileResponse
+
+router = APIRouter()
+
+@router.get("/")
+def index_page():
+    return FileResponse("app/static/index.html")
 
