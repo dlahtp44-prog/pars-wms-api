@@ -2,60 +2,104 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>PARS WMS</title>
+    <title>PARS WMS 관리자 메뉴</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <style>
         body {
             margin: 0;
-            background: #f2f2f2;
+            padding: 0;
             font-family: Arial, sans-serif;
+            background: #f5f6fa;
+            display: flex;
+            justify-content: center;
+        }
+
+        .wrapper {
+            width: 100%;
+            max-width: 480px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h2 {
+            margin-top: 10px;
+            margin-bottom: 25px;
+            color: #2c3e50;
+            font-size: 26px;
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 18px;
+        }
+
+        .menu-btn {
+            background: white;
+            padding: 25px 10px;
+            border-radius: 14px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.12);
+            text-decoration: none;
+            color: #2c3e50;
+            font-size: 18px;
+            font-weight: bold;
+            transition: 0.2s;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding-top: 50px;
         }
 
-        h1 {
-            color: #333;
-            margin-bottom: 30px;
+        .menu-btn:hover {
+            background: #e6f0ff;
+            transform: translateY(-3px);
         }
 
-        .menu-container {
-            width: 90%;
-            max-width: 400px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .btn {
-            padding: 15px;
-            text-align: center;
-            background-color: #4CAF50;
-            color: white;
-            font-size: 20px;
-            border-radius: 10px;
-            cursor: pointer;
-            text-decoration: none;
-        }
-
-        .btn:hover {
-            background-color: #45a049;
+        .icon {
+            font-size: 45px;
+            margin-bottom: 12px;
         }
     </style>
 </head>
+
 <body>
+    <div class="wrapper">
 
-    <h1>PARS WMS SYSTEM</h1>
+        <h2>📦 PARS WMS 관리자 메뉴</h2>
 
-    <div class="menu-container">
-        <a class="btn" href="/inbound.html">📦 입고</a>
-        <a class="btn" href="/outbound.html">📤 출고</a>
-        <a class="btn" href="/move.html">🔄 이동</a>
-        <a class="btn" href="/inventory.html">📊 재고 조회</a>
+        <div class="menu-grid">
+
+            <a href="/inbound" class="menu-btn">
+                <div class="icon">📥</div>
+                입고 등록
+            </a>
+
+            <a href="/outbound" class="menu-btn">
+                <div class="icon">📤</div>
+                출고 등록
+            </a>
+
+            <a href="/move" class="menu-btn">
+                <div class="icon">🔄</div>
+                이동 등록
+            </a>
+
+            <a href="/api/inventory" class="menu-btn">
+                <div class="icon">📊</div>
+                재고 조회
+            </a>
+
+            <a href="/history" class="menu-btn">
+                <div class="icon">📝</div>
+                이력 조회
+            </a>
+
+            <a href="https://pars-wms-api-2.onrender.com/docs" class="menu-btn">
+                <div class="icon">⚙</div>
+                API 문서 (Docs)
+            </a>
+
+        </div>
     </div>
-
 </body>
 </html>
-
