@@ -112,28 +112,60 @@
 
     <script>
         async function submitMove() {
+
+            const warehouse_from = document.getElementById("warehouse_from").value.trim();
+            const location_from = document.getElementById("location_from").value.trim();
+            const warehouse_to = document.getElementById("warehouse_to").value.trim();
+            const location_to = document.getElementById("location_to").value.trim();
+            const item_code = document.getElementById("item_code").value.trim();
+            const lot_no = document.getElementById("lot_no").value.trim();
+            const qty = Number(document.getElementById("qty").value);
+            const remark = document.getElementById("remark").value.trim();
+
+            // --- 필수 입력값 검증 ---
+            if (!warehouse_from || !location_from) {
+                alert("출발 창고와 LOCATION을 입력하세요.");
+                return;
+            }
+            if (!warehouse_to || !location_to) {
+                alert("도착 창고와 LOCATION을 입력하세요.");
+                return;
+            }
+            if (!item_code) {
+                alert("품번을 입력하세요.");
+                return;
+            }
+            if (!qty || qty <= 0) {
+                alert("이동 수량(QTY)은 1 이상 숫자로 입력하세요.");
+                return;
+            }
+
             const data = {
-                warehouse_from: document.getElementById("warehouse_from").value,
-                location_from: document.getElementById("location_from").value,
-                warehouse_to: document.getElementById("warehouse_to").value,
-                location_to: document.getElementById("location_to").value,
-                item_code: document.getElementById("item_code").value,
-                lot_no: document.getElementById("lot_no").value,
-                qty: Number(document.getElementById("qty").value),
-                remark: document.getElementById("remark").value
+                warehouse_from,
+                location_from,
+                warehouse_to,
+                location_to,
+                item_code,
+                lot_no,
+                qty,
+                remark
             };
 
-            const response = await fetch("/api/inventory/move", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data)
-            });
+            try {
+                const response = await fetch("/api/inventory/move", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data)
+                });
 
-            const result = await response.json();
-            alert(result.msg ? result.msg : JSON.stringify(result));
+                const result = await response.json();
+                alert(result.msg ? result.msg : JSON.stringify(result));
+
+            } catch (error) {
+                alert("서버와 통신 중 오류가 발생했습니다.");
+            }
         }
     </script>
 
 </body>
 </html>
-
