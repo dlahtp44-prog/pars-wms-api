@@ -1,1 +1,209 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>관리자 메뉴 - PARS WMS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #eef2f3;
+        }
+
+        /* 네비게이션 */
+        .navbar {
+            width: 100%;
+            background: #2c3e50;
+            padding: 12px 0;
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+        }
+        .navbar a {
+            color: white;
+            font-size: 15px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .navbar a:hover {
+            color: #1abc9c;
+        }
+
+        /* 타이틀 */
+        .title {
+            text-align: center;
+            margin-top: 25px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        /* 카드 컨테이너 */
+        .container {
+            width: 90%;
+            max-width: 700px;
+            margin: 25px auto;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        label {
+            font-size: 15px;
+            margin-top: 12px;
+            display: block;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            margin-top: 5px;
+        }
+
+        button {
+            margin-top: 20px;
+            width: 100%;
+            padding: 14px;
+            font-size: 17px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #1e8449;
+        }
+
+        /* 리스트 테이블 */
+        table {
+            width: 100%;
+            margin-top: 25px;
+            border-collapse: collapse;
+        }
+        th, td {
+            border-bottom: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background: #f9f9f9;
+        }
+        .del-btn {
+            color: red;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- 상단 네비게이션 -->
+    <div class="navbar">
+        <a href="/">메인</a>
+        <a href="/inbound">입고</a>
+        <a href="/outbound">출고</a>
+        <a href="/move">이동</a>
+        <a href="/inventory">재고조회</a>
+        <a href="/history">이력조회</a>
+        <a style="color:#1abc9c;">관리자</a>
+    </div>
+
+    <div class="title">관리자 메뉴</div>
+
+    <div class="container">
+
+        <h3>📦 창고 / LOCATION 등록</h3>
+
+        <label>창고 코드 (예: WH01)</label>
+        <input id="wh" placeholder="입력">
+
+        <label>LOCATION (예: A01-01)</label>
+        <input id="loc" placeholder="입력">
+
+        <button onclick="addLocation()">등록하기</button>
+
+        <h3 style="margin-top:30px;">📋 등록된 Location 목록</h3>
+
+        <table id="locTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>창고</th>
+                    <th>Location</th>
+                    <th>삭제</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+    </div>
+
+    <script>
+        // --- Location 등록 ---
+        async function addLocation() {
+            const warehouse = document.getElementById("wh").value.trim();
+            const location = document.getElementById("loc").value.trim();
+
+            if (!warehouse || !location) {
+                alert("창고와 Location 모두 입력하세요.");
+                return;
+            }
+
+            const res = await fetch("/api/location", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({ warehouse, location })
+            });
+
+            const data = await res.json();
+            alert(data.msg || "등록 완료");
+            loadLocations();
+        }
+
+        // --- Location 목록 조회 ---
+        async function loadLocations() {
+            const res = await fetch("/api/location");
+            const list = await res.json();
+
+            const tbody = document.querySelector("#locTable tbody");
+            tbody.innerHTML = "";
+
+            list.forEach(row => {
+                const tr = document.createElement("tr");
+
+                tr.innerHTML = `
+                    <td>${row.id}</td>
+                    <td>${row.warehouse}</td>
+                    <td>${row.location}</td>
+                    <td><span class="del-btn" onclick="deleteLocation(${row.id})">삭제</span></td>
+                `;
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        // --- Location 삭제 ---
+        async function deleteLocation(id) {
+            if (!confirm("정말 삭제하시겠습니까?")) return;
+
+            const res = await fetch(`/api/location/${id}`, { method: "DELETE" });
+            const data = await res.json();
+            alert(data.msg);
+            loadLocations();
+        }
+
+        // 초기 로딩
+        loadLocations();
+    </script>
+
+</body>
+</html>
 
