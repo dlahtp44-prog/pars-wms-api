@@ -1,1 +1,1386 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>PARS WMS QR BUTTON FINAL (기능 수정 완료)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+  <script src="https://unpkg.com/html5-qrcode"></script>
 
+  <style>
+    :root {
+      --bg: #020617;
+      --accent: #2563eb;
+      --accent-soft: #1d4ed8;
+      --card: #0b1120;
+      --border: #1f2937;
+      --text: #e5e7eb;
+      --nav-width: 130px; /* 메뉴바 너비 추가 */
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      /* body 전체에 미니멈 높이를 줘서 nav 영역을 확보 */
+      min-height: 100vh;
+      display: flex; /* 헤더와 앱 컨테이너를 세로로 정렬하기 위해 flex 사용 */
+      flex-direction: column;
+    }
+    header {
+      background: linear-gradient(90deg, #020617, #1d4ed8);
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      /* 헤더는 전체 너비를 사용 */
+      flex-shrink: 0; 
+    }
+    header .title { font-weight: 700; font-size: 16px; }
+    header .subtitle { font-size: 11px; opacity: 0.8; }
+    
+    /* 전체 레이아웃 컨테이너: nav와 main을 가로로 분할 */
+    #app-container {
+      display: flex;
+      flex-grow: 1; /* 남은 공간을 모두 차지 */
+      width: 100%;
+    }
+
+    /* 왼쪽 세로 메뉴바 스타일 */
+    nav {
+      width: var(--nav-width);
+      flex-shrink: 0; /* 너비가 줄어들지 않도록 고정 */
+      display: flex;
+      flex-direction: column; /* 버튼 세로 정렬 */
+      gap: 2px; /* 버튼 사이 간격 줄임 */
+      padding: 10px 6px;
+      background: #0b1120; /* 메뉴 배경색 */
+      border-right: 1px solid var(--border);
+      overflow-y: auto; /* 메뉴가 많아지면 스크롤 가능 */
+    }
+    nav button {
+      border: 0;
+      border-radius: 6px; /* 둥근 모양 변경 */
+      padding: 8px 6px;
+      background: #111827;
+      color: #e5e7eb;
+      font-size: 12px;
+      white-space: normal; /* 텍스트 줄바꿈 허용 */
+      text-align: center;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    nav button.active {
+      background: var(--accent);
+      color: #fff;
+      font-weight: 600;
+    }
+    nav button:hover:not(.active) {
+      background: #1f2937;
+    }
+    
+    /* 메인 콘텐츠 영역 스타일 */
+    main {
+      flex-grow: 1; /* 남은 공간을 모두 차지 */
+      padding: 10px;
+      /* 모바일 환경을 고려하여 최대 너비는 제거 */
+      max-width: calc(100vw - var(--nav-width)); /* nav 영역 제외 최대 너비 */
+      overflow-y: auto;
+    }
+    
+    .section { display: none; }
+    .section.active { display: block; }
+
+    .card {
+      background: var(--card);
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid var(--border);
+      box-shadow: 0 1px 4px rgba(15,23,42,.4);
+    }
+    .card h2 { margin: 0 0 6px 0; font-size: 15px; }
+    .status {
+      font-size: 11px;
+      margin-top: 4px;
+      color: #9ca3af;
+    }
+    .form-row {
+      display: flex;
+      flex-direction: column; /* 세로 정렬 유지 */
+      gap: 8px;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      font-size: 11px;
+    }
+    .field span { margin-bottom: 2px; color:#9ca3af; }
+    input, select, textarea {
+      padding: 6px 8px;
+      border-radius: 8px;
+      border: 1px solid #374151;
+      font-size: 12px;
+      background: #020617;
+      color: #e5e7eb;
+    }
+    input:disabled, textarea:disabled {
+      background:#111827;
+    }
+    textarea { resize: vertical; min-height: 60px; }
+
+    .btn {
+      border-radius: 999px;
+      border: 0;
+      padding: 7px 12px;
+      font-size: 12px;
+      background: var(--accent);
+      color:#fff;
+      margin-top: 6px;
+      cursor:pointer;
+    }
+    .btn.secondary { background:#111827; }
+    .btn.sm { padding:4px 10px;font-size:11px; }
+
+    .btn-group {
+      display: flex;
+      gap: 5px;
+      margin-top: 6px;
+    }
+    .btn-group .btn {
+      margin-top: 0;
+      flex-grow: 1;
+    }
+
+    /* 테이블 스타일 */
+    table {
+      width:100%; border-collapse:collapse; font-size:11px; margin-top:6px;
+    }
+    th,td { border:1px solid #1f2937; padding:4px; text-align:center; }
+    th { background:#111827; }
+    .filter-group {
+      display: flex; gap: 8px; margin-bottom: 8px;
+    }
+    .filter-group .field { flex-grow: 1; }
+    .filter-group .field.w100 { flex-grow: 0; width: 100px; }
+
+
+    /* QR 스캔 관련 */
+    video {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid #1f2937;
+      background:#000;
+      margin-top:6px;
+    }
+    canvas.qr-preview {
+      background:#fff;
+      padding:4px;
+      border-radius:6px;
+      margin:4px;
+    }
+
+    /* 반응형 디자인을 위한 미디어 쿼리는 제거하고, 주 컨테이너 레이아웃으로 대체 */
+  </style>
+</head>
+<body>
+<header>
+  <div>
+    <div class="title">PARS WMS</div>
+    <div class="subtitle">버튼형 + QR + Location Excel</div>
+  </div>
+  <div style="font-size:11px;opacity:.8;">vQR-BUTTON-FIXED</div>
+</header>
+
+<div id="app-container">
+  <nav>
+    <button id="tab-dashboard" onclick="openTab('dashboard')">📊 대시보드</button>
+    <button id="tab-inbound" onclick="openTab('inbound')">📦 입고(QR)</button>
+    <button id="tab-outbound" onclick="openTab('outbound')">🚚 출고(QR)</button>
+    <button id="tab-move" onclick="openTab('move')">🔄 이동(QR)</button>
+    <button id="tab-opening" onclick="openTab('opening')">📌 기초</button>
+    <button id="tab-location" onclick="openTab('location')">📍 Location</button>
+    <button id="tab-inventory" onclick="openTab('inventory')">📦 재고</button>
+    <button id="tab-history" onclick="openTab('history')">🧾 이력/취소</button>
+    <button id="tab-upload" onclick="openTab('upload')">📥 엑셀 & QR 센터</button>
+  </nav>
+
+  <main>
+    <section id="dashboard" class="section active">
+      <div class="card">
+        <h2>📊 대시보드</h2>
+        <p class="status">요약 정보는 추후 확장 예정입니다. 현재는 메뉴별 기능 테스트용으로 사용하세요.</p>
+      </div>
+    </section>
+
+    <section id="inbound" class="section">
+      <div class="card">
+        <h2>📦 입고 (품명 자동 + 재고 기반 드롭다운)</h2>
+        <div class="form-row">
+          <div class="field">
+            <span>품번</span>
+            <input id="in_item_code" placeholder="품번 스캔/입력" onchange="handleItemCodeChange(this, 'in')" />
+          </div>
+          <div class="field">
+            <span>품명</span>
+            <input id="in_item_name" placeholder="자동 표시 또는 수기 입력"  />
+          </div>
+          <div class="field">
+            <span>창고</span>
+            <select id="in_wh" placeholder="창고 선택"></select>
+          </div>
+          <div class="field">
+            <span>Location</span>
+            <select id="in_loc" placeholder="로케이션 선택"></select>
+          </div>
+          <div class="field">
+            <span>LOT (수기 입력 가능)</span>
+            <input id="in_lot" placeholder="LOT No. 수기 입력" />
+          </div>
+          <div class="field">
+            <span>수량</span>
+            <input id="in_qty" type="number" value="1" min="1" />
+          </div>
+          <div class="field">
+            <span>비고</span>
+            <input id="in_remark" placeholder="비고" value="입고" />
+          </div>
+        </div>
+        <button class="btn" onclick="doInbound()">입고 처리</button>
+        <div class="status" id="in_result"></div>
+      </div>
+
+      <div class="card">
+        <h2>📷 입고 QR 스캔</h2>
+        <p class="status">예: ITEM=FM028CRN;WH=서이천창고;LOC=D01-01;LOT=ORIGIN;QTY=10</p>
+        <div class="btn-group">
+          <button class="btn secondary sm" onclick="startQrScan('in')">QR 스캔 시작</button>
+          <button class="btn secondary sm" onclick="stopQrScan()">스캔 중지</button>
+        </div>
+        <video id="qrVideoIn" autoplay playsinline muted></video>
+        <canvas id="qrCanvas" style="display:none;"></canvas>
+        <div class="status" id="qrStatus">카메라 대기중...</div>
+      </div>
+    </section>
+
+    <section id="outbound" class="section">
+      <div class="card">
+        <h2>🚚 출고 (품명 자동 + 재고 기반 드롭다운)</h2>
+        <div class="form-row">
+          <div class="field">
+            <span>품번</span>
+            <input id="out_item_code" placeholder="품번 입력" onchange="handleItemCodeChange(this, 'out')" />
+          </div>
+          <div class="field">
+            <span>품명</span>
+            <input id="out_item_name"  />
+          </div>
+          <div class="field">
+            <span>창고</span>
+            <select id="out_wh" placeholder="출고 창고"></select>
+          </div>
+          <div class="field">
+            <span>Location</span>
+            <select id="out_loc" placeholder="출고 Location"></select>
+          </div>
+          <div class="field">
+            <span>LOT</span>
+            <select id="out_lot" placeholder="출고 LOT"></select>
+          </div>
+          <div class="field">
+            <span>출고 수량</span>
+            <input id="out_qty" type="number" value="1" min="1" />
+          </div>
+          <div class="field">
+            <span>비고</span>
+            <input id="out_remark" value="출고" />
+          </div>
+          <div class="field">
+            <span>해당 LOT 현재고</span>
+            <input id="out_current" disabled />
+          </div>
+        </div>
+        <button class="btn" onclick="doOutbound()">출고 처리</button>
+        <div class="status" id="out_result"></div>
+      </div>
+
+      <div class="card">
+        <h2>📷 출고 QR 스캔</h2>
+        <p class="status">예: ITEM=FM028CRN;WH=서이천창고;LOC=D01-01;LOT=ORIGIN;QTY=1</p>
+        <div class="btn-group">
+          <button class="btn secondary sm" onclick="startQrScan('out')">QR 스캔 시작</button>
+          <button class="btn secondary sm" onclick="stopQrScan()">스캔 중지</button>
+        </div>
+        <video id="qrVideoOut" autoplay playsinline muted></video>
+        <div class="status" id="qrStatusOut">카메라 대기중...</div>
+      </div>
+    </section>
+
+    <section id="move" class="section">
+      <div class="card">
+        <h2>🔄 재고 이동 (품명 자동 + 재고 기반 드롭다운)</h2>
+        <div class="form-row">
+          <div class="field">
+            <span>품번</span>
+            <input id="mv_item_code" placeholder="품번 입력" onchange="handleItemCodeChange(this, 'move')" />
+          </div>
+          <div class="field">
+            <span>품명</span>
+            <input id="mv_item_name"  />
+          </div>
+          <h3>출고지 (FROM)</h3>
+          <div class="field"><span>출고 창고</span><select id="mv_wh_from"></select></div>
+          <div class="field"><span>출고 Location</span><select id="mv_loc_from"></select></div>
+          <div class="field"><span>LOT</span><select id="mv_lot"></select></div>
+          <h3>입고지 (TO)</h3>
+          <div class="field"><span>입고 창고</span><input id="mv_wh_to" /></div> 
+          <div class="field"><span>입고 Location</span><input id="mv_loc_to" /></div>
+          
+          <div class="field"><span>수량</span><input id="mv_qty" type="number" value="1" min="1" /></div>
+          <div class="field"><span>비고</span><input id="mv_remark" value="재고 이동" /></div>
+        </div>
+        <button class="btn" onclick="doMove()">이동 처리</button>
+        <div class="status" id="mv_result"></div>
+      </div>
+
+      <div class="card">
+        <h2>📷 이동 QR 스캔</h2>
+        <p class="status"> 예: ITEM=FM028CRN;LOT=ORIGIN;WHF=서이천창고;LOCF=D01-01;WHT=서이천창고;LOCT=D01-02;QTY=5 </p>
+        <div class="btn-group">
+          <button class="btn secondary sm" onclick="startQrScan('move')">QR 스캔 시작</button>
+          <button class="btn secondary sm" onclick="stopQrScan()">스캔 중지</button>
+        </div>
+        <video id="qrVideoMove" autoplay playsinline muted></video>
+        <div class="status" id="qrStatusMove">카메라 대기중...</div>
+      </div>
+    </section>
+
+    <section id="opening" class="section">
+      <div class="card">
+        <h2>📌 기초 재고 등록</h2>
+        <div class="form-row">
+          <div class="field"><span>품번</span><input id="op_item_code" /></div>
+          <div class="field"><span>품명</span><input id="op_item_name" /></div>
+          <div class="field"><span>창고</span><input id="op_wh" /></div>
+          <div class="field"><span>Location</span><input id="op_loc" /></div>
+          <div class="field"><span>LOT</span><input id="op_lot" /></div>
+          <div class="field"><span>수량</span><input id="op_qty" type="number" value="1" min="0" /></div>
+          <div class="field"><span>비고</span><input id="op_remark" value="기초 재고" /></div>
+        </div>
+        <button class="btn" onclick="doOpening()">기초 재고 등록</button>
+        <div class="status" id="op_result"></div>
+      </div>
+    </section>
+
+    <section id="location" class="section">
+      <div class="card">
+        <h2>📍 Location 마스터</h2>
+        <div class="form-row">
+          <div class="field"><span>창고</span><input id="loc_wh" /></div>
+          <div class="field"><span>Location</span><input id="loc_loc" /></div>
+        </div>
+        <button class="btn" onclick="doLocationAdd()">Location 추가</button>
+        <div class="status" id="loc_result"></div>
+      </div>
+
+      <div class="card">
+        <h2>마스터 목록</h2>
+        <div class="status" id="loc_list">Location 정보를 불러오는 중...</div>
+      </div>
+    </section>
+
+    <section id="inventory" class="section">
+      <div class="card">
+        <h2>📦 재고 조회</h2>
+        <div class="filter-group">
+          <div class="field"><input id="inv_item_code" placeholder="품번 검색" /></div>
+          <div class="field"><input id="inv_lot_no" placeholder="LOT 검색" /></div>
+          <div class="field"><input id="inv_wh" placeholder="창고 검색" /></div>
+          <div class="field"><input id="inv_loc" placeholder="Location 검색" /></div>
+        </div>
+        <div class="filter-group">
+          <div class="field"><input id="inv_from" type="date" placeholder="거래 시작일" /></div>
+          <div class="field"><input id="inv_to" type="date" placeholder="거래 종료일" /></div>
+          <button class="btn sm" onclick="loadInventoryFiltered()">검색</button>
+          <button class="btn sm secondary" onclick="loadInventory()">전체</button>
+        </div>
+        <div class="status" id="inv_table">재고 정보를 불러오는 중...</div>
+      </div>
+    </section>
+
+    <section id="history" class="section">
+      <div class="card">
+        <h2>🧾 재고 이력/취소</h2>
+        <div class="filter-group">
+          <div class="field"><select id="his_type"><option value="">TYPE</option><option value="IN">IN</option><option value="OUT">OUT</option><option value="MOVE">MOVE</option><option value="OPENING">OPENING</option><option value="ROLLBACK">ROLLBACK</option></select></div>
+          <div class="field"><input id="his_item_code" placeholder="품번 검색" /></div>
+          <div class="field"><input id="his_lot_no" placeholder="LOT 검색" /></div>
+        </div>
+        <div class="filter-group">
+          <div class="field"><input id="his_wh" placeholder="창고 검색" /></div>
+          <div class="field"><input id="his_loc" placeholder="Location 검색" /></div>
+          <div class="field"><input id="his_from" type="date" placeholder="거래 시작일" /></div>
+          <div class="field"><input id="his_to" type="date" placeholder="거래 종료일" /></div>
+          <button class="btn sm" onclick="loadHistoryFiltered()">검색</button>
+          <button class="btn sm secondary" onclick="loadHistory()">전체</button>
+        </div>
+        <div class="status" id="his_table">이력 정보를 불러오는 중...</div>
+      </div>
+    </section>
+
+    <section id="upload" class="section">
+      <div class="card">
+        <h2>📥 엑셀 업로드</h2>
+        <p class="status">필수 컬럼 순서 (Header는 무시됨):<br/>
+          입고/출고: 창고, Location, 품번, 품명, LOT, 수량, 비고<br/>
+          이동: 출고창고, 출고Loc, 입고창고, 입고Loc, 품번, LOT, 수량, 비고<br/>
+          기초: 창고, Location, 품번, 품명, LOT, 수량, 비고<br/>
+          Location: 창고, Location
+        </p>
+        <div class="form-row">
+          <div class="field"> <span>입고 업로드</span> <input type="file" id="file_inbound" accept=".xlsx,.xlsm" /> </div>
+          <button class="btn sm" onclick="uploadExcel('inbound')">입고 엑셀 업로드</button>
+        </div>
+        <div class="form-row">
+          <div class="field"> <span>출고 업로드</span> <input type="file" id="file_outbound" accept=".xlsx,.xlsm" /> </div>
+          <button class="btn sm" onclick="uploadExcel('outbound')">출고 엑셀 업로드</button>
+        </div>
+        <div class="form-row">
+          <div class="field"> <span>이동 업로드</span> <input type="file" id="file_move" accept=".xlsx,.xlsm" /> </div>
+          <button class="btn sm" onclick="uploadExcel('move')">이동 엑셀 업로드</button>
+        </div>
+        <div class="form-row">
+          <div class="field"> <span>기초재고 업로드</span> <input type="file" id="file_opening" accept=".xlsx,.xlsm" /> </div>
+          <button class="btn sm" onclick="uploadExcel('opening')">기초 재고 엑셀 업로드</button>
+        </div>
+        <div class="form-row">
+          <div class="field"> <span>Location 업로드</span> <input type="file" id="file_location" accept=".xlsx,.xlsm" /> </div>
+          <button class="btn sm" onclick="uploadExcel('location')">Location 엑셀 업로드</button>
+        </div>
+        <div class="status" id="upload_result"></div>
+      </div>
+
+      <div class="card">
+        <h2>📰 QR 생성</h2>
+        <div class="form-row">
+          <div class="field"><span>QR 데이터</span><textarea id="qr_data">ITEM=FM028CRN;WH=서이천창고;LOC=D01-01;LOT=ORIGIN;QTY=10</textarea></div>
+        </div>
+        <button class="btn sm" onclick="generateQR()">QR 생성</button>
+        <div id="qr_display" style="text-align:center;"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+  // ID 단축
+  const in_item_code = document.getElementById("in_item_code");
+  const in_item_name = document.getElementById("in_item_name");
+  const in_wh = document.getElementById("in_wh");
+  const in_loc = document.getElementById("in_loc");
+  const in_lot = document.getElementById("in_lot"); // input
+  const in_qty = document.getElementById("in_qty");
+  const in_remark = document.getElementById("in_remark");
+
+  const out_item_code = document.getElementById("out_item_code");
+  const out_item_name = document.getElementById("out_item_name");
+  const out_wh = document.getElementById("out_wh");
+  const out_loc = document.getElementById("out_loc");
+  const out_lot = document.getElementById("out_lot");
+  const out_qty = document.getElementById("out_qty");
+  const out_remark = document.getElementById("out_remark");
+
+  const mv_item_code = document.getElementById("mv_item_code");
+  const mv_item_name = document.getElementById("mv_item_name");
+  const mv_wh_from = document.getElementById("mv_wh_from");
+  const mv_loc_from = document.getElementById("mv_loc_from");
+  const mv_wh_to = document.getElementById("mv_wh_to");
+  const mv_loc_to = document.getElementById("mv_loc_to");
+  const mv_lot = document.getElementById("mv_lot");
+  const mv_qty = document.getElementById("mv_qty");
+  const mv_remark = document.getElementById("mv_remark");
+
+  const inv_item_code = document.getElementById("inv_item_code");
+  const inv_lot_no = document.getElementById("inv_lot_no");
+  const inv_wh = document.getElementById("inv_wh");
+  const inv_loc = document.getElementById("inv_loc");
+  const inv_from = document.getElementById("inv_from");
+  const inv_to = document.getElementById("inv_to");
+
+  const his_type = document.getElementById("his_type");
+  const his_item_code = document.getElementById("his_item_code");
+  const his_lot_no = document.getElementById("his_lot_no");
+  const his_wh = document.getElementById("his_wh");
+  const his_loc = document.getElementById("his_loc");
+  const his_from = document.getElementById("his_from");
+  const his_to = document.getElementById("his_to");
+
+
+  // --- 탭 관리 ---
+  function openTab(tabName) {
+    // 섹션 숨기기
+    document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+    // 탭 버튼 비활성화
+    document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
+
+    // 선택된 섹션 보이기
+    document.getElementById(tabName).classList.add('active');
+    // 선택된 버튼 활성화
+    document.getElementById('tab-' + tabName).classList.add('active');
+
+    // 특정 탭으로 이동 시 데이터 로드
+    if (tabName === 'location') {
+      loadLocationList();
+    } else if (tabName === 'inventory') {
+      loadInventory();
+    } else if (tabName === 'history') {
+      loadHistory();
+    }
+  }
+
+  // --- API 호출 유틸 ---
+  async function callApi(url, method = "GET", payload = null) {
+    const options = {
+      method: method,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    };
+    if (payload) {
+      options.body = JSON.stringify(payload);
+    }
+    const res = await fetch(url, options);
+
+    if (!res.ok) {
+      const t = await res.text();
+      try {
+        const errJson = JSON.parse(t);
+        throw new Error(errJson.detail || errJson.msg || ("HTTP " + res.status));
+      } catch {
+        throw new Error(t || ("HTTP " + res.status));
+      }
+    }
+    return res.json();
+  }
+
+  // --- 품명 자동 채움 ---
+  async function fillItemName(codeInput, nameInput){
+    const code = codeInput.value.trim();
+    if(!code){
+      nameInput.value="";
+      return;
+    }
+    try{
+      // 가정: /api/item_name 엔드포인트는 품명 조회를 지원함
+      const d = await callApi("/api/item_name?item_code="+encodeURIComponent(code));
+      nameInput.value = d.item_name || '품명 미등록';
+    }catch(e){
+      console.error(e);
+      nameInput.value = '조회 오류';
+    }
+  }
+
+  // --- 드롭다운 유틸 함수 ---
+  function updateDropdown(selectElement, data, placeholderText) {
+    // 기존 LOT 값을 유지하려고 시도
+    const currentValue = selectElement.value;
+
+    selectElement.innerHTML = '';
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.textContent = placeholderText;
+    selectElement.appendChild(defaultOption);
+
+    let isCurrentValuePresent = false;
+    data.forEach(item => {
+      const opt = document.createElement('option');
+      opt.value = item;
+      opt.textContent = item;
+      if (item === currentValue) {
+        opt.selected = true;
+        isCurrentValuePresent = true;
+      }
+      selectElement.appendChild(opt);
+    });
+    // 기존 값이 목록에 없으면 선택 해제
+    if (!isCurrentValuePresent && currentValue) {
+      selectElement.value = '';
+    }
+  }
+
+  function clearDropdowns(...elements) {
+    const last = elements[elements.length - 1];
+    const placeholderText = typeof last === 'string' ? last : '선택하세요';
+    
+    elements.slice(0, elements.length - (typeof last === 'string' ? 1 : 0)).forEach(selectElement => {
+      if (selectElement.tagName === 'SELECT') {
+        selectElement.innerHTML = `<option value="">${placeholderText}</option>`;
+      }
+    });
+  }
+
+
+  // --- 재고 필터 드롭다운 로드 ---
+  // 이 함수는 백엔드 구현에 따라 달라집니다. 현재는 더미 로직입니다.
+  // 이 함수의 내부 로직 (getLocationsForWh, getLotsForWhLoc)은 백엔드 응답 구조에 따라 정확히 맞춰야 합니다.
+  async function loadInventoryFilters(code, context) {
+    const defaultPlaceholder = context === 'in' ? '창고/로케이션' : '창고/로케이션/LOT';
+
+    try {
+        // 백엔드 API가 재고 기반 창고/로케이션/LOT 목록을 제공한다고 가정
+        const result = await callApi("/api/inventory/filters?item_code=" + encodeURIComponent(code));
+        
+        // --- INBOUND (입고) 로직 ---
+        if(context === 'in'){
+            // 입고는 재고 기반 필터가 필요 없으므로 Location 마스터 기반으로 갱신하는 것이 더 합리적일 수 있습니다.
+            // 여기서는 원본 스크립트의 의도대로 재고 기반 필터링을 유지합니다.
+            updateDropdown(in_wh, result.warehouses, '창고 선택');
+            updateDropdown(in_loc, result.locations, 'Location 선택');
+            // in_lot은 input이므로 제외
+        } 
+        
+        // --- OUTBOUND (출고) 로직 ---
+        else if (context === 'out'){
+            const invMap = result.inventory_map || {};
+            
+            // 1. 초기 전체 목록 로드
+            updateDropdown(out_wh, result.warehouses, '출고 창고 선택');
+            updateDropdown(out_loc, result.locations, '출고 Location 선택');
+            updateDropdown(out_lot, result.lots, '출고 LOT 선택');
+
+            // 2. 종속적인 드롭다운 로직 설정
+            const updateOutLocAndLot = () => {
+                const selectedWh = out_wh.value;
+                const selectedLoc = out_loc.value;
+                
+                // 창고 변경 시 로케이션과 LOT 갱신
+                updateDropdown(out_loc, getLocationsForWh(selectedWh, invMap), '출고 Location 선택');
+                updateDropdown(out_lot, getLotsForWhLoc(selectedWh, selectedLoc, invMap), '출고 LOT 선택');
+                loadCurrentQty(context);
+            };
+
+            const updateOutLot = () => {
+                const selectedWh = out_wh.value;
+                const selectedLoc = out_loc.value;
+                
+                // 로케이션 변경 시 LOT 갱신
+                updateDropdown(out_lot, getLotsForWhLoc(selectedWh, selectedLoc, invMap), '출고 LOT 선택');
+                loadCurrentQty(context);
+            };
+
+            // 이벤트 리스너 연결
+            out_wh.onchange = updateOutLocAndLot;
+            out_loc.onchange = updateOutLot;
+            out_lot.onchange = () => loadCurrentQty(context);
+
+        } 
+        
+        // --- MOVE (이동) 로직 ---
+        else if (context === 'move'){
+            const invMap = result.inventory_map || {};
+
+            // 1. 초기 전체 목록 로드
+            updateDropdown(mv_wh_from, result.warehouses, '출고 창고 선택');
+            updateDropdown(mv_loc_from, result.locations, '출고 Location 선택');
+            updateDropdown(mv_lot, result.lots, '이동할 LOT 선택');
+            // 입고지(TO)는 입력 필드 유지 
+
+            // 2. 종속적인 드롭다운 로직 설정
+            const updateMvLocAndLot = () => {
+                const selectedWh = mv_wh_from.value;
+                const selectedLoc = mv_loc_from.value;
+                
+                // 창고 변경 시 로케이션과 LOT 갱신
+                updateDropdown(mv_loc_from, getLocationsForWh(selectedWh, invMap), '출고 Location 선택');
+                updateDropdown(mv_lot, getLotsForWhLoc(selectedWh, selectedLoc, invMap), '이동할 LOT 선택');
+                loadCurrentQty(context);
+            };
+
+            const updateMvLot = () => {
+                const selectedWh = mv_wh_from.value;
+                const selectedLoc = mv_loc_from.value;
+                
+                // 로케이션 변경 시 LOT 갱신
+                updateDropdown(mv_lot, getLotsForWhLoc(selectedWh, selectedLoc, invMap), '이동할 LOT 선택');
+                loadCurrentQty(context);
+            };
+
+            // 이벤트 리스너 연결
+            mv_wh_from.onchange = updateMvLocAndLot;
+            mv_loc_from.onchange = updateMvLot;
+            mv_lot.onchange = () => loadCurrentQty(context);
+        }
+
+    } catch(e) {
+        console.error("재고 필터링 오류:", e);
+        if(context === 'in'){
+            clearDropdowns(in_wh, in_loc, defaultPlaceholder);
+        } else if (context === 'out'){
+            clearDropdowns(out_wh, out_loc, out_lot, defaultPlaceholder);
+            document.getElementById("out_current").value = "";
+        } else if (context === 'move'){
+            clearDropdowns(mv_wh_from, mv_loc_from, mv_lot, defaultPlaceholder);
+        }
+    }
+  }
+
+  // --- 재고 맵 기반 유틸리티 함수 (loadInventoryFilters에서 사용) ---
+  // 백엔드 API가 { "창고": { "로케이션": [ "LOT1", "LOT2" ] } } 형태의 맵을 준다고 가정
+  function getLocationsForWh(warehouse, inventoryMap) {
+      if (!warehouse || !inventoryMap[warehouse]) {
+          return [];
+      }
+      return Object.keys(inventoryMap[warehouse]);
+  }
+
+  function getLotsForWhLoc(warehouse, location, inventoryMap) {
+      if (!warehouse || !location || !inventoryMap[warehouse] || !inventoryMap[warehouse][location]) {
+          return [];
+      }
+      return inventoryMap[warehouse][location];
+  }
+
+  // --- 품번 변경 이벤트 핸들러 통합 ---
+  function handleItemCodeChange(inputElement, context) {
+    const code = inputElement.value.trim();
+    let nameElement; 
+    let clearFunc;
+
+    if (context === 'in') { 
+        nameElement = in_item_name; 
+        clearFunc = () => clearDropdowns(in_wh, in_loc, '창고/로케이션'); 
+    } else if (context === 'out') { 
+        nameElement = out_item_name; 
+        clearFunc = () => { clearDropdowns(out_wh, out_loc, out_lot, '창고/로케이션/LOT'); document.getElementById("out_current").value = ""; };
+    } else if (context === 'move') { 
+        nameElement = mv_item_name; 
+        clearFunc = () => clearDropdowns(mv_wh_from, mv_loc_from, mv_lot, '출고지/LOT');
+    }
+
+    if(code) {
+      fillItemName(inputElement, nameElement);
+      loadInventoryFilters(code, context);
+    } else {
+      nameElement.value = "";
+      clearFunc();
+    }
+  }
+
+
+  // --- 현재고 로드 유틸 (출고/이동에서 사용) ---
+  async function loadCurrentQty(context){
+    let item_code, wh, loc, lot, qtyInput, resultBox;
+    if(context === 'out'){
+      item_code = out_item_code.value;
+      wh = out_wh.value;
+      loc = out_loc.value;
+      lot = out_lot.value;
+      qtyInput = document.getElementById("out_current");
+      resultBox = document.getElementById("out_result");
+    } else if (context === 'move'){
+      item_code = mv_item_code.value;
+      wh = mv_wh_from.value;
+      loc = mv_loc_from.value;
+      lot = mv_lot.value;
+      qtyInput = document.getElementById("mv_qty"); // 이동에서는 수량 입력 필드에 max를 설정하기 위해 사용
+      resultBox = document.getElementById("mv_result");
+    }
+
+    if (!item_code || !wh || !loc || !lot) {
+      if(context === 'out') qtyInput.value = "";
+      return;
+    }
+
+    try{
+      const data = await callApi(`/api/inventory/qty?item_code=${encodeURIComponent(item_code)}&warehouse=${encodeURIComponent(wh)}&location=${encodeURIComponent(loc)}&lot_no=${encodeURIComponent(lot)}`);
+      if(context === 'out'){
+        qtyInput.value = data.current_qty.toFixed(2);
+      } else if (context === 'move'){
+        // 이동에서는 수량 입력 필드의 최대값을 재고로 제한합니다.
+        qtyInput.setAttribute('max', data.current_qty.toFixed(2));
+      }
+    }catch(e){
+      console.error("재고 조회 오류:", e);
+      if(context === 'out') qtyInput.value = "조회 오류";
+      resultBox.textContent = "재고 조회 중 오류 발생";
+    }
+  }
+
+
+  // --- Location 관리 함수 ---
+  async function doLocationAdd(){
+    const payload = {
+      warehouse: loc_wh.value,
+      location: loc_loc.value
+    };
+    if (!payload.warehouse || !payload.location) {
+        document.getElementById("loc_result").textContent = "에러: 창고와 Location을 모두 입력하세요.";
+        alert("에러: 창고와 Location을 모두 입력하세요.");
+        return;
+    }
+    const box = document.getElementById("loc_result");
+    try{
+      const data = await callApi("/api/location","POST",payload);
+      box.textContent = "Location 추가 완료: " + data.warehouse + "/" + data.location;
+      alert("📍 Location 추가 완료");
+      loadLocationList();
+    }catch(e){
+      box.textContent = "실패: " + e.message;
+      alert("❌ Location 추가 실패: " + e.message);
+    }
+  }
+
+  async function loadLocationList(){
+    const box = document.getElementById("loc_list");
+    box.textContent = "Location 정보를 불러오는 중...";
+    try {
+        const list = await callApi("/api/location");
+        if(!list.length){
+          box.textContent = "등록된 Location 없음";
+          return;
+        }
+        
+        let html = "<table><thead><tr><th>창고</th><th>Location</th></tr></thead><tbody>";
+        list.forEach(item => {
+          html += `<tr><td>${item.warehouse}</td><td>${item.location}</td></tr>`;
+        });
+        html += "</tbody></table>";
+        box.innerHTML = html;
+    } catch(e) {
+        box.textContent = "Location 정보 로드 실패: " + e.message;
+    }
+  }
+
+  // --- 거래 처리 함수 ---
+  async function doInbound(){
+    const payload = {
+      item_code: in_item_code.value,
+      item_name: in_item_name.value,
+      warehouse: in_wh.value,
+      location: in_loc.value,
+      lot_no: in_lot.value,
+      qty: parseFloat(in_qty.value || "0"),
+      remark: in_remark.value
+    };
+
+    if (!payload.item_code || !payload.warehouse || !payload.location || !payload.lot_no || payload.qty <= 0) {
+        document.getElementById("in_result").textContent = "에러: 필수 입력/선택 항목을 확인하세요.";
+        alert("에러: 필수 입력/선택 항목을 확인하세요.");
+        return;
+    }
+
+    const box = document.getElementById("in_result");
+    try{
+      const data = await callApi("/api/inventory/in","POST",payload);
+      box.textContent = "입고 완료: 현재고 " + data.현재고.toFixed(2);
+      alert("📦 입고 완료");
+      // 드롭다운 갱신 (LOT은 수동 입력이므로 갱신 불필요)
+      loadInventoryFilters(payload.item_code, 'in'); 
+      loadInventory();
+      loadHistory();
+    }catch(e){
+      box.textContent = "실패: " + e.message;
+      alert("❌ 입고 실패: " + e.message);
+    }
+  }
+
+  async function doOutbound(){
+    const payload = {
+      item_code: out_item_code.value,
+      item_name: out_item_name.value,
+      warehouse: out_wh.value,
+      location: out_loc.value,
+      lot_no: out_lot.value,
+      qty: parseFloat(out_qty.value || "0"),
+      remark: out_remark.value
+    };
+
+    if (!payload.item_code || !payload.warehouse || !payload.location || !payload.lot_no || payload.qty <= 0) {
+        document.getElementById("out_result").textContent = "에러: 필수 입력/선택 항목을 확인하세요.";
+        alert("에러: 필수 입력/선택 항목을 확인하세요.");
+        return;
+    }
+    
+    const box = document.getElementById("out_result");
+    try{
+      const data = await callApi("/api/inventory/out","POST",payload);
+      if(data.result === "FAIL"){
+        box.textContent = "실패: " + data.msg + " (현재고:"+data.현재고.toFixed(2)+")";
+        alert("❌ 출고 재고 부족");
+      }else{
+        box.textContent = "출고 완료: 현재고 " + data.현재고.toFixed(2);
+        alert("🚚 출고 완료");
+        loadInventoryFilters(payload.item_code, 'out'); // 드롭다운 갱신
+        loadCurrentQty('out'); // 현재고 갱신
+        loadInventory();
+        loadHistory();
+      }
+    }catch(e){
+      box.textContent = "실패: " + e.message;
+      alert("❌ 출고 실패: " + e.message);
+    }
+  }
+
+  async function doMove(){
+    const payload = {
+      warehouse_from: mv_wh_from.value,
+      location_from: mv_loc_from.value,
+      warehouse_to: mv_wh_to.value,
+      location_to: mv_loc_to.value,
+      item_code: mv_item_code.value,
+      lot_no: mv_lot.value,
+      qty: parseFloat(mv_qty.value || "0"),
+      remark: mv_remark.value
+    };
+
+    if (!payload.item_code || !payload.warehouse_from || !payload.location_from || !payload.warehouse_to || !payload.location_to || !payload.lot_no || payload.qty <= 0) {
+        document.getElementById("mv_result").textContent = "에러: 필수 입력/선택 항목을 확인하세요.";
+        alert("에러: 필수 입력/선택 항목을 확인하세요.");
+        return;
+    }
+    
+    const box = document.getElementById("mv_result");
+    try{
+      const data = await callApi("/api/inventory/move","POST",payload);
+      if(data.result === "FAIL"){
+        box.textContent = "실패: " + data.msg + " (현재고:"+data.현재고.toFixed(2)+")";
+        alert("❌ 이동 재고 부족");
+      }else{
+        box.textContent = "이동 완료";
+        alert("🔄 이동 완료");
+        loadInventoryFilters(payload.item_code, 'move'); // 드롭다운 갱신
+        loadCurrentQty('move'); // 현재고 갱신
+        loadInventory();
+        loadHistory();
+      }
+    }catch(e){
+      box.textContent = "실패: " + e.message;
+      alert("❌ 이동 실패: " + e.message);
+    }
+  }
+
+  async function doOpening(){
+    const payload = {
+      item_code: op_item_code.value,
+      item_name: op_item_name.value,
+      warehouse: op_wh.value,
+      location: op_loc.value,
+      lot_no: op_lot.value,
+      qty: parseFloat(op_qty.value || "0"),
+      remark: op_remark.value
+    };
+
+    if (!payload.item_code || !payload.warehouse || !payload.location || !payload.lot_no || payload.qty <= 0) {
+        document.getElementById("op_result").textContent = "에러: 필수 입력/선택 항목을 확인하세요.";
+        alert("에러: 필수 입력/선택 항목을 확인하세요.");
+        return;
+    }
+    
+    const box = document.getElementById("op_result");
+    try{
+      const data = await callApi("/api/inventory/opening","POST",payload);
+      box.textContent = "기초 재고 등록 완료: 현재고 " + data.현재고.toFixed(2);
+      alert("📌 기초 재고 등록 완료");
+      loadInventory();
+      loadHistory();
+    }catch(e){
+      box.textContent = "실패: " + e.message;
+      alert("❌ 기초 재고 등록 실패: " + e.message);
+    }
+  }
+
+
+  // --- 재고 조회 (Inventory) ---
+  async function loadInventory(){ 
+    const box = document.getElementById("inv_table"); 
+    box.textContent = "불러오는 중..."; 
+    try{ 
+        const list = await callApi("/api/inventory"); 
+        renderInventory(list); 
+    }catch(e){ 
+        box.textContent = "에러: " + e.message; 
+    } 
+  } 
+
+  async function loadInventoryFiltered(){ 
+    const box = document.getElementById("inv_table"); 
+    box.textContent = "검색 중..."; 
+    const p = new URLSearchParams({ 
+        item_code: inv_item_code.value || "", 
+        lot_no: inv_lot_no.value || "", 
+        warehouse: inv_wh.value || "", 
+        location: inv_loc.value || "", 
+        date_from: inv_from.value || "", 
+        date_to: inv_to.value || "" 
+    }); 
+    try{ 
+        const list = await callApi("/api/inventory?"+p.toString()); 
+        renderInventory(list); 
+    }catch(e){ 
+        box.textContent = "에러: " + e.message; 
+    } 
+  }
+
+  function renderInventory(list){
+      const box = document.getElementById("inv_table");
+      if(!list.length){
+          box.textContent = "검색 결과 없음";
+          return;
+      }
+      
+      let html = "<table><thead><tr>"+
+          "<th>창고</th><th>Loc</th><th>품번</th><th>품명</th><th>LOT</th><th>현재고</th><th>최종거래시간</th>"+
+          "</tr></thead><tbody>";
+      
+      list.forEach(item => {
+          const qty_class = item.current_qty > 0 ? 'style="color:#7CFC00; font-weight: bold;"' : '';
+          html += `<tr>
+              <td>${item.warehouse}</td>
+              <td>${item.location}</td>
+              <td>${item.item_code}</td>
+              <td>${item.item_name || ''}</td>
+              <td>${item.lot_no}</td>
+              <td ${qty_class}>${item.current_qty.toFixed(2)}</td>
+              <td>${item.last_tx_time.replace("T"," ")}</td>
+          </tr>`;
+      });
+
+      html += "</tbody></table>";
+      box.innerHTML = html;
+  }
+  
+  // --- 재고 이력 (History) ---
+  async function loadHistory(){
+    const his_table = document.getElementById("his_table");
+    his_table.textContent = "불러오는 중...";
+    try{
+        const list = await callApi("/api/history");
+        renderHistory(list);
+    }catch(e){
+        his_table.textContent = "에러: " + e.message;
+    }
+  }
+
+  async function loadHistoryFiltered(){
+    const his_table = document.getElementById("his_table");
+    his_table.textContent = "검색 중...";
+    const p = new URLSearchParams({
+        tx_type: his_type.value || "",
+        item_code: his_item_code.value || "",
+        lot_no: his_lot_no.value || "",
+        warehouse: his_wh.value || "",
+        location: his_loc.value || "",
+        date_from: his_from.value || "",
+        date_to: his_to.value || ""
+    });
+    try{
+        const list = await callApi("/api/history?"+p.toString());
+        renderHistory(list);
+    }catch(e){
+        his_table.textContent = "에러: " + e.message;
+    }
+  }
+
+  function renderHistory(list){ 
+      const box = document.getElementById("his_table"); 
+      if(!list.length){ 
+          box.textContent = "이력 없음"; 
+          return; 
+      } 
+      let html = "<table><thead><tr>"+ 
+          "<th>ID</th><th>시간</th><th>TYPE</th><th>창고</th><th>Loc</th><th>품번</th><th>품명</th><th>LOT</th><th>수량</th><th>비고</th><th>취소</th>"+
+          "</tr></thead><tbody>";
+      
+      list.forEach(item => {
+          const tx_qty = item.qty.toFixed(2);
+          const qty_class = item.qty > 0 ? 'style="color:#7CFC00; font-weight: bold;"' : (item.qty < 0 ? 'style="color:#FFA07A; font-weight: bold;"' : '');
+          const item_name = item.item_name || ''; 
+          
+          // ROLLBACK 거래는 취소할 수 없고, 이미 취소된 거래도 다시 취소할 수 없음
+          const rollback_button = item.tx_type !== 'ROLLBACK' 
+              ? `<button class="btn sm secondary" onclick="doRollback(${item.id})">취소</button>` 
+              : `취소됨 (원천 ID:${item.source_tx_id || item.id})`;
+
+          html += `<tr>
+              <td>${item.id}</td>
+              <td>${item.tx_time.replace("T"," ")}</td>
+              <td>${item.tx_type}</td>
+              <td>${item.warehouse}</td>
+              <td>${item.location}</td>
+              <td>${item.item_code}</td>
+              <td>${item_name}</td>
+              <td>${item.lot_no}</td>
+              <td ${qty_class}>${tx_qty}</td>
+              <td>${item.remark || ''}</td>
+              <td>${rollback_button}</td>
+          </tr>`;
+      });
+
+      html += "</tbody></table>";
+      box.innerHTML = html; 
+  }
+
+  async function doRollback(tx_id){
+    if(!confirm(`거래 ID ${tx_id}를 정말로 취소(롤백)하시겠습니까?`)){
+        return;
+    }
+
+    const box = document.getElementById("his_table");
+    box.textContent = `거래 ID ${tx_id} 취소 처리 중...`;
+
+    try{
+        const data = await callApi(`/api/inventory/rollback/${tx_id}`, "POST");
+        alert(data.msg);
+        loadHistory(); // 이력 갱신
+        loadInventory(); // 재고 갱신
+    }catch(e){
+        box.textContent = "취소 실패: " + e.message;
+        alert("❌ 취소 실패: " + e.message);
+        loadHistory(); // 실패하더라도 목록은 다시 로드
+    }
+  }
+
+
+  // --- 엑셀 업로드 유틸 ---
+  async function uploadExcel(kind){
+    const fileInput = document.getElementById(`file_${kind}`);
+    const file = fileInput.files[0];
+    const box = document.getElementById("upload_result");
+
+    if (!file) {
+      box.textContent = "에러: 파일을 선택하세요.";
+      alert("파일을 선택하세요.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+    box.textContent = `${kind} 엑셀 업로드 중...`;
+
+    try {
+      const res = await fetch(`/api/upload/${kind}`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const t = await res.text();
+        try {
+          const errJson = JSON.parse(t);
+          throw new Error(errJson.detail || ("HTTP " + res.status));
+        } catch {
+          throw new Error(t || ("HTTP " + res.status));
+        }
+      }
+
+      const data = await res.json();
+      let msg = "업로드 완료: ";
+      const successCount = data.uploaded !== undefined ? data.uploaded : data.inserted;
+      const failedCount = data.failed ? data.failed.length : (data.failed_rows ? data.failed_rows.length : 0);
+      
+      msg += "성공 " + (successCount || 0) + "건";
+      if(failedCount > 0){ 
+        msg += " / 실패 " + failedCount + "건 (자세한 내용은 콘솔 확인)"; 
+      }
+      box.textContent = msg;
+
+      if(kind === "location"){
+        if(typeof loadLocationList === "function") loadLocationList();
+      }else if(["inbound", "outbound", "move", "opening"].includes(kind)){
+        if(typeof loadInventory === "function") loadInventory(); 
+        if(typeof loadHistory === "function") loadHistory(); 
+      }
+
+      // 실패 목록 콘솔 출력
+      if(data.failed && data.failed.length > 0) { console.error(`엑셀 업로드 실패 목록 (${kind}):`, data.failed); }
+      if(data.failed_rows && data.failed_rows.length > 0) { console.error(`Location 업로드 실패 목록:`, data.failed_rows); }
+
+      alert(msg);
+
+    } catch (e) {
+      box.textContent = "업로드 오류: " + e.message;
+      alert("업로드 오류: " + e.message);
+    }
+  }
+
+  // --- QR 생성 유틸 ---
+  function generateQR(){
+    const data = document.getElementById("qr_data").value;
+    const box = document.getElementById("qr_display");
+    box.innerHTML = '';
+    
+    if(!data){
+        box.textContent = "QR 데이터를 입력하세요.";
+        return;
+    }
+
+    const size = 200;
+    
+    // QR Code 생성
+    QRCode.toCanvas(
+        data, 
+        { errorCorrectionLevel: 'H', width: size, margin: 2 }, 
+        (err, canvas) => {
+            if(err){
+                box.textContent = "QR 생성 실패";
+                console.error(err);
+                return;
+            }
+            canvas.classList.add('qr-preview');
+            box.appendChild(canvas);
+        }
+    );
+  }
+  
+  // --- QR 스캔 로직 ---
+  let qrScanner = null;
+  let qrContext = '';
+  
+  function startQrScan(type) {
+    qrContext = type;
+    const videoId = (type === 'in') ? 'qrVideoIn' : (type === 'out' ? 'qrVideoOut' : 'qrVideoMove');
+    const statusId = (type === 'in') ? 'qrStatus' : (type === 'out' ? 'qrStatusOut' : 'qrStatusMove');
+    const video = document.getElementById(videoId);
+    const status = document.getElementById(statusId);
+    // canvas는 사용하지 않으므로 제거
+    // const canvas = document.getElementById('qrCanvas'); 
+    // const ctx = canvas.getContext('2d');
+
+    if (qrScanner) stopQrScan();
+
+    video.style.display = 'block';
+    if(status) status.textContent = "카메라 시작 중...";
+
+    // Html5QrcodeReader 사용
+    const readerElementId = 'qrReaderTemp';
+    if(!document.getElementById(readerElementId)){
+        const div = document.createElement('div');
+        div.id = readerElementId;
+        div.style.display = 'none'; // 비디오 요소를 직접 사용하기 위해 숨김
+        document.body.appendChild(div);
+    }
+
+    qrScanner = new Html5Qrcode(readerElementId);
+    
+    Html5Qrcode.getCameras().then(devices => {
+        if (devices && devices.length) {
+            // 후면 카메라 우선 사용
+            const cameraId = devices.length > 1 ? devices[1].id : devices[0].id; // 보통 devices[1]이 후면일 가능성이 높음
+            
+            qrScanner.start(
+                cameraId, 
+                { fps: 10, qrbox: 250 }, 
+                (decodedText, decodedResult) => {
+                    handleQrText(decodedText);
+                    stopQrScan();
+                },
+                (errorMessage) => {
+                    // console.log(`QR Error: ${errorMessage}`);
+                }
+            ).then(() => {
+                if(status) status.textContent = "QR 스캔 중...";
+                // 스캐너가 시작되면, 숨겨진 리더의 비디오 스트림을 복사하여 표시용 비디오 요소에 연결
+                const actualVideoElement = document.getElementById(readerElementId).querySelector('video');
+                if (actualVideoElement) {
+                    video.srcObject = actualVideoElement.srcObject;
+                    video.style.display = 'block';
+                }
+            }).catch(err => {
+                if(status) status.textContent = "카메라 시작 오류: " + err;
+                console.error("QR Start Error:", err);
+            });
+        } else {
+            if(status) status.textContent = "카메라를 찾을 수 없습니다.";
+        }
+    }).catch(err => {
+        if(status) status.textContent = "카메라 접근 오류: " + err;
+        console.error("Camera Access Error:", err);
+    });
+
+  }
+
+  function stopQrScan() {
+    if (qrScanner) {
+        // Html5Qrcode.stop()은 비동기이므로 .then().catch() 사용
+        qrScanner.stop().catch(err => console.log("QR Stop Error:", err));
+        qrScanner = null;
+    }
+    
+    // 모든 video 요소 초기화
+    document.getElementById("qrVideoIn").style.display = 'none';
+    document.getElementById("qrVideoOut").style.display = 'none';
+    document.getElementById("qrVideoMove").style.display = 'none';
+    
+    // srcObject를 null로 설정하여 비디오 스트림 해제
+    const videoIn = document.getElementById("qrVideoIn");
+    const videoOut = document.getElementById("qrVideoOut");
+    const videoMove = document.getElementById("qrVideoMove");
+    if(videoIn.srcObject) videoIn.srcObject.getTracks().forEach(track => track.stop());
+    if(videoOut.srcObject) videoOut.srcObject.getTracks().forEach(track => track.stop());
+    if(videoMove.srcObject) videoMove.srcObject.getTracks().forEach(track => track.stop());
+    
+    document.getElementById("qrVideoIn").srcObject = null;
+    document.getElementById("qrVideoOut").srcObject = null;
+    document.getElementById("qrVideoMove").srcObject = null;
+    
+    if(document.getElementById("qrStatus")) document.getElementById("qrStatus").textContent = "카메라 대기중...";
+    if(document.getElementById("qrStatusOut")) document.getElementById("qrStatusOut").textContent = "카메라 대기중...";
+    if(document.getElementById("qrStatusMove")) document.getElementById("qrStatusMove").textContent = "카메라 대기중...";
+  }
+
+
+  function handleQrText(text){
+    const obj = {};
+    text.split(";").forEach(part=>{
+      const [k,v] = part.split("=");
+      if(!k || !v) return;
+      obj[k.trim().toUpperCase()] = v.trim();
+    });
+
+    if(qrContext === "in"){
+      if(obj.ITEM) in_item_code.value = obj.ITEM;
+      if(obj.WH)   in_wh.value = obj.WH;
+      if(obj.LOC)  in_loc.value = obj.LOC;
+      if(obj.LOT)  in_lot.value = obj.LOT; // LOT 수기 입력 필드에 값 입력
+      if(obj.QTY)  in_qty.value = obj.QTY;
+      fillItemName(in_item_code, in_item_name);
+      loadInventoryFilters(in_item_code.value, 'in'); // 드롭다운 갱신
+      alert("📦 QR 입고 정보 자동 입력");
+    }else if(qrContext === "out"){
+      if(obj.ITEM) out_item_code.value = obj.ITEM;
+      if(obj.WH)   out_wh.value = obj.WH;
+      if(obj.LOC)  out_loc.value = obj.LOC;
+      if(obj.LOT)  out_lot.value = obj.LOT;
+      if(obj.QTY)  out_qty.value = obj.QTY;
+      fillItemName(out_item_code, out_item_name);
+      loadInventoryFilters(out_item_code.value, 'out'); // 드롭다운 갱신 및 현재고 로드
+      alert("🚚 QR 출고 정보 자동 입력");
+    }else if(qrContext === "move"){
+      if(obj.ITEM) mv_item_code.value = obj.ITEM;
+      if(obj.WHF)  mv_wh_from.value = obj.WHF;
+      if(obj.LOCF) mv_loc_from.value = obj.LOCF;
+      if(obj.WHT)  mv_wh_to.value = obj.WHT;
+      if(obj.LOCT) mv_loc_to.value = obj.LOCT;
+      if(obj.LOT)  mv_lot.value = obj.LOT;
+      if(obj.QTY)  mv_qty.value = obj.QTY;
+      fillItemName(mv_item_code, mv_item_name);
+      loadInventoryFilters(mv_item_code.value, 'move'); // 드롭다운 갱신 및 현재고 로드
+      alert("🔄 QR 이동 정보 자동 입력");
+    }
+  }
+
+  // 초기
+  window.onload = function() {
+    openTab("dashboard");
+    // 초기 드롭다운 안내 문구 설정 (in_lot은 input으로 변경되어 제외)
+    clearDropdowns(in_wh, in_loc, '창고/로케이션'); 
+    clearDropdowns(out_wh, out_loc, out_lot, '창고/로케이션/LOT');
+    clearDropdowns(mv_wh_from, mv_loc_from, mv_lot, '출고지/LOT');
+  }
+</script>
+
+<div id="qrReaderTemp" style="display:none;"></div>
+</body>
+</html>
