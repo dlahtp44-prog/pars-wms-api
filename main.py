@@ -567,9 +567,14 @@ def get_item_name_api(item_code: str = Query(...)):
 
 # ---------------------- STATIC 파일 제공 ----------------------
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+
+# static 폴더 연결
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/inbound")
 def inbound_page():
     return FileResponse("static/inbound.html")
+
 
 
