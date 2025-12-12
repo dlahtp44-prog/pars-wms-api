@@ -1,59 +1,51 @@
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-
-# DB 초기화
-from app.db import init_db
-
-# API 라우터
+from fastapi.middleware.cors import CORSMiddleware
+from app.pages import index_page
 from app.routers import (
-    inbound, outbound, move, opening, inventory,
-    history, items, location
+    items, inbound, outbound, move, location,
+    inventory, history, qr_api
 )
+import os
 
-# 페이지 라우터
-from app.pages import (
-    index_page, inbound_page, outbound_page, move_page,
-    inventory_page, history_page, opening_page, admin_page,
-    test_page
-)
+app = FastAPI(title="PARS WMS - Responsive + QR + Label 70x40")
 
+# ------------------------------------------------------------
+# STATIC & TEMPLATE PATHS
+# ------------------------------------------------------------
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+STATIC_DIR = os.path.join(BASE_DIR, "app", "static")
 
-app = FastAPI(title="PARS WMS")
+if not os.path.exists(STATIC_DIR):
+    os.makedirs(STATIC_DIR)
 
-# CORS 설정
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+# ------------------------------------------------------------
+# CORS
+# ------------------------------------------------------------
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],   # 필요 시 도메인 제한 가능
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# DB 초기화
-init_db()
-
-# Static 폴더 연결
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
-
-# 페이지 라우터 등록
+# ------------------------------------------------------------
+# ROUTERS
+# ------------------------------------------------------------
 app.include_router(index_page.router)
-app.include_router(inbound_page.router)
-app.include_router(outbound_page.router)
-app.include_router(move_page.router)
-app.include_router(inventory_page.router)
-app.include_router(history_page.router)
-app.include_router(opening_page.router)
-app.include_router(admin_page.router)
-app.include_router(test_page.router)
-
-# API 라우터 등록
+app.include_router(items.router)
 app.include_router(inbound.router)
 app.include_router(outbound.router)
 app.include_router(move.router)
-app.include_router(opening.router)
+app.include_router(location.router)
 app.include_router(inventory.router)
 app.include_router(history.router)
-app.include_router(items.router)
-app.include_router(location.router)
+app.include_router(qr_api.router)
+
+@app.get("/ping")
+def ping():
+    return {"status": "OK", "msg": "PARS WMS Running"}
 
