@@ -33,6 +33,10 @@ input, select, textarea {
     --vh: 1vh;
 }
 
+.main-container {
+    height: calc(var(--vh) * 100);
+}
+
 /* 전체화면이 필요한 컨테이너에 적용할 클래스 */
 .full-height,
 .main-container {
