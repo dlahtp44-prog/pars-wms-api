@@ -14,8 +14,10 @@ from app.routers import (
 # 페이지 라우터
 from app.pages import (
     index_page, inbound_page, outbound_page, move_page,
-    inventory_page, history_page, opening_page, admin_page
+    inventory_page, history_page, opening_page, admin_page,
+    test_page
 )
+
 
 app = FastAPI(title="PARS WMS")
 
@@ -43,6 +45,7 @@ app.include_router(inventory_page.router)
 app.include_router(history_page.router)
 app.include_router(opening_page.router)
 app.include_router(admin_page.router)
+app.include_router(test_page.router)
 
 # API 라우터 등록
 app.include_router(inbound.router)
