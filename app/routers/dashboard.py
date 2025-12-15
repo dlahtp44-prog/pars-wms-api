@@ -2,7 +2,7 @@ from fastapi import APIRouter
 
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
 
-@router.get("")
+@router.get("/")
 def dashboard_summary():
     return {
         "inbound_today": 0,
