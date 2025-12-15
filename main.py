@@ -2,26 +2,22 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
-
 import os
 
 # ------------------------------------------------------------
 # APP INIT
 # ------------------------------------------------------------
-app = FastAPI(title="PARS WMS - Responsive + QR + Dashboard")
+app = FastAPI(title="PARS WMS - Dashboard Stable")
 
 
 # ------------------------------------------------------------
-# BASE / STATIC / TEMPLATE PATH
+# PATH SETTING
 # ------------------------------------------------------------
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))           # /pars-wms-api
-STATIC_DIR = os.path.join(BASE_DIR, "app", "static")            # /pars-wms-api/app/static
-TEMPLATE_DIR = os.path.join(BASE_DIR, "app", "templates")       # /pars-wms-api/app/templates
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+STATIC_DIR = os.path.join(BASE_DIR, "app", "static")
+TEMPLATE_DIR = os.path.join(BASE_DIR, "app", "templates")
 
-# static mount
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
-
-# templates (pages에서 사용)
 templates = Jinja2Templates(directory=TEMPLATE_DIR)
 
 
@@ -42,7 +38,7 @@ app.add_middleware(
 # ------------------------------------------------------------
 from app.pages import index_page
 from app.routers import (
-    dashboard,        # ✅ 대시보드 API
+    dashboard,
     items,
     inbound,
     outbound,
@@ -78,7 +74,8 @@ def ping():
     return {
         "status": "OK",
         "service": "PARS WMS",
-        "message": "PARS WMS Running 정상"
+        "message": "PARS WMS Running"
     }
+
 
     return {"status": "OK", "msg": "PARS WMS Running"}
