@@ -1,1 +1,51 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>PARS WMS Dashboard</title>
+    <style>
+        body { font-family: Arial; background:#f3f4f6; margin:0; }
+        .container { padding:20px; }
+        .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:15px; }
+        .card {
+            background:#fff; padding:20px; border-radius:12px;
+            box-shadow:0 2px 6px rgba(0,0,0,.08);
+        }
+        .card h2 { margin:0; font-size:14px; color:#6b7280; }
+        .card p { font-size:26px; margin-top:8px; }
+        .actions button {
+            width:100%; padding:14px; margin-top:10px;
+            font-size:16px; border:none; border-radius:10px;
+            background:#2563eb; color:white;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>PARS WMS Dashboard</h1>
+
+    <div class="grid" id="summary"></div>
+
+    <div class="actions">
+        <button onclick="location.href='/inbound'">입고 등록</button>
+        <button onclick="location.href='/outbound'">출고 등록</button>
+        <button onclick="location.href='/inventory'">재고 조회</button>
+    </div>
+</div>
+
+<script>
+fetch('/api/dashboard')
+.then(res => res.json())
+.then(d => {
+    const box = document.getElementById('summary');
+    box.innerHTML = `
+      <div class="card"><h2>오늘 입고</h2><p>${d.inbound_today}</p></div>
+      <div class="card"><h2>오늘 출고</h2><p>${d.outbound_today}</p></div>
+      <div class="card"><h2>총 재고</h2><p>${d.total_stock}</p></div>
+      <div class="card"><h2>위치 미지정</h2><p>${d.no_location}</p></div>
+    `;
+});
+</script>
+</body>
+</html>
 
