@@ -11,4 +11,3 @@ def dashboard_summary():
         "no_location": 0,
         "status": "DASHBOARD API OK"
     }
-
