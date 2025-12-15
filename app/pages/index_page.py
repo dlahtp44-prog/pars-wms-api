@@ -5,7 +5,7 @@ router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 
 @router.get("/")
-def dashboard(request: Request):
+def index(request: Request):
     return templates.TemplateResponse(
         "dashboard.html",
         {"request": request}
