@@ -9,7 +9,6 @@ import os
 # ------------------------------------------------------------
 app = FastAPI(title="PARS WMS - Dashboard Stable")
 
-
 # ------------------------------------------------------------
 # PATH SETTING
 # ------------------------------------------------------------
@@ -19,7 +18,6 @@ TEMPLATE_DIR = os.path.join(BASE_DIR, "app", "templates")
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 templates = Jinja2Templates(directory=TEMPLATE_DIR)
-
 
 # ------------------------------------------------------------
 # CORS
@@ -31,7 +29,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 # ------------------------------------------------------------
 # ROUTERS IMPORT
@@ -49,13 +46,11 @@ from app.routers import (
     qr_api
 )
 
-
 # ------------------------------------------------------------
-# ROUTERS REGISTER
+# ROUTERS REGISTER (한 번만)
 # ------------------------------------------------------------
 app.include_router(index_page.router)     # /
 app.include_router(dashboard.router)      # /api/dashboard
-
 app.include_router(items.router)
 app.include_router(inbound.router)
 app.include_router(outbound.router)
@@ -65,40 +60,8 @@ app.include_router(inventory.router)
 app.include_router(history.router)
 app.include_router(qr_api.router)
 
-
 # ------------------------------------------------------------
-# HEALTH CHECK
-# ------------------------------------------------------------
-@app.get("/ping")
-def ping():
-    return {
-        "status": "OK",
-        "service": "PARS WMS",
-        "message": "PARS WMS Running"
-    }
-
-    qr_api
-)
-
-
-# ------------------------------------------------------------
-# ROUTERS REGISTER
-# ------------------------------------------------------------
-app.include_router(index_page.router)     # /
-app.include_router(dashboard.router)      # /api/dashboard
-
-app.include_router(items.router)
-app.include_router(inbound.router)
-app.include_router(outbound.router)
-app.include_router(move.router)
-app.include_router(location.router)
-app.include_router(inventory.router)
-app.include_router(history.router)
-app.include_router(qr_api.router)
-
-
-# ------------------------------------------------------------
-# HEALTH CHECK
+# HEALTH CHECK (한 번만)
 # ------------------------------------------------------------
 @app.get("/ping")
 def ping():
@@ -107,6 +70,3 @@ def ping():
         "service": "PARS WMS",
         "message": "PARS WMS Running"
     }
-
-
-    return {"status": "OK", "msg": "PARS WMS Running"}
