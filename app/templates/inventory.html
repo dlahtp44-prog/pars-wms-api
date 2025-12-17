@@ -1,83 +1,92 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>재고 조회</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 12px; }
-    h2 { margin: 6px 0 12px; }
-    .bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
-    select, input, button {
-      padding: 10px; font-size: 16px; border: 1px solid #ccc; border-radius: 8px;
-    }
-    button { background: #111; color: #fff; border: none; }
-    .table-wrap { overflow-x: auto; border: 1px solid #ddd; border-radius: 10px; }
-    table { border-collapse: collapse; width: 100%; min-width: 980px; }
-    th, td { border-bottom: 1px solid #eee; padding: 10px; text-align: center; white-space: nowrap; }
-    th { background: #222; color: #fff; position: sticky; top: 0; }
-    tr:nth-child(even) { background: #fafafa; }
-    .qty { font-weight: 700; }
-    .badge { padding: 4px 8px; border-radius: 999px; background: #f1f1f1; }
-    a { text-decoration: none; }
-  </style>
+    <meta charset="UTF-8">
+    <title>재고 조회</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f7f7f7;
+            padding: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+            font-size: 14px;
+        }
+        th {
+            background: #333;
+            color: #fff;
+        }
+        a {
+            color: #0a58ca;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .btn-home {
+            margin-top: 15px;
+            display: inline-block;
+            padding: 10px 18px;
+            background: #666;
+            color: #fff;
+            border-radius: 6px;
+        }
+    </style>
 </head>
 <body>
 
-<h2>📦 재고 조회</h2>
+<h1>📦 재고 조회</h1>
 
-<form class="bar" method="get" action="/inventory-page">
-  <select name="warehouse">
-    <option value="">전체 창고</option>
-    {% for w in warehouses %}
-      <option value="{{ w }}" {% if w == warehouse %}selected{% endif %}>{{ w }}</option>
-    {% endfor %}
-  </select>
-
-  <input name="q" value="{{ q }}" placeholder="검색: 품번/품명/브랜드/LOT/로케이션" />
-  <button type="submit">조회</button>
-
-  <a href="/" class="badge">🏠 메인</a>
-  <a href="/history-page" class="badge">📋 작업이력</a>
-</form>
-
-<div class="table-wrap">
+{% if rows %}
 <table>
-  <thead>
-    <tr>
-      <th>장소명</th>
-      <th>브랜드</th>
-      <th>품번</th>
-      <th>품명</th>
-      <th>LOT</th>
-      <th>규격</th>
-      <th>로케이션</th>
-      <th>현재고</th>
-    </tr>
-  </thead>
+    <thead>
+        <tr>
+            <th>장소명</th>
+            <th>브랜드</th>
+            <th>품번</th>
+            <th>품명</th>
+            <th>LOT</th>
+            <th>규격</th>
+            <th>로케이션</th>
+            <th>현재고</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for r in rows %}
+        <tr>
+            <td>{{ r.location_name }}</td>
+            <td>{{ r.brand }}</td>
 
-  <tbody>
-  {% if rows %}
-    {% for r in rows %}
-    <tr>
-      <td>{{ r[0] }}</td>
-      <td>{{ r[1] }}</td>
-      <td>{{ r[2] }}</td>
-      <td>{{ r[3] }}</td>
-      <td>{{ r[4] }}</td>
-      <td>{{ r[5] }}</td>
-      <td>{{ r[6] }}</td>
-      <td class="qty">{{ r[7] }}</td>
-    </tr>
-    {% endfor %}
-  {% else %}
-    <tr>
-      <td colspan="8">재고 데이터가 없습니다.</td>
-    </tr>
-  {% endif %}
-  </tbody>
+            <!-- ✅ 품번 클릭 → item 상세 페이지 -->
+            <td>
+                <a href="/item/{{ r.item_code }}">
+                    {{ r.item_code }}
+                </a>
+            </td>
+
+            <td>{{ r.item_name }}</td>
+            <td>{{ r.lot }}</td>
+            <td>{{ r.spec }}</td>
+            <td>{{ r.location }}</td>
+            <td>{{ r.qty }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
 </table>
-</div>
+{% else %}
+<p>재고 데이터가 없습니다.</p>
+{% endif %}
+
+<a class="btn-home" href="/">← 메인으로</a>
 
 </body>
 </html>
