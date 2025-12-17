@@ -1,34 +1,41 @@
+# app/routers/move.py
 from fastapi import APIRouter, HTTPException
 from app.db import get_conn, log_history
 
 router = APIRouter(tags=["재고이동"])
 
-@router.post("/move", summary="재고 위치 이동")
-def move(item: str, new_location: str, remark: str = ""):
+@router.post("/move")
+def move(
+    item: str,
+    warehouse: str,
+    zone: str,
+    rack: str,
+    level: str,
+    cell: str,
+    remark: str = ""
+):
+    new_location = f"{zone}-{rack}-{level}-{cell}"
+
     conn = get_conn()
     cur = conn.cursor()
 
-    cur.execute("SELECT qty, location FROM inventory WHERE item = ?", (item,))
+    cur.execute("SELECT qty FROM inventory WHERE item=?", (item,))
     row = cur.fetchone()
 
     if not row:
         raise HTTPException(status_code=404, detail="품목 없음")
 
-    qty, old_location = row
+    qty = row[0]
 
-    cur.execute(
-        "UPDATE inventory SET location = ? WHERE item = ?",
-        (new_location, item)
-    )
+    cur.execute("""
+        UPDATE inventory
+        SET warehouse=?, zone=?, rack=?, level=?, cell=?
+        WHERE item=?
+    """, (warehouse, zone, rack, level, cell, item))
 
     conn.commit()
     conn.close()
 
-    log_history("이동", item, qty, new_location, f"{old_location} → {new_location} {remark}")
+    log_history("이동", item, qty, warehouse, new_location, remark)
 
-    return {
-        "result": "이동 완료",
-        "item": item,
-        "from": old_location,
-        "to": new_location
-    }
+    return {"result": "이동 완료", "to": new_location}
