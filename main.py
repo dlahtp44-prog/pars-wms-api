@@ -1,4 +1,3 @@
-# main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -6,19 +5,25 @@ from fastapi.templating import Jinja2Templates
 import os
 
 # =========================
-# DB 초기화 (중요)
-# =========================
-from app.db import init_db
-init_db()
-
-# =========================
 # App 설정
 # =========================
 app = FastAPI(
     title="PARS WMS",
-    description="물류 입·출고, 이동, 재고 관리를 위한 WMS API",
+    description="물류 입·출고, 이동, 재고, 작업이력, 엑셀업로드를 포함한 WMS",
     version="1.0.0"
 )
+
+# =========================
+# DB 초기화 (startup 이벤트)
+# =========================
+@app.on_event("startup")
+def startup_event():
+    try:
+        from app.db import init_db
+        init_db()
+        print("✅ DB 초기화 완료")
+    except Exception as e:
+        print("❌ DB 초기화 실패:", e)
 
 # =========================
 # 경로 설정
@@ -27,10 +32,12 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "app", "static")
 TEMPLATE_DIR = os.path.join(BASE_DIR, "app", "templates")
 
-if os.path.exists(STATIC_DIR):
+# Static
+if os.path.isdir(STATIC_DIR):
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
-if os.path.exists(TEMPLATE_DIR):
+# Templates
+if os.path.isdir(TEMPLATE_DIR):
     templates = Jinja2Templates(directory=TEMPLATE_DIR)
 
 # =========================
@@ -44,54 +51,41 @@ app.add_middleware(
 )
 
 # =========================
-# API Routers
+# API Routers (안전 import)
 # =========================
-from app.routers.items import router as items_router
-from app.routers.inbound import router as inbound_router
-from app.routers.outbound import router as outbound_router
-from app.routers.move import router as move_router
-from app.routers.location import router as location_router
-from app.routers.inventory import router as inventory_router
-from app.routers.history import router as history_router
-from app.routers.qr_api import router as qr_router
+def safe_include(router_path, name):
+    try:
+        module = __import__(router_path, fromlist=["router"])
+        app.include_router(module.router)
+        print(f"✅ {name} 등록")
+    except Exception as e:
+        print(f"❌ {name} 로드 실패:", e)
+
+safe_include("app.routers.items", "items")
+safe_include("app.routers.inbound", "inbound")
+safe_include("app.routers.outbound", "outbound")
+safe_include("app.routers.move", "move")
+safe_include("app.routers.location", "location")
+safe_include("app.routers.inventory", "inventory")
+safe_include("app.routers.history", "history")
+safe_include("app.routers.qr_api", "qr_api")
+safe_include("app.routers.upload_inventory", "upload_inventory")
 
 # =========================
 # Page Routers
 # =========================
-from app.pages.index_page import router as index_router
-from app.pages.worker_page import router as worker_router
-from app.pages.inbound_page import router as inbound_page_router
-from app.pages.outbound_page import router as outbound_page_router
-from app.pages.move_page import router as move_page_router
-from app.pages.inventory_page import router as inventory_page_router
-from app.pages.history_page import router as history_page_router
-from app.pages.qr_page import router as qr_page_router
-
-# =========================
-# Router 등록
-# =========================
-app.include_router(index_router)
-app.include_router(worker_router)
-
-app.include_router(items_router)
-app.include_router(inbound_router)
-app.include_router(outbound_router)
-app.include_router(move_router)
-app.include_router(location_router)
-app.include_router(inventory_router)
-app.include_router(history_router)
-app.include_router(qr_router)
-
-app.include_router(inbound_page_router)
-app.include_router(outbound_page_router)
-app.include_router(move_page_router)
-app.include_router(inventory_page_router)
-app.include_router(history_page_router)
-app.include_router(qr_page_router)
+safe_include("app.pages.index_page", "index_page")
+safe_include("app.pages.worker_page", "worker_page")
+safe_include("app.pages.inbound_page", "inbound_page")
+safe_include("app.pages.outbound_page", "outbound_page")
+safe_include("app.pages.move_page", "move_page")
+safe_include("app.pages.inventory_page", "inventory_page")
+safe_include("app.pages.history_page", "history_page")
+safe_include("app.pages.qr_page", "qr_page")
 
 # =========================
 # Health Check
 # =========================
-@app.get("/ping", summary="서버 상태 확인")
+@app.get("/ping")
 def ping():
     return {"status": "OK"}
