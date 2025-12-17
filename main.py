@@ -12,12 +12,19 @@ app = FastAPI(title="PARS WMS - Dashboard Stable")
 # ------------------------------------------------------------
 # PATH SETTING
 # ------------------------------------------------------------
+# ------------------------------------------------------------
+# PATH SETTING
+# ------------------------------------------------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "app", "static")
 TEMPLATE_DIR = os.path.join(BASE_DIR, "app", "templates")
 
-app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
-templates = Jinja2Templates(directory=TEMPLATE_DIR)
+if os.path.exists(STATIC_DIR):
+    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+if os.path.exists(TEMPLATE_DIR):
+    templates = Jinja2Templates(directory=TEMPLATE_DIR)
+
 
 # ------------------------------------------------------------
 # CORS
