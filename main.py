@@ -74,13 +74,18 @@ app.include_router(move_page_router)
 # =========================
 app.include_router(index_router)
 app.include_router(worker_router)
-
 app.include_router(inbound_page_router)
-app.include_router(outbound_page_router)
-app.include_router(move_page_router)
-app.include_router(inventory_page_router)
 app.include_router(history_page_router)
-app.include_router(qr_page_router)
+
+app.include_router(items_router)
+app.include_router(inbound_router)
+app.include_router(outbound_router)
+app.include_router(move_router)
+app.include_router(location_router)
+app.include_router(inventory_router)
+app.include_router(history_router)
+app.include_router(qr_router)
+app.include_router(qr_page_router
 
 # =========================
 # Health Check
