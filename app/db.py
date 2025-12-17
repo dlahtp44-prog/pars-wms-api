@@ -1,6 +1,5 @@
 # app/db.py
-import sqlite3
-import os
+import sqlite3, os
 from datetime import datetime
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "wms.db")
@@ -12,22 +11,27 @@ def init_db():
     conn = get_conn()
     cur = conn.cursor()
 
-    # 재고 테이블 (location 포함)
+    # 재고 테이블
     cur.execute("""
     CREATE TABLE IF NOT EXISTS inventory (
         item TEXT PRIMARY KEY,
         qty INTEGER,
-        location TEXT
+        warehouse TEXT,
+        zone TEXT,
+        rack TEXT,
+        level TEXT,
+        cell TEXT
     )
     """)
 
-    # 작업 이력 테이블
+    # 작업 이력
     cur.execute("""
     CREATE TABLE IF NOT EXISTS history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         type TEXT,
         item TEXT,
         qty INTEGER,
+        warehouse TEXT,
         location TEXT,
         remark TEXT,
         created_at TEXT
@@ -37,18 +41,18 @@ def init_db():
     conn.commit()
     conn.close()
 
-def log_history(type, item, qty, location="", remark=""):
+def log_history(type, item, qty, warehouse, location, remark=""):
     conn = get_conn()
     cur = conn.cursor()
 
-    cur.execute(
-        """
-        INSERT INTO history (type, item, qty, location, remark, created_at)
-        VALUES (?, ?, ?, ?, ?, ?)
-        """,
-        (type, item, qty, location, remark, datetime.now().isoformat())
-    )
+    cur.execute("""
+        INSERT INTO history
+        (type, item, qty, warehouse, location, remark, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, (
+        type, item, qty, warehouse, location, remark,
+        datetime.now().isoformat()
+    ))
 
     conn.commit()
     conn.close()
-
