@@ -5,17 +5,10 @@ import os
 
 router = APIRouter()
 
-# ---------------------------
-# templates 안전하게 생성
-# ---------------------------
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TEMPLATE_DIR = os.path.join(BASE_DIR, "templates")
-
 templates = Jinja2Templates(directory=TEMPLATE_DIR)
 
 @router.get("/", response_class=HTMLResponse)
 def index(request: Request):
-    return templates.TemplateResponse(
-        "index.html",
-        {"request": request}
-    )
+    return templates.TemplateResponse("index.html", {"request": request})
