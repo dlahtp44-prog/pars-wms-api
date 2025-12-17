@@ -1,43 +1,11 @@
 from fastapi import APIRouter
-from app.core.database import get_conn
 
-router = APIRouter(prefix="/inventory", tags=["Inventory"])
+router = APIRouter(tags=["재고"])
 
-
-@router.get("/")
-def inventory(
-    item_code: str = "",
-    lot_no: str = "",
-    warehouse: str = "",
-    location: str = "",
-):
-    conn = get_conn()
-    cur = conn.cursor()
-
-    sql = """
-        SELECT item_code, lot_no, warehouse, location, SUM(qty) AS qty
-        FROM inventory_tx
-        WHERE 1=1
-    """
-    params = []
-
-    if item_code:
-        sql += " AND item_code=?"
-        params.append(item_code)
-    if lot_no:
-        sql += " AND lot_no=?"
-        params.append(lot_no)
-    if warehouse:
-        sql += " AND warehouse=?"
-        params.append(warehouse)
-    if location:
-        sql += " AND location=?"
-        params.append(location)
-
-    sql += " GROUP BY item_code, lot_no, warehouse, location HAVING qty <> 0"
-
-    cur.execute(sql, params)
-    rows = [dict(r) for r in cur.fetchall()]
-    conn.close()
-    return rows
-
+@router.get(
+    "/inventory",
+    summary="재고 현황 조회",
+    description="현재 재고 현황을 조회합니다."
+)
+def inventory():
+    return {"재고": []}
