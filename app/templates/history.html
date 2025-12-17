@@ -3,20 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <title>작업 이력</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 6px;
+            text-align: center;
+        }
+        th {
+            background-color: #333;
+            color: #fff;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+    </style>
 </head>
 <body>
-    <h1>작업 이력</h1>
 
-    {% if rows %}
-        <ul>
-        {% for r in rows %}
-            <li>{{ r }}</li>
-        {% endfor %}
-        </ul>
-    {% else %}
-        <p>작업 이력이 없습니다.</p>
-    {% endif %}
+<h2>📋 작업 이력</h2>
 
-    <a href="/">메인으로</a>
+{% if rows %}
+<table>
+    <tr>
+        <th>작업유형</th>
+        <th>장소명</th>
+        <th>로케이션</th>
+        <th>품번</th>
+        <th>수량</th>
+        <th>비고</th>
+        <th>작업일시</th>
+    </tr>
+    {% for r in rows %}
+    <tr>
+        <td>{{ r[0] }}</td>
+        <td>{{ r[1] }}</td>
+        <td>{{ r[2] }}</td>
+        <td>{{ r[3] }}</td>
+        <td>{{ r[4] }}</td>
+        <td>{{ r[5] }}</td>
+        <td>{{ r[6] }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p>작업 이력이 없습니다.</p>
+{% endif %}
+
+<br>
+<a href="/">⬅ 메인으로</a>
+
 </body>
 </html>
