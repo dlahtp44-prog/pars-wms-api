@@ -1,108 +1,24 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>출고 처리</title>
+<h2>📤 출고 처리</h2>
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f6f8;
-      margin: 0;
-      padding: 20px;
-    }
+<input id="item" placeholder="품목명"><br><br>
+<input id="qty" type="number" placeholder="수량"><br><br>
 
-    .card {
-      max-width: 420px;
-      margin: auto;
-      background: #fff;
-      padding: 24px;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    }
+<button onclick="submit()">출고 처리</button>
+<br><br>
+<a href="/worker">← 작업자 화면</a>
 
-    h1 {
-      text-align: center;
-      margin-bottom: 20px;
-    }
+<script>
+async function submit(){
+  const item = itemEl.value;
+  const qty = qtyEl.value;
 
-    input {
-      width: 100%;
-      padding: 14px;
-      font-size: 16px;
-      margin-bottom: 16px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-    }
+  const res = await fetch(
+    `/outbound?item=${item}&qty=${qty}`,
+    { method: "POST" }
+  );
+  alert(await res.text());
+}
 
-    button {
-      width: 100%;
-      padding: 14px;
-      font-size: 16px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-    }
-
-    .btn-submit {
-      background: #ff9800;
-      color: #fff;
-      margin-bottom: 12px;
-    }
-
-    .btn-back {
-      background: #777;
-      color: #fff;
-    }
-  </style>
-</head>
-
-<body>
-  <div class="card">
-    <h1>🚚 출고 처리</h1>
-
-    <input
-      id="remark"
-      placeholder="출고 구분 (예: OUT, 출고)"
-      autocomplete="off"
-    />
-
-    <button class="btn-submit" onclick="submitOutbound()">
-      출고 처리
-    </button>
-
-    <button class="btn-back" onclick="goHome()">
-      ← 메인으로
-    </button>
-  </div>
-
-  <script>
-    async function submitOutbound() {
-      const remark = document.getElementById("remark").value.trim();
-
-      if (!remark) {
-        alert("출고 구분을 입력하세요.");
-        return;
-      }
-
-      try {
-        const res = await fetch(`/outbound?remark=${encodeURIComponent(remark)}`, {
-          method: "POST"
-        });
-
-        const text = await res.text();
-        alert(text);
-
-        document.getElementById("remark").value = "";
-      } catch (e) {
-        alert("출고 처리 중 오류 발생");
-      }
-    }
-
-    function goHome() {
-      location.href = "/";
-    }
-  </script>
-</body>
-</html>
+const itemEl = document.getElementById("item");
+const qtyEl = document.getElementById("qty");
+</script>
