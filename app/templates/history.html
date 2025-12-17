@@ -23,7 +23,7 @@
 
 <script>
 async function loadHist(){
-    const res = await fetch("/history/");
+    const res = await fetch("/api/history");
     const rows = await res.json();
 
     let html = "";
@@ -38,17 +38,25 @@ async function loadHist(){
             <td>${r.item_code}</td>
             <td>${r.lot_no}</td>
             <td>${r.qty}</td>
-            <td>${r.remark}</td>
-            <td><button onclick="rollback(${r.id})" class="btn btn-sm btn-danger">취소</button></td>
+            <td>${r.remark ?? ""}</td>
+            <td>
+                <button onclick="rollback(${r.id})"
+                        class="btn btn-sm btn-danger">
+                    취소
+                </button>
+            </td>
         </tr>`;
     }
-    histBody.innerHTML = html;
+    document.getElementById("histBody").innerHTML = html;
 }
 
 async function rollback(id){
     if(!confirm("해당 이력을 롤백할까요?")) return;
 
-    await fetch(`/history/rollback?tx_id=${id}`, { method:"POST" });
+    await fetch(`/api/history/rollback?tx_id=${id}`, {
+        method: "POST"
+    });
+
     alert("롤백 완료");
     loadHist();
 }
