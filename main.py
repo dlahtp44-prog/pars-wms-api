@@ -1,19 +1,21 @@
 from fastapi import FastAPI
-from app.db import init_db
-
-init_db()
-
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import os
 
 # =========================
+# DB 초기화 (서버 시작 시 1회)
+# =========================
+from app.db import init_db
+init_db()
+
+# =========================
 # App 기본 설정
 # =========================
 app = FastAPI(
     title="PARS WMS",
-    description="물류 입·출고, 이동, 재고 관리를 위한 WMS API",
+    description="물류 입고·출고·이동·재고·이력 관리를 위한 WMS 시스템",
     version="1.0.0"
 )
 
@@ -24,15 +26,17 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "app", "static")
 TEMPLATE_DIR = os.path.join(BASE_DIR, "app", "templates")
 
+# =========================
 # Static 파일 (CSS, JS)
+# =========================
 if os.path.exists(STATIC_DIR):
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
+# =========================
 # Template (HTML)
+# =========================
 if os.path.exists(TEMPLATE_DIR):
     templates = Jinja2Templates(directory=TEMPLATE_DIR)
-else:
-    templates = None
 
 # =========================
 # CORS 설정
@@ -44,11 +48,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# =========================
-# API Router import
-# =========================
-from app.pages.index_page import router as index_router
-from app.pages.worker_page import router as worker_router
+# =====================================================
+# API Router import (JSON API)
+# =====================================================
+from app.routers.items import router as items_router
+from app.routers.inbound import router as inbound_router
+from app.routers.outbound import router as outbound_router
+from app.routers.move import router as move_router
+from app.routers.location import router as location_router
+from app.routers.inventory import router as inventory_router
+from app.routers.history import router as history_router
+from app.routers.qr_api import router as qr_router
+
+# =====================================================
+# Page Router import (HTML 화면)
+# =====================================================
+from app.pages.index_page import router as index_page_router
+from app.pages.worker_page import router as worker_page_router
 from app.pages.inbound_page import router as inbound_page_router
 from app.pages.outbound_page import router as outbound_page_router
 from app.pages.move_page import router as move_page_router
@@ -56,27 +72,23 @@ from app.pages.inventory_page import router as inventory_page_router
 from app.pages.history_page import router as history_page_router
 from app.pages.qr_page import router as qr_page_router
 
-# =========================
-# Page Router import
-# =========================
-from app.pages.index_page import router as index_router
-from app.pages.qr_page import router as qr_page_router
-from app.pages.worker_page import router as worker_router  # 작업자 화면
-from app.pages.inbound_page import router as inbound_page_router
-from app.pages.move_page import router as move_page_router
-from app.pages.history_page import router as history_page_router
-
-app.include_router(move_page_router)
-
-
-# =========================
+# =====================================================
 # Router 등록
-# =========================
-app.include_router(index_router)
-app.include_router(worker_router)
-app.include_router(inbound_page_router)
-app.include_router(history_page_router)
+# =====================================================
 
+# ▶ 메인 / 작업자 화면
+app.include_router(index_page_router)
+app.include_router(worker_page_router)
+
+# ▶ 입고 / 출고 / 이동 / 재고 / 이력 / QR (HTML)
+app.include_router(inbound_page_router)
+app.include_router(outbound_page_router)
+app.include_router(move_page_router)
+app.include_router(inventory_page_router)
+app.include_router(history_page_router)
+app.include_router(qr_page_router)
+
+# ▶ API (JSON)
 app.include_router(items_router)
 app.include_router(inbound_router)
 app.include_router(outbound_router)
@@ -85,7 +97,6 @@ app.include_router(location_router)
 app.include_router(inventory_router)
 app.include_router(history_router)
 app.include_router(qr_router)
-app.include_router(qr_page_router
 
 # =========================
 # Health Check
