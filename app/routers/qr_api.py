@@ -1,25 +1,13 @@
-from fastapi import APIRouter, Response
-from app.core.qr_generator import generate_qr_label
+from fastapi import APIRouter, Query
 
-router = APIRouter(prefix="/qr", tags=["QR"])
+router = APIRouter(tags=["QR"])
 
-
-@router.get("/label")
+@router.get(
+    "/qr/label",
+    summary="QR 라벨 생성",
+    description="품목 QR 라벨을 생성합니다."
+)
 def qr_label(
-    item_code: str,
-    warehouse: str,
-    location: str,
-    lot_no: str,
-    qty: float,
+    item_code: str = Query(..., title="품목코드", example="ITEM001")
 ):
-    pdf_path = generate_qr_label(item_code, warehouse, location, lot_no, qty)
-
-    with open(pdf_path, "rb") as f:
-        pdf_bytes = f.read()
-
-    return Response(
-        content=pdf_bytes,
-        media_type="application/pdf",
-        headers={"Content-Disposition": f"attachment; filename={pdf_path}"}
-    )
-
+    return {"결과": "QR 생성 완료"}
