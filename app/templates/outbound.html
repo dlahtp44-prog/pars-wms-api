@@ -28,8 +28,8 @@ async function submitOutbound() {
 
     if (res.ok) {
         alert("출고 완료");
-        // ✅ 여기서 메인으로 이동
-        window.location.href = "/";
+        // ✅ 1️⃣ 출고 후 재고조회로 이동 (item 전달)
+        window.location.href = `/inventory-page?highlight=${item}`;
     } else {
         alert("출고 실패");
     }
