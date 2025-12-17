@@ -1,37 +1,41 @@
+# app/db.py
 import sqlite3
+import os
 
-DB_PATH = "wms.db"
-
-def get_conn():
-    return sqlite3.connect(DB_PATH, check_same_thread=False)
+DB_PATH = os.path.join(os.path.dirname(__file__), "wms.db")
 
 def init_db():
-    conn = get_conn()
+    conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
 
-    # 재고 테이블
+    # 품목
     cur.execute("""
-    CREATE TABLE IF NOT EXISTS inventory (
-        item_code TEXT,
-        location TEXT,
-        qty INTEGER,
-        PRIMARY KEY (item_code, location)
+    CREATE TABLE IF NOT EXISTS items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        code TEXT
     )
     """)
 
-    # 작업 이력 테이블
+    # 재고
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS inventory (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        item_code TEXT,
+        location TEXT,
+        qty INTEGER
+    )
+    """)
+
+    # 이력
     cur.execute("""
     CREATE TABLE IF NOT EXISTS history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         type TEXT,
-        item_code TEXT,
-        from_loc TEXT,
-        to_loc TEXT,
-        qty INTEGER,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        remark TEXT,
+        created_at TEXT
     )
     """)
 
     conn.commit()
     conn.close()
-
