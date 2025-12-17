@@ -1,51 +1,53 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from app.db import get_conn, log_history
+import json
 
 router = APIRouter(tags=["QR"])
 
 @router.post(
-    "/qr/scan",
-    summary="QR 스캔 처리",
-    description="QR 데이터로 입고/출고를 자동 처리합니다."
+    "/qr/process",
+    summary="QR 스캔 자동 처리",
+    description="QR 코드 데이터를 분석하여 입고/출고/이동을 자동 처리합니다."
 )
-def qr_scan(action: str, item: str, qty: int):
-    if action not in ["입고", "출고"]:
-        raise HTTPException(status_code=400, detail="action은 입고 또는 출고만 가능합니다.")
+def process_qr(qr_data: str):
+    data = json.loads(qr_data)
+
+    action = data.get("type")
+    item = data.get("item")
+    qty = int(data.get("qty", 0))
+    location = data.get("location", "")
 
     conn = get_conn()
     cur = conn.cursor()
 
-    if action == "입고":
-        cur.execute("SELECT qty FROM inventory WHERE item=?", (item,))
-        row = cur.fetchone()
-
-        if row:
-            cur.execute(
-                "UPDATE inventory SET qty = qty + ? WHERE item=?",
-                (qty, item)
-            )
-        else:
-            cur.execute(
-                "INSERT INTO inventory (item, qty) VALUES (?, ?)",
-                (item, qty)
-            )
-
-    else:  # 출고
-        cur.execute("SELECT qty FROM inventory WHERE item=?", (item,))
-        row = cur.fetchone()
-
-        if not row or row[0] < qty:
-            conn.close()
-            raise HTTPException(status_code=400, detail="출고 재고 부족")
-
+    if action == "IN":
         cur.execute(
-            "UPDATE inventory SET qty = qty - ? WHERE item=?",
+            "INSERT INTO inventory(item, qty) VALUES (?, ?) "
+            "ON CONFLICT(item) DO UPDATE SET qty = qty + ?",
+            (item, qty, qty)
+        )
+        log_history("입고", item, qty, location)
+
+    elif action == "OUT":
+        cur.execute(
+            "UPDATE inventory SET qty = qty - ? WHERE item = ?",
             (qty, item)
         )
+        log_history("출고", item, qty, location)
+
+    elif action == "MOVE":
+        log_history("이동", item, qty, location)
+
+    else:
+        return {"결과": "알 수 없는 작업"}
 
     conn.commit()
     conn.close()
 
-    log_history(action, item, qty, "QR 처리")
-
-    return {"결과": f"{action} 처리 완료"}
+    return {
+        "결과": "처리 완료",
+        "작업": action,
+        "품목": item,
+        "수량": qty,
+        "위치": location
+    }
