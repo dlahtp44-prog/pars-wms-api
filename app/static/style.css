@@ -1,1 +1,41 @@
 
+body.worker {
+    background: #111827;
+    color: #fff;
+    text-align: center;
+    padding: 30px 15px;
+}
+
+.worker h2 {
+    margin-bottom: 30px;
+}
+
+.worker-form {
+    margin-bottom: 20px;
+}
+
+.btn {
+    width: 100%;
+    padding: 22px;
+    font-size: 22px;
+    border: none;
+    border-radius: 12px;
+    font-weight: bold;
+}
+
+.btn.in {
+    background: #22c55e;
+    color: #000;
+}
+
+.btn.out {
+    background: #ef4444;
+    color: #fff;
+}
+
+.back {
+    display: block;
+    margin-top: 30px;
+    color: #9ca3af;
+    text-decoration: none;
+}
