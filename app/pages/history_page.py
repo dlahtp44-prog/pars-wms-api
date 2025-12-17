@@ -1,11 +1,13 @@
+# app/pages/history_page.py
 from fastapi import APIRouter, Request
+from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from app.db import get_conn
 
-router = APIRouter()
+router = APIRouter(prefix="/history-page", tags=["Page"], include_in_schema=False)
 templates = Jinja2Templates(directory="app/templates")
 
-@router.get("/history-page")
+@router.get("/", response_class=HTMLResponse)
 def history_page(request: Request):
     conn = get_conn()
     cur = conn.cursor()
@@ -13,7 +15,7 @@ def history_page(request: Request):
     cur.execute("""
         SELECT type, item, qty, remark, created_at
         FROM history
-        ORDER BY created_at DESC
+        ORDER BY id DESC
     """)
     rows = cur.fetchall()
 
