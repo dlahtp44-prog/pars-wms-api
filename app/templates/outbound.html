@@ -1,56 +1,23 @@
-{% extends "base.html" %}
-{% block content %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>출고 처리</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
 
-<h4 class="fw-bold mb-3">출고 처리</h4>
+<div class="container">
+    <h1>📤 출고 처리</h1>
 
-<div class="card p-3 shadow-sm">
-    <div class="row g-2">
+    <form action="/outbound" method="post">
+        <input type="text" name="remark" placeholder="출고 구분 (예: OUT, 출고)" required>
+        <button class="card red" type="submit">출고 처리</button>
+    </form>
 
-        <div class="col-md-4">
-            <label>창고</label>
-            <input id="wh" class="form-control">
-        </div>
-
-        <div class="col-md-4">
-            <label>Location</label>
-            <input id="loc" class="form-control">
-        </div>
-
-        <div class="col-md-4">
-            <label>품번</label>
-            <input id="item" class="form-control">
-        </div>
-
-        <div class="col-md-4">
-            <label>LOT</label>
-            <input id="lot" class="form-control">
-        </div>
-
-        <div class="col-md-4">
-            <label>출고수량</label>
-            <input id="qty" class="form-control" type="number">
-        </div>
-    </div>
-
-    <button onclick="doOutbound()" class="btn btn-danger w-100 mt-3">출고 실행</button>
+    <a href="/" class="card gray">⬅ 메인으로</a>
 </div>
 
-<script>
-async function doOutbound(){
-    const params = new URLSearchParams({
-        warehouse: wh.value,
-        location: loc.value,
-        item_code: item.value,
-        lot_no: lot.value,
-        qty: qty.value
-    });
-
-    const res = await fetch(`/outbound/?${params}`, { method: "POST" });
-    const data = await res.json();
-
-    alert("출고 완료! 현재고: " + data.after_qty);
-}
-</script>
-
-{% endblock %}
-
+</body>
+</html>
