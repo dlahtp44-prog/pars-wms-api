@@ -1,5 +1,5 @@
-# app/db.py
-import sqlite3, os
+import sqlite3
+import os
 from datetime import datetime
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "wms.db")
@@ -11,28 +11,31 @@ def init_db():
     conn = get_conn()
     cur = conn.cursor()
 
-    # 재고 테이블
     cur.execute("""
     CREATE TABLE IF NOT EXISTS inventory (
-        item TEXT PRIMARY KEY,
-        qty INTEGER,
+        item_code TEXT PRIMARY KEY,
         warehouse TEXT,
-        zone TEXT,
-        rack TEXT,
-        level TEXT,
-        cell TEXT
+        brand TEXT,
+        item_name TEXT,
+        lot_no TEXT,
+        spec TEXT,
+        location TEXT,
+        qty INTEGER DEFAULT 0
     )
     """)
 
-    # 작업 이력
     cur.execute("""
     CREATE TABLE IF NOT EXISTS history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         type TEXT,
-        item TEXT,
-        qty INTEGER,
         warehouse TEXT,
+        brand TEXT,
+        item_code TEXT,
+        item_name TEXT,
+        lot_no TEXT,
+        spec TEXT,
         location TEXT,
+        qty INTEGER,
         remark TEXT,
         created_at TEXT
     )
@@ -41,18 +44,25 @@ def init_db():
     conn.commit()
     conn.close()
 
-def log_history(type, item, qty, warehouse, location, remark=""):
+def log_history(t, data):
     conn = get_conn()
     cur = conn.cursor()
-
     cur.execute("""
-        INSERT INTO history
-        (type, item, qty, warehouse, location, remark, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO history
+    (type, warehouse, brand, item_code, item_name, lot_no, spec, location, qty, remark, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
-        type, item, qty, warehouse, location, remark,
+        t,
+        data["warehouse"],
+        data["brand"],
+        data["item_code"],
+        data["item_name"],
+        data["lot_no"],
+        data["spec"],
+        data["location"],
+        data["qty"],
+        data.get("remark", ""),
         datetime.now().isoformat()
     ))
-
     conn.commit()
     conn.close()
