@@ -1,69 +1,73 @@
-{% extends "base.html" %}
-{% block content %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>작업 이력</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 12px;
+            background: #f5f6f7;
+        }
+        h2 {
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+        }
+        th, td {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+            font-size: 14px;
+            text-align: center;
+        }
+        th {
+            background: #2c3e50;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background: #f2f2f2;
+        }
+        .back {
+            margin-top: 12px;
+            display: block;
+            text-align: center;
+            padding: 12px;
+            background: #7f8c8d;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body>
 
-<h4 class="fw-bold mb-3">이력 조회</h4>
+<h2>📋 작업 이력</h2>
 
-<table class="table table-bordered table-striped">
-    <thead class="table-dark">
-        <tr>
-            <th>ID</th>
-            <th>시간</th>
-            <th>TYPE</th>
-            <th>창고</th>
-            <th>LOC</th>
-            <th>ITEM</th>
-            <th>LOT</th>
-            <th>QTY</th>
-            <th>비고</th>
-            <th>ROLLBACK</th>
-        </tr>
-    </thead>
-    <tbody id="histBody"></tbody>
+<table>
+    <tr>
+        <th>구분</th>
+        <th>품목</th>
+        <th>수량</th>
+        <th>위치</th>
+        <th>시간</th>
+    </tr>
+
+    {% for row in rows %}
+    <tr>
+        <td>{{ row["action"] }}</td>
+        <td>{{ row["item_code"] }}</td>
+        <td>{{ row["qty"] }}</td>
+        <td>{{ row["location"] }}</td>
+        <td>{{ row["created_at"] }}</td>
+    </tr>
+    {% endfor %}
 </table>
 
-<script>
-async function loadHist(){
-    const res = await fetch("/api/history");
-    const rows = await res.json();
+<a href="/" class="back">← 메인으로</a>
 
-    let html = "";
-    for(const r of rows){
-        html += `
-        <tr>
-            <td>${r.id}</td>
-            <td>${r.tx_time}</td>
-            <td>${r.tx_type}</td>
-            <td>${r.warehouse}</td>
-            <td>${r.location}</td>
-            <td>${r.item_code}</td>
-            <td>${r.lot_no}</td>
-            <td>${r.qty}</td>
-            <td>${r.remark ?? ""}</td>
-            <td>
-                <button onclick="rollback(${r.id})"
-                        class="btn btn-sm btn-danger">
-                    취소
-                </button>
-            </td>
-        </tr>`;
-    }
-    document.getElementById("histBody").innerHTML = html;
-}
-
-async function rollback(id){
-    if(!confirm("해당 이력을 롤백할까요?")) return;
-
-    await fetch(`/api/history/rollback?tx_id=${id}`, {
-        method: "POST"
-    });
-
-    alert("롤백 완료");
-    loadHist();
-}
-
-loadHist();
-</script>
-
-{% endblock %}
-
-
+</body>
+</html>
