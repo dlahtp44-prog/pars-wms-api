@@ -12,15 +12,20 @@ def init_db():
     conn = get_conn()
     cur = conn.cursor()
 
-    # 재고 테이블
     cur.execute("""
     CREATE TABLE IF NOT EXISTS inventory (
-        item TEXT PRIMARY KEY,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        warehouse TEXT,
+        brand TEXT,
+        item TEXT,
+        item_name TEXT,
+        lot TEXT,
+        spec TEXT,
+        location TEXT,
         qty INTEGER
     )
     """)
 
-    # 작업 이력
     cur.execute("""
     CREATE TABLE IF NOT EXISTS history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -34,6 +39,7 @@ def init_db():
 
     conn.commit()
     conn.close()
+
 
 def log_history(type, item, qty, remark=""):
     conn = get_conn()
