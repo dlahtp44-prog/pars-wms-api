@@ -43,14 +43,14 @@ app.add_middleware(
 # =========================
 # API Router import
 # =========================
-from app.routers.items import router as items_router
-from app.routers.inbound import router as inbound_router
-from app.routers.outbound import router as outbound_router
-from app.routers.move import router as move_router
-from app.routers.location import router as location_router
-from app.routers.inventory import router as inventory_router
-from app.routers.history import router as history_router
-from app.routers.qr_api import router as qr_router
+from app.pages.index_page import router as index_router
+from app.pages.worker_page import router as worker_router
+from app.pages.inbound_page import router as inbound_page_router
+from app.pages.outbound_page import router as outbound_page_router
+from app.pages.move_page import router as move_page_router
+from app.pages.inventory_page import router as inventory_page_router
+from app.pages.history_page import router as history_page_router
+from app.pages.qr_page import router as qr_page_router
 
 # =========================
 # Page Router import
@@ -69,16 +69,12 @@ app.include_router(move_page_router)
 app.include_router(index_router)
 app.include_router(worker_router)
 
-app.include_router(items_router)
-app.include_router(inbound_router)
-app.include_router(outbound_router)
-app.include_router(move_router)
-app.include_router(location_router)
-app.include_router(inventory_router)
-app.include_router(history_router)
-app.include_router(qr_router)
-app.include_router(qr_page_router)
 app.include_router(inbound_page_router)
+app.include_router(outbound_page_router)
+app.include_router(move_page_router)
+app.include_router(inventory_page_router)
+app.include_router(history_page_router)
+app.include_router(qr_page_router)
 
 # =========================
 # Health Check
