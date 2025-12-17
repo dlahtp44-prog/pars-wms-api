@@ -1,23 +1,11 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <title>출고 처리</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
+<h1>🚚 출고 처리</h1>
+<input id="remark" placeholder="출고 구분 (OUT)" />
+<button onclick="submit()">출고 처리</button>
 
-<div class="container">
-    <h1>📤 출고 처리</h1>
-
-    <form action="/outbound" method="post">
-        <input type="text" name="remark" placeholder="출고 구분 (예: OUT, 출고)" required>
-        <button class="card red" type="submit">출고 처리</button>
-    </form>
-
-    <a href="/" class="card gray">⬅ 메인으로</a>
-</div>
-
-</body>
-</html>
+<script>
+async function submit(){
+  const r = document.getElementById("remark").value;
+  const res = await fetch(`/outbound?remark=${r}`, {method:"POST"});
+  alert(await res.text());
+}
+</script>
