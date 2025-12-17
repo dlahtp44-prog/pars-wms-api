@@ -58,6 +58,7 @@ from app.routers.qr_api import router as qr_router
 from app.pages.index_page import router as index_router
 from app.pages.qr_page import router as qr_page_router
 from app.pages.worker_page import router as worker_router  # 작업자 화면
+from app.pages.inbound_page import router as inbound_page_router
 
 # =========================
 # Router 등록
@@ -74,6 +75,7 @@ app.include_router(inventory_router)
 app.include_router(history_router)
 app.include_router(qr_router)
 app.include_router(qr_page_router)
+app.include_router(inbound_page_router)
 
 # =========================
 # Health Check
