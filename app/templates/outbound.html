@@ -1,24 +1,40 @@
-<h2>📤 출고 처리</h2>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>출고 처리</title>
+</head>
+<body>
 
-<input id="item" placeholder="품목명"><br><br>
-<input id="qty" type="number" placeholder="수량"><br><br>
+<h1>📤 출고 처리</h1>
 
-<button onclick="submit()">출고 처리</button>
+<input id="item" placeholder="품번">
+<input id="qty" type="number" placeholder="수량">
+<input id="remark" placeholder="비고">
 <br><br>
-<a href="/worker">← 작업자 화면</a>
+
+<button onclick="submitOutbound()">출고 처리</button>
 
 <script>
-async function submit(){
-  const item = itemEl.value;
-  const qty = qtyEl.value;
+async function submitOutbound() {
+    const item = document.getElementById("item").value;
+    const qty = document.getElementById("qty").value;
+    const remark = document.getElementById("remark").value;
 
-  const res = await fetch(
-    `/outbound?item=${item}&qty=${qty}`,
-    { method: "POST" }
-  );
-  alert(await res.text());
+    const res = await fetch(
+        `/outbound?item=${item}&qty=${qty}&remark=${encodeURIComponent(remark)}`,
+        { method: "POST" }
+    );
+
+    if (res.ok) {
+        alert("출고 완료");
+        // ✅ 여기서 메인으로 이동
+        window.location.href = "/";
+    } else {
+        alert("출고 실패");
+    }
 }
-
-const itemEl = document.getElementById("item");
-const qtyEl = document.getElementById("qty");
 </script>
+
+</body>
+</html>
