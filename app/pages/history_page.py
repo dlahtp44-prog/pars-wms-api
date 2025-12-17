@@ -10,17 +10,14 @@ def history_page(request: Request):
     conn = get_conn()
     cur = conn.cursor()
 
-    try:
-        cur.execute("""
-            SELECT action, item, qty, created_at
-            FROM history
-            ORDER BY created_at DESC
-        """)
-        rows = cur.fetchall()
-    except Exception as e:
-        rows = []
-    finally:
-        conn.close()
+    cur.execute("""
+        SELECT type, item, qty, remark, created_at
+        FROM history
+        ORDER BY created_at DESC
+    """)
+    rows = cur.fetchall()
+
+    conn.close()
 
     return templates.TemplateResponse(
         "history.html",
