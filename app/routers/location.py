@@ -1,21 +1,15 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter
+from app.core.locations import WAREHOUSE_MAP
 
-router = APIRouter(tags=["로케이션"])
-
-@router.post(
-    "/location/add",
-    summary="로케이션 등록",
-    description="새로운 로케이션을 등록합니다."
+router = APIRouter(
+    prefix="/api",
+    tags=["로케이션"]
 )
-def add_location(
-    location_code: str = Query(..., title="로케이션 코드", example="A01-01")
-):
-    return {"결과": "로케이션 등록 완료"}
 
 @router.get(
-    "/location/list",
-    summary="로케이션 목록 조회",
-    description="등록된 로케이션 목록을 조회합니다."
+    "/locations",
+    summary="로케이션 구조 조회",
+    description="창고 → 존 → 랙 → 셀 전체 구조를 반환합니다."
 )
-def list_locations():
-    return {"로케이션목록": []}
+def get_locations():
+    return WAREHOUSE_MAP
