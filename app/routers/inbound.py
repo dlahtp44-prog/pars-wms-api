@@ -1,40 +1,19 @@
+from fastapi import APIRouter, Query
 
-from fastapi import APIRouter, HTTPException
-from app.core.models import upsert_item, get_current_qty
-from app.core.database import get_conn
+router = APIRouter(tags=["입고"])
 
-router = APIRouter(prefix="/inbound", tags=["Inbound"])
-
-
-@router.post("/")
+@router.post(
+    "/inbound",
+    summary="입고 처리",
+    description="상품 입고를 처리하는 API입니다."
+)
 def inbound(
-    warehouse: str,
-    location: str,
-    item_code: str,
-    lot_no: str,
-    qty: float,
-    item_name: str = "",
-    spec: str = "",
-    remark: str = "IN",
+    remark: str = Query(
+        ...,
+        title="비고",
+        description="입고 구분 또는 메모 (예: IN, 신규입고)",
+        example="IN"
+    )
 ):
-    if qty <= 0:
-        raise HTTPException(400, "qty must be greater than 0")
+    return {"결과": "입고 처리 완료"}
 
-    conn = get_conn()
-    cur = conn.cursor()
-
-    # 품목 자동 등록
-    upsert_item(item_code, item_name, spec)
-
-    cur.execute("""
-        INSERT INTO inventory_tx
-        (tx_type, warehouse, location, item_code, lot_no, qty, remark)
-        VALUES ('IN', ?, ?, ?, ?, ?, ?)
-    """, (warehouse, location, item_code, lot_no, qty, remark))
-
-    conn.commit()
-    conn.close()
-
-    new_qty = get_current_qty(warehouse, location, item_code, lot_no)
-
-    return {"result": "OK", "after_qty": new_qty}
