@@ -1,12 +1,38 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+import os
 
+# =========================
+# App 기본 설정
+# =========================
 app = FastAPI(
     title="PARS WMS",
     description="물류 입·출고, 이동, 재고 관리를 위한 WMS API",
     version="1.0.0"
 )
 
+# =========================
+# 경로 설정
+# =========================
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+STATIC_DIR = os.path.join(BASE_DIR, "app", "static")
+TEMPLATE_DIR = os.path.join(BASE_DIR, "app", "templates")
+
+# Static 파일 (CSS, JS)
+if os.path.exists(STATIC_DIR):
+    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+# Template (HTML)
+if os.path.exists(TEMPLATE_DIR):
+    templates = Jinja2Templates(directory=TEMPLATE_DIR)
+else:
+    templates = None
+
+# =========================
+# CORS 설정
+# =========================
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -14,7 +40,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Router imports
+# =========================
+# API Router import
+# =========================
 from app.routers.items import router as items_router
 from app.routers.inbound import router as inbound_router
 from app.routers.outbound import router as outbound_router
@@ -24,11 +52,19 @@ from app.routers.inventory import router as inventory_router
 from app.routers.history import router as history_router
 from app.routers.qr_api import router as qr_router
 
+# =========================
+# Page Router import
+# =========================
 from app.pages.index_page import router as index_router
 from app.pages.qr_page import router as qr_page_router
+from app.pages.worker_page import router as worker_router  # 작업자 화면
 
-# Router register
+# =========================
+# Router 등록
+# =========================
 app.include_router(index_router)
+app.include_router(worker_router)
+
 app.include_router(items_router)
 app.include_router(inbound_router)
 app.include_router(outbound_router)
@@ -39,6 +75,9 @@ app.include_router(history_router)
 app.include_router(qr_router)
 app.include_router(qr_page_router)
 
+# =========================
+# Health Check
+# =========================
 @app.get(
     "/ping",
     summary="서버 상태 확인",
