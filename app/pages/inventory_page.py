@@ -1,19 +1,18 @@
 from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse
 
+router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 
-router = APIRouter(
-    prefix="/inbound",
-    tags=["Page"],
-    include_in_schema=False
-)
 
-@router.get("/", response_class=HTMLResponse)
-def inbound_page(request: Request):
+@router.get(
+    "/inventory-page",
+    response_class=HTMLResponse,
+    summary="재고 조회 화면"
+)
+def inventory_page(request: Request):
     return templates.TemplateResponse(
-        "inbound.html",
+        "inventory.html",
         {"request": request}
     )
-
