@@ -1,35 +1,37 @@
 from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-import os
+import sqlite3
 
-# ------------------------------------------------------------
-# Router
-# ------------------------------------------------------------
-router = APIRouter(
-    prefix="/history",
-    tags=["Page"],
+router = APIRouter()
+templates = Jinja2Templates(directory="app/templates")
+
+DB_PATH = "wms.db"
+
+
+@router.get(
+    "/history-page",
+    summary="작업 이력 화면",
+    description="입고, 출고, 이동 작업 이력을 조회하는 화면",
     include_in_schema=False
 )
-
-# ------------------------------------------------------------
-# Template Path
-# main.py 기준으로 templates 경로 계산
-# ------------------------------------------------------------
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-TEMPLATE_DIR = os.path.join(BASE_DIR, "templates")
-
-templates = Jinja2Templates(directory=TEMPLATE_DIR)
-
-# ------------------------------------------------------------
-# Page
-# ------------------------------------------------------------
-@router.get("", response_class=HTMLResponse)
 def history_page(request: Request):
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT action, item_code, qty, location, created_at
+        FROM history
+        ORDER BY id DESC
+        LIMIT 100
+    """)
+    rows = cur.fetchall()
+    conn.close()
+
     return templates.TemplateResponse(
         "history.html",
         {
-            "request": request
+            "request": request,
+            "rows": rows
         }
     )
-
