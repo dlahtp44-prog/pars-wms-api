@@ -64,6 +64,8 @@ from app.pages.qr_page import router as qr_page_router
 from app.pages.worker_page import router as worker_router  # 작업자 화면
 from app.pages.inbound_page import router as inbound_page_router
 from app.pages.move_page import router as move_page_router
+from app.pages.history_page import router as history_page_router
+
 app.include_router(move_page_router)
 
 
