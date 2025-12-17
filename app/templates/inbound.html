@@ -1,62 +1,39 @@
-{% extends "base.html" %}
-{% block content %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>입고 처리</title>
 
-<h4 class="mb-3 fw-bold">입고 처리</h4>
+    <!-- 모바일 대응 필수 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<div class="card p-3 shadow-sm">
+    <!-- 공통 스타일 -->
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
 
-    <div class="row g-2">
-        <div class="col-md-4">
-            <label>창고</label>
-            <input id="wh" class="form-control" placeholder="ICHEON">
-        </div>
+<div class="container">
+    <h1>📥 입고 처리</h1>
 
-        <div class="col-md-4">
-            <label>Location</label>
-            <input id="loc" class="form-control" placeholder="A01-01">
-        </div>
+    <!-- 입고 처리 폼 -->
+    <form action="/inbound" method="post">
+        <input
+            type="text"
+            name="remark"
+            placeholder="입고 구분 (예: IN, 입고)"
+            required
+        >
 
-        <div class="col-md-4">
-            <label>품번</label>
-            <input id="item" class="form-control">
-        </div>
+        <button class="card green" type="submit">
+            입고 처리
+        </button>
+    </form>
 
-        <div class="col-md-4">
-            <label>품명</label>
-            <input id="item_name" class="form-control">
-        </div>
-
-        <div class="col-md-4">
-            <label>LOT</label>
-            <input id="lot" class="form-control">
-        </div>
-
-        <div class="col-md-4">
-            <label>수량</label>
-            <input id="qty" type="number" class="form-control" value="1">
-        </div>
-    </div>
-
-    <button onclick="doInbound()" class="btn btn-primary w-100 mt-3">입고 실행</button>
-
+    <!-- 메인 이동 -->
+    <a href="/" class="card gray">
+        ⬅ 메인으로
+    </a>
 </div>
 
-<script>
-async function doInbound(){
-    const params = new URLSearchParams({
-        warehouse: wh.value,
-        location: loc.value,
-        item_code: item.value,
-        item_name: item_name.value,
-        lot_no: lot.value,
-        qty: qty.value
-    });
-
-    const res = await fetch(`/inbound/?${params}`, { method: "POST" });
-    const data = await res.json();
-    alert("입고 완료! 현재고: " + data.after_qty);
-}
-</script>
-
-{% endblock %}
-
+</body>
+</html>
