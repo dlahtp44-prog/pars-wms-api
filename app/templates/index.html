@@ -1,14 +1,29 @@
-{% extends "base.html" %}
-{% block content %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <title>PARS WMS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
 
-<h3 class="fw-bold">PARS WMS</h3>
-<p>물류 관리 시스템</p>
+<header>
+    <h1>PARS WMS</h1>
+    <p>물류 입·출고 및 재고 관리 시스템</p>
+</header>
 
-<ul>
-    <li>입고 / 출고 / 이동</li>
-    <li>실시간 재고</li>
-    <li>이력 관리</li>
-    <li>QR 라벨</li>
-</ul>
+<main class="grid">
+    <a href="/docs" class="card">📘 Swagger API</a>
+    <a href="/ping" class="card">🟢 서버 상태</a>
+    <a href="/items" class="card">📦 품목 조회</a>
+    <a href="/inventory" class="card">📊 재고 현황</a>
+    <a href="/qr/label?item_code=TEST" class="card">🔳 QR 생성</a>
+</main>
 
-{% endblock %}
+<footer>
+    <small>© PARS WMS</small>
+</footer>
+
+</body>
+</html>
