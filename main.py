@@ -10,10 +10,11 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "app", "static")
 TEMPLATE_DIR = os.path.join(BASE_DIR, "app", "templates")
 
-if os.path.exists(STATIC_DIR):
-    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+if os.path.exists(TEMPLATE_DIR):
+    templates = Jinja2Templates(directory=TEMPLATE_DIR)
+else:
+    templates = None
 
-templates = Jinja2Templates(directory=TEMPLATE_DIR)
 
 app.add_middleware(
     CORSMiddleware,
