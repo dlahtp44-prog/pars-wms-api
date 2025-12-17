@@ -1,69 +1,84 @@
-{% extends "base.html" %}
-{% block content %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>재고 이동</title>
 
-<h4 class="fw-bold mb-3">재고 이동</h4>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background:#f5f6f7;
+            padding:20px;
+        }
+        .box {
+            max-width:420px;
+            margin:auto;
+            background:white;
+            padding:20px;
+            border-radius:12px;
+            box-shadow:0 0 10px rgba(0,0,0,.1);
+        }
+        h1 {
+            text-align:center;
+        }
+        input {
+            width:100%;
+            padding:12px;
+            font-size:16px;
+            margin:12px 0;
+        }
+        button {
+            width:100%;
+            padding:14px;
+            font-size:18px;
+            border:none;
+            border-radius:10px;
+            cursor:pointer;
+        }
+        .move {
+            background:#ff9800;
+            color:white;
+        }
+        .home {
+            background:#607d8b;
+            color:white;
+            margin-top:10px;
+        }
+    </style>
+</head>
 
-<div class="card p-3 shadow-sm">
+<body>
+<div class="box">
+    <h1>📦 재고 이동</h1>
 
-    <div class="row g-2">
+    <input
+        id="remark"
+        placeholder="이동 사유 또는 코드 (예: MOVE)"
+    />
 
-        <h6 class="fw-bold">출고 위치</h6>
+    <button class="move" onclick="submitMove()">재고 이동 처리</button>
 
-        <div class="col-md-3">
-            <input id="wh_from" class="form-control" placeholder="출고창고">
-        </div>
-        <div class="col-md-3">
-            <input id="loc_from" class="form-control" placeholder="출고 LOC">
-        </div>
-
-        <h6 class="fw-bold mt-3">입고 위치</h6>
-
-        <div class="col-md-3">
-            <input id="wh_to" class="form-control" placeholder="입고창고">
-        </div>
-        <div class="col-md-3">
-            <input id="loc_to" class="form-control" placeholder="입고 LOC">
-        </div>
-
-        <div class="col-md-4 mt-2">
-            <label>품번</label>
-            <input id="item" class="form-control">
-        </div>
-
-        <div class="col-md-4 mt-2">
-            <label>LOT</label>
-            <input id="lot" class="form-control">
-        </div>
-
-        <div class="col-md-4 mt-2">
-            <label>수량</label>
-            <input id="qty" class="form-control" type="number">
-        </div>
-
-    </div>
-
-    <button onclick="doMove()" class="btn btn-warning w-100 mt-3">이동 실행</button>
-
+    <button class="home" onclick="location.href='/'">
+        ← 메인으로
+    </button>
 </div>
 
 <script>
-async function doMove(){
-    const params = new URLSearchParams({
-        wh_from: wh_from.value,
-        loc_from: loc_from.value,
-        wh_to: wh_to.value,
-        loc_to: loc_to.value,
-        item_code: item.value,
-        lot_no: lot.value,
-        qty: qty.value
+async function submitMove() {
+    const remark = document.getElementById("remark").value;
+    if (!remark) {
+        alert("이동 내용을 입력하세요");
+        return;
+    }
+
+    const res = await fetch(`/move?remark=${remark}`, {
+        method: "POST"
     });
 
-    const res = await fetch(`/move/?${params}`, { method:"POST" });
     const data = await res.json();
-
-    alert("이동 완료!");
+    alert(data.결과);
 }
 </script>
-
-{% endblock %}
-
+</body>
+</html>
