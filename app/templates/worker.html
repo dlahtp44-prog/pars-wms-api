@@ -1,27 +1,35 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <title>작업자 입·출고</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/static/style.css">
+  <meta charset="UTF-8">
+  <title>작업자 화면</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 20px; }
+    button {
+      width: 90%;
+      padding: 15px;
+      margin: 10px 0;
+      font-size: 18px;
+    }
+  </style>
 </head>
-<body class="worker">
+<body>
 
-<h2>📦 작업자 입·출고</h2>
+<h2>📦 PARS WMS 작업자</h2>
 
-<form method="post" action="/inbound" class="worker-form">
-    <input type="hidden" name="remark" value="IN">
-    <button class="btn in">⬇ 입고 처리</button>
-</form>
+<button onclick="go('/inbound-page')">입고</button>
+<button onclick="go('/outbound-page')">출고</button>
+<button onclick="go('/move-page')">재고 이동</button>
+<button onclick="go('/inventory-page')">재고 조회</button>
+<button onclick="go('/history-page')">작업 이력</button>
 
-<form method="post" action="/outbound" class="worker-form">
-    <input type="hidden" name="remark" value="OUT">
-    <button class="btn out">⬆ 출고 처리</button>
-</form>
-
-<a href="/" class="back">← 메인으로</a>
+<script>
+function go(url){
+  location.href = url;
+}
+</script>
 
 </body>
 </html>
+
