@@ -1,56 +1,54 @@
-
 # app/db.py
 import sqlite3
+import os
+from datetime import datetime
 
-DB_PATH = "wms.db"
+DB_PATH = os.path.join(os.path.dirname(__file__), "wms.db")
 
 def get_conn():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+    return sqlite3.connect(DB_PATH)
 
 def init_db():
     conn = get_conn()
     cur = conn.cursor()
 
-    # 재고 테이블 (엑셀 1:1 대응)
+    # 재고 테이블 (location 포함)
     cur.execute("""
     CREATE TABLE IF NOT EXISTS inventory (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        warehouse TEXT,
-        brand TEXT,
-        item TEXT,
-        item_name TEXT,
-        lot TEXT,
-        spec TEXT,
-        location TEXT,
-        qty INTEGER
+        item TEXT PRIMARY KEY,
+        qty INTEGER,
+        location TEXT
     )
     """)
 
-    # 작업 이력
+    # 작업 이력 테이블
     cur.execute("""
     CREATE TABLE IF NOT EXISTS history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         type TEXT,
         item TEXT,
         qty INTEGER,
+        location TEXT,
         remark TEXT,
-        created_at TEXT DEFAULT (datetime('now','localtime'))
+        created_at TEXT
     )
     """)
 
     conn.commit()
     conn.close()
 
-
-
-def log_history(type, item, qty, remark=""):
+def log_history(type, item, qty, location="", remark=""):
     conn = get_conn()
     cur = conn.cursor()
+
     cur.execute(
-        "INSERT INTO history (type, item, qty, remark, created_at) VALUES (?, ?, ?, ?, ?)",
-        (type, item, qty, remark, datetime.now().isoformat())
+        """
+        INSERT INTO history (type, item, qty, location, remark, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+        """,
+        (type, item, qty, location, remark, datetime.now().isoformat())
     )
+
     conn.commit()
     conn.close()
+
