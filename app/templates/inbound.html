@@ -1,38 +1,83 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>입고 처리</title>
+<style>
+body { font-family: sans-serif; padding: 16px; }
+select, input, button {
+  width: 100%; margin: 8px 0; padding: 10px; font-size: 16px;
+}
+button { background:#2ecc71; color:white; border:none; }
+</style>
 </head>
 <body>
 
-<h2>📥 입고 처리</h2>
+<h2>📦 입고 처리</h2>
 
-<input id="item" placeholder="품목명"><br><br>
-<input id="qty" type="number" placeholder="수량"><br><br>
-<input id="remark" placeholder="비고 (선택)"><br><br>
+<input id="item" placeholder="품목코드" />
+<input id="qty" type="number" placeholder="수량" />
 
-<button onclick="submit()">입고 처리</button>
-<br><br>
-<a href="/worker">← 작업자 화면</a>
+<select id="warehouse"></select>
+<select id="zone"></select>
+<select id="rack"></select>
+<select id="cell"></select>
+
+<button onclick="submitInbound()">입고 처리</button>
 
 <script>
-async function submit(){
-  const item = itemEl.value;
-  const qty = qtyEl.value;
-  const remark = remarkEl.value;
+let data = {};
 
-  const res = await fetch(
-    `/inbound?item=${item}&qty=${qty}&remark=${remark}`,
-    { method: "POST" }
+fetch("/locations")
+  .then(res => res.json())
+  .then(json => {
+    data = json;
+    const wh = document.getElementById("warehouse");
+    wh.innerHTML = `<option value="">창고 선택</option>`;
+    Object.keys(data).forEach(w =>
+      wh.innerHTML += `<option value="${w}">${w}</option>`
+    );
+  });
+
+warehouse.onchange = () => {
+  zone.innerHTML = "";
+  rack.innerHTML = "";
+  cell.innerHTML = "";
+
+  Object.keys(data[warehouse.value]).forEach(z =>
+    zone.innerHTML += `<option value="${z}">${z}</option>`
   );
-  alert(await res.text());
-}
+};
 
-const itemEl = document.getElementById("item");
-const qtyEl = document.getElementById("qty");
-const remarkEl = document.getElementById("remark");
+zone.onchange = () => {
+  rack.innerHTML = "";
+  cell.innerHTML = "";
+
+  Object.keys(data[warehouse.value][zone.value]).forEach(r =>
+    rack.innerHTML += `<option value="${r}">${r}</option>`
+  );
+};
+
+rack.onchange = () => {
+  cell.innerHTML = "";
+  data[warehouse.value][zone.value][rack.value]
+    .forEach(c =>
+      cell.innerHTML += `<option value="${c}">${c}</option>`
+    );
+};
+
+function submitInbound() {
+  const url = `/inbound?item=${item.value}&qty=${qty.value}` +
+              `&warehouse=${warehouse.value}` +
+              `&zone=${zone.value}` +
+              `&rack=${rack.value}` +
+              `&level=01&cell=${cell.value}`;
+
+  fetch(url, { method: "POST" })
+    .then(r => r.json())
+    .then(r => alert(JSON.stringify(r)));
+}
 </script>
 
 </body>
