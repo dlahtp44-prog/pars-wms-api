@@ -1,3 +1,22 @@
-@router.get("/history-page")
-def history_page():
-    return "OK"
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>작업 이력</title>
+</head>
+<body>
+    <h1>작업 이력</h1>
+
+    {% if rows %}
+        <ul>
+        {% for r in rows %}
+            <li>{{ r }}</li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>작업 이력이 없습니다.</p>
+    {% endif %}
+
+    <a href="/">메인으로</a>
+</body>
+</html>
