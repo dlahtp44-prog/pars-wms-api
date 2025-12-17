@@ -1,18 +1,22 @@
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
+from app.db import get_conn
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 
-
-@router.get(
-    "/inventory-page",
-    response_class=HTMLResponse,
-    summary="재고 조회 화면"
-)
+@router.get("/inventory-page")
 def inventory_page(request: Request):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT warehouse, location, brand, item, name, lot, spec, qty
+        FROM inventory
+    """)
+    rows = cur.fetchall()
+    conn.close()
+
     return templates.TemplateResponse(
         "inventory.html",
-        {"request": request}
+        {"request": request, "rows": rows}
     )
