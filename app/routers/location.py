@@ -1,35 +1,14 @@
+from fastapi import APIRouter, Query
 
-from fastapi import APIRouter, HTTPException
-from app.core.database import get_conn
+router = APIRouter(tags=["로케이션"])
 
-router = APIRouter(prefix="/location", tags=["Location"])
+@router.post(
+    "/location/add",
+    summary="로케이션 등록",
+    description="새로운 로케이션을 등록합니다."
+)
+def add_location(
+    code: str = Query(..., title="로케이션 코드", example="A01-01")
+):
+    return {"결과": "로케이션 등록 완료"}
 
-
-@router.post("/add")
-def add_location(warehouse: str, location: str):
-    conn = get_conn()
-    cur = conn.cursor()
-
-    try:
-        cur.execute("""
-            INSERT INTO locations (warehouse, location)
-            VALUES (?, ?)
-        """, (warehouse, location))
-        conn.commit()
-    except:
-        raise HTTPException(400, "이미 등록된 Location")
-
-    finally:
-        conn.close()
-
-    return {"result": "OK"}
-
-
-@router.get("/list")
-def list_locations():
-    conn = get_conn()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM locations ORDER BY warehouse, location")
-    rows = [dict(r) for r in cur.fetchall()]
-    conn.close()
-    return rows
