@@ -1,77 +1,36 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html>
 <head>
     <meta charset="UTF-8">
-    <title>재고 조회</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        h1 {
-            text-align: center;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-        th, td {
-            border: 1px solid #ccc;
-            padding: 8px;
-            text-align: center;
-        }
-        th {
-            background: #f4f4f4;
-        }
-        button {
-            margin-top: 15px;
-            width: 100%;
-            padding: 12px;
-            font-size: 16px;
-        }
-    </style>
+    <title>재고 현황</title>
 </head>
 <body>
+<h2>재고 현황</h2>
 
-<h1>📦 재고 현황</h1>
-
-<button onclick="loadInventory()">재고 조회</button>
-
-<table>
-    <thead>
-        <tr>
-            <th>품목코드</th>
-            <th>로케이션</th>
-            <th>수량</th>
-        </tr>
-    </thead>
-    <tbody id="inventory-body"></tbody>
+<table border="1">
+<tr>
+    <th>장소명</th>
+    <th>로케이션</th>
+    <th>브랜드</th>
+    <th>품번</th>
+    <th>품명</th>
+    <th>LOT</th>
+    <th>규격</th>
+    <th>현재고</th>
+</tr>
+{% for r in rows %}
+<tr>
+    <td>{{ r[0] }}</td>
+    <td>{{ r[1] }}</td>
+    <td>{{ r[2] }}</td>
+    <td>{{ r[3] }}</td>
+    <td>{{ r[4] }}</td>
+    <td>{{ r[5] }}</td>
+    <td>{{ r[6] }}</td>
+    <td>{{ r[7] }}</td>
+</tr>
+{% endfor %}
 </table>
-
-<button onclick="location.href='/'">← 메인으로</button>
-
-<script>
-async function loadInventory() {
-    const res = await fetch('/inventory');
-    const data = await res.json();
-
-    const body = document.getElementById('inventory-body');
-    body.innerHTML = '';
-
-    data["재고"].forEach(row => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${row.item_code}</td>
-            <td>${row.location}</td>
-            <td>${row.qty}</td>
-        `;
-        body.appendChild(tr);
-    });
-}
-</script>
 
 </body>
 </html>
-
