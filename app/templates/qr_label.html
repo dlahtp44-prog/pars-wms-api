@@ -1,1 +1,37 @@
 
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QR 라벨 생성</title>
+</head>
+<body>
+
+<h2>🏷 QR 라벨 생성</h2>
+
+<input id="item" placeholder="품목 코드"><br><br>
+<input id="qty" type="number" placeholder="수량"><br><br>
+<input id="location" placeholder="위치"><br><br>
+<input id="lot" placeholder="LOT 번호"><br><br>
+
+<button onclick="create()">라벨 생성</button>
+
+<p id="result"></p>
+
+<script>
+async function create(){
+  const url =
+    `/qr/label?item=${item.value}&qty=${qty.value}` +
+    `&location=${location.value}&lot=${lot.value}`;
+
+  const res = await fetch(url, { method: "POST" });
+  const data = await res.json();
+
+  document.getElementById("result").innerHTML =
+    `<a href="${data.파일}" target="_blank">QR 라벨 다운로드</a>`;
+}
+</script>
+
+</body>
+</html>
