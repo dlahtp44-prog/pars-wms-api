@@ -1,132 +1,19 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8" />
-    <title>{{ title }}</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<h2>🔄 재고 이동</h2>
 
-    <style>
-        body {
-            margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: #f5f6f8;
-        }
+<input id="item" placeholder="품목"><br><br>
+<input id="qty" type="number" placeholder="수량"><br><br>
+<input id="from" placeholder="출발 위치"><br><br>
+<input id="to" placeholder="도착 위치"><br><br>
 
-        .container {
-            max-width: 420px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        h1 {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .card {
-            background: #fff;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        }
-
-        label {
-            font-weight: bold;
-            display: block;
-            margin-top: 12px;
-        }
-
-        input {
-            width: 100%;
-            padding: 12px;
-            margin-top: 6px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            font-size: 16px;
-        }
-
-        button {
-            width: 100%;
-            padding: 14px;
-            margin-top: 20px;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .btn-move {
-            background: #ff9800;
-            color: #fff;
-        }
-
-        .btn-home {
-            background: #6c757d;
-            color: #fff;
-            margin-top: 10px;
-        }
-
-        .result {
-            margin-top: 15px;
-            text-align: center;
-            font-weight: bold;
-        }
-    </style>
-</head>
-
-<body>
-<div class="container">
-    <h1>🔄 재고 이동</h1>
-
-    <div class="card">
-        <label>품목 코드</label>
-        <input id="item_code" placeholder="예: ITEM-001" />
-
-        <label>이동 전 위치</label>
-        <input id="from_location" placeholder="예: A01-01" />
-
-        <label>이동 후 위치</label>
-        <input id="to_location" placeholder="예: B02-03" />
-
-        <label>비고</label>
-        <input id="remark" placeholder="재고 이동 사유" />
-
-        <button class="btn-move" onclick="submitMove()">재고 이동 처리</button>
-        <button class="btn-home" onclick="goHome()">← 메인으로</button>
-
-        <div id="result" class="result"></div>
-    </div>
-</div>
+<button onclick="submit()">이동 처리</button>
+<br><br>
+<a href="/worker">← 작업자 화면</a>
 
 <script>
-async function submitMove() {
-    const item_code = document.getElementById("item_code").value;
-    const from_location = document.getElementById("from_location").value;
-    const to_location = document.getElementById("to_location").value;
-    const remark = document.getElementById("remark").value;
-
-    if (!item_code || !from_location || !to_location) {
-        alert("필수 항목을 입력하세요.");
-        return;
-    }
-
-    try {
-        const res = await fetch(
-            `/move?item_code=${item_code}&from_location=${from_location}&to_location=${to_location}&remark=${remark}`,
-            { method: "POST" }
-        );
-
-        const text = await res.text();
-        document.getElementById("result").innerText = text;
-    } catch (e) {
-        alert("서버 오류 발생");
-    }
-}
-
-function goHome() {
-    location.href = "/";
+async function submit(){
+  const url =
+    `/move?item=${item.value}&qty=${qty.value}&from_loc=${from.value}&to_loc=${to.value}`;
+  const res = await fetch(url, { method: "POST" });
+  alert(await res.text());
 }
 </script>
-</body>
-</html>
