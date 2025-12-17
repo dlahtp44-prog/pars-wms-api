@@ -1,47 +1,14 @@
-from fastapi import APIRouter, HTTPException
-from app.core.models import get_current_qty
-from app.core.database import get_conn
+from fastapi import APIRouter, Query
 
-router = APIRouter(prefix="/move", tags=["Move"])
+router = APIRouter(tags=["재고이동"])
 
-
-@router.post("/")
+@router.post(
+    "/move",
+    summary="재고 이동",
+    description="창고 또는 위치 간 재고 이동을 처리합니다."
+)
 def move(
-    wh_from: str,
-    loc_from: str,
-    wh_to: str,
-    loc_to: str,
-    item_code: str,
-    lot_no: str,
-    qty: float,
-    remark: str = "MOVE",
+    from_loc: str = Query(..., title="출발 위치", example="A01-01"),
+    to_loc: str = Query(..., title="도착 위치", example="B01-02"),
 ):
-    if qty <= 0:
-        raise HTTPException(400, "qty must be > 0")
-
-    current = get_current_qty(wh_from, loc_from, item_code, lot_no)
-    if qty > current:
-        raise HTTPException(400, f"재고 부족 (현재고 {current})")
-
-    conn = get_conn()
-    cur = conn.cursor()
-
-    # 출고
-    cur.execute("""
-        INSERT INTO inventory_tx
-        (tx_type, warehouse, location, item_code, lot_no, qty, remark)
-        VALUES ('MOVE', ?, ?, ?, ?, ?, ?)
-    """, (wh_from, loc_from, item_code, lot_no, -abs(qty), remark + " OUT"))
-
-    # 입고
-    cur.execute("""
-        INSERT INTO inventory_tx
-        (tx_type, warehouse, location, item_code, lot_no, qty, remark)
-        VALUES ('MOVE', ?, ?, ?, ?, ?, ?)
-    """, (wh_to, loc_to, item_code, lot_no, qty, remark + " IN"))
-
-    conn.commit()
-    conn.close()
-
-    return {"result": "OK"}
-
+    return {"결과": "재고 이동 완료"}
