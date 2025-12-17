@@ -1,1 +1,44 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>품목 상세</title>
+<style>
+  body { font-family: Arial; margin: 14px; }
+  .box { border: 1px solid #ddd; padding: 12px; border-radius: 10px; margin-bottom: 12px; }
+  .row { display: flex; justify-content: space-between; padding: 4px 0; }
+  .btn { padding: 10px; border-radius: 8px; background: #111; color: #fff; border: none; width: 100%; margin-top: 6px; }
+  img { width: 160px; }
+</style>
+</head>
+<body>
+
+<h2>📦 품목 상세</h2>
+
+<div class="box">
+  <div class="row"><b>장소명</b><span>{{ r[0] }}</span></div>
+  <div class="row"><b>브랜드</b><span>{{ r[1] }}</span></div>
+  <div class="row"><b>품번</b><span>{{ r[2] }}</span></div>
+  <div class="row"><b>품명</b><span>{{ r[3] }}</span></div>
+  <div class="row"><b>LOT</b><span>{{ r[4] }}</span></div>
+  <div class="row"><b>규격</b><span>{{ r[5] }}</span></div>
+  <div class="row"><b>로케이션</b><span>{{ r[6] }}</span></div>
+  <div class="row"><b>현재고</b><span><b>{{ r[7] }}</b></span></div>
+</div>
+
+<div class="box" style="text-align:center">
+  <img src="/qr/{{ r[2] }}" alt="QR">
+  <div>QR 스캔 → 품번 {{ r[2] }}</div>
+</div>
+
+<button class="btn" onclick="location.href='/worker/inbound?item={{ r[2] }}'">입고</button>
+<button class="btn" onclick="location.href='/worker/outbound?item={{ r[2] }}'">출고</button>
+<button class="btn" onclick="location.href='/worker/move?item={{ r[2] }}'">재고이동</button>
+
+<br><br>
+<a href="/inventory-page">⬅ 재고목록</a>
+
+</body>
+</html>
 
