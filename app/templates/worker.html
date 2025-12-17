@@ -1,1 +1,27 @@
 
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>작업자 입·출고</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="worker">
+
+<h2>📦 작업자 입·출고</h2>
+
+<form method="post" action="/inbound" class="worker-form">
+    <input type="hidden" name="remark" value="IN">
+    <button class="btn in">⬇ 입고 처리</button>
+</form>
+
+<form method="post" action="/outbound" class="worker-form">
+    <input type="hidden" name="remark" value="OUT">
+    <button class="btn out">⬆ 출고 처리</button>
+</form>
+
+<a href="/" class="back">← 메인으로</a>
+
+</body>
+</html>
