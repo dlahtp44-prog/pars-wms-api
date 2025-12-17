@@ -1,4 +1,3 @@
-# app/routers/inbound.py
 from fastapi import APIRouter
 from app.db import get_conn, log_history
 
@@ -7,16 +6,15 @@ router = APIRouter(tags=["입고"])
 @router.post("/inbound")
 def inbound(
     item: str,
-    qty: int,
+    brand: str,
+    name: str,
+    lot: str,
+    spec: str,
     warehouse: str,
-    zone: str,
-    rack: str,
-    level: str,
-    cell: str,
+    location: str,
+    qty: int,
     remark: str = ""
 ):
-    location = f"{zone}-{rack}-{level}-{cell}"
-
     conn = get_conn()
     cur = conn.cursor()
 
@@ -26,21 +24,18 @@ def inbound(
     if row:
         cur.execute("""
             UPDATE inventory
-            SET qty = qty + ?,
-                warehouse=?,
-                zone=?, rack=?, level=?, cell=?
+            SET qty = qty + ?, warehouse=?, location=?
             WHERE item=?
-        """, (qty, warehouse, zone, rack, level, cell, item))
+        """, (qty, warehouse, location, item))
     else:
         cur.execute("""
             INSERT INTO inventory
-            (item, qty, warehouse, zone, rack, level, cell)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (item, qty, warehouse, zone, rack, level, cell))
+            (item, brand, name, lot, spec, warehouse, location, qty)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (item, brand, name, lot, spec, warehouse, location, qty))
 
     conn.commit()
     conn.close()
 
     log_history("입고", item, qty, warehouse, location, remark)
-
-    return {"result": "입고 완료", "location": location}
+    return {"result": "입고 완료"}
