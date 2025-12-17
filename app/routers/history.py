@@ -9,11 +9,12 @@ def history():
     cur = conn.cursor()
 
     cur.execute("""
-        SELECT type, item, qty, remark, created_at
+        SELECT type, item, qty, location, remark, created_at
         FROM history
-        ORDER BY created_at DESC
+        ORDER BY id DESC
     """)
     rows = cur.fetchall()
+
     conn.close()
 
     return {
@@ -22,8 +23,9 @@ def history():
                 "구분": r[0],
                 "품목": r[1],
                 "수량": r[2],
-                "비고": r[3],
-                "시간": r[4]
+                "위치": r[3],
+                "비고": r[4],
+                "시간": r[5]
             } for r in rows
         ]
     }
