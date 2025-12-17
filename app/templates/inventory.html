@@ -1,36 +1,83 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <title>재고 현황</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>재고 조회</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 12px; }
+    h2 { margin: 6px 0 12px; }
+    .bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    select, input, button {
+      padding: 10px; font-size: 16px; border: 1px solid #ccc; border-radius: 8px;
+    }
+    button { background: #111; color: #fff; border: none; }
+    .table-wrap { overflow-x: auto; border: 1px solid #ddd; border-radius: 10px; }
+    table { border-collapse: collapse; width: 100%; min-width: 980px; }
+    th, td { border-bottom: 1px solid #eee; padding: 10px; text-align: center; white-space: nowrap; }
+    th { background: #222; color: #fff; position: sticky; top: 0; }
+    tr:nth-child(even) { background: #fafafa; }
+    .qty { font-weight: 700; }
+    .badge { padding: 4px 8px; border-radius: 999px; background: #f1f1f1; }
+    a { text-decoration: none; }
+  </style>
 </head>
 <body>
-<h2>재고 현황</h2>
 
-<table border="1">
-<tr>
-    <th>장소명</th>
-    <th>로케이션</th>
-    <th>브랜드</th>
-    <th>품번</th>
-    <th>품명</th>
-    <th>LOT</th>
-    <th>규격</th>
-    <th>현재고</th>
-</tr>
-{% for r in rows %}
-<tr>
-    <td>{{ r[0] }}</td>
-    <td>{{ r[1] }}</td>
-    <td>{{ r[2] }}</td>
-    <td>{{ r[3] }}</td>
-    <td>{{ r[4] }}</td>
-    <td>{{ r[5] }}</td>
-    <td>{{ r[6] }}</td>
-    <td>{{ r[7] }}</td>
-</tr>
-{% endfor %}
+<h2>📦 재고 조회</h2>
+
+<form class="bar" method="get" action="/inventory-page">
+  <select name="warehouse">
+    <option value="">전체 창고</option>
+    {% for w in warehouses %}
+      <option value="{{ w }}" {% if w == warehouse %}selected{% endif %}>{{ w }}</option>
+    {% endfor %}
+  </select>
+
+  <input name="q" value="{{ q }}" placeholder="검색: 품번/품명/브랜드/LOT/로케이션" />
+  <button type="submit">조회</button>
+
+  <a href="/" class="badge">🏠 메인</a>
+  <a href="/history-page" class="badge">📋 작업이력</a>
+</form>
+
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr>
+      <th>장소명</th>
+      <th>브랜드</th>
+      <th>품번</th>
+      <th>품명</th>
+      <th>LOT</th>
+      <th>규격</th>
+      <th>로케이션</th>
+      <th>현재고</th>
+    </tr>
+  </thead>
+
+  <tbody>
+  {% if rows %}
+    {% for r in rows %}
+    <tr>
+      <td>{{ r[0] }}</td>
+      <td>{{ r[1] }}</td>
+      <td>{{ r[2] }}</td>
+      <td>{{ r[3] }}</td>
+      <td>{{ r[4] }}</td>
+      <td>{{ r[5] }}</td>
+      <td>{{ r[6] }}</td>
+      <td class="qty">{{ r[7] }}</td>
+    </tr>
+    {% endfor %}
+  {% else %}
+    <tr>
+      <td colspan="8">재고 데이터가 없습니다.</td>
+    </tr>
+  {% endif %}
+  </tbody>
 </table>
+</div>
 
 </body>
 </html>
