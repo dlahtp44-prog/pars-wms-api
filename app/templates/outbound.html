@@ -1,25 +1,16 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <title>출고 처리</title>
-</head>
-<body>
-
 <h1>📤 출고 처리</h1>
 
 <input id="item" placeholder="품번">
 <input id="qty" type="number" placeholder="수량">
 <input id="remark" placeholder="비고">
-<br><br>
 
 <button onclick="submitOutbound()">출고 처리</button>
 
 <script>
 async function submitOutbound() {
-    const item = document.getElementById("item").value;
-    const qty = document.getElementById("qty").value;
-    const remark = document.getElementById("remark").value;
+    const item = item.value;
+    const qty = qty.value;
+    const remark = remark.value;
 
     const res = await fetch(
         `/outbound?item=${item}&qty=${qty}&remark=${encodeURIComponent(remark)}`,
@@ -28,13 +19,10 @@ async function submitOutbound() {
 
     if (res.ok) {
         alert("출고 완료");
-        // ✅ 1️⃣ 출고 후 재고조회로 이동 (item 전달)
-        window.location.href = `/inventory-page?highlight=${item}`;
+        // ✅ 출고 후 재고조회로 이동
+        location.href = `/inventory-page?highlight=${item}`;
     } else {
         alert("출고 실패");
     }
 }
 </script>
-
-</body>
-</html>
