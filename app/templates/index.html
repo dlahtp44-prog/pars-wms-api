@@ -8,23 +8,19 @@
 </head>
 <body>
 
-<header>
+<div class="container">
     <h1>PARS WMS</h1>
-    <p>물류 입·출고 및 재고 관리 시스템</p>
-</header>
+    <p class="subtitle">물류 작업 메인 화면</p>
 
-<main class="menu">
-    <a href="/docs" class="card">📘 API 문서</a>
-    <a href="/inbound" class="card">📥 입고 처리</a>
-    <a href="/outbound" class="card">📤 출고 처리</a>
-    <a href="/move" class="card">🔄 재고 이동</a>
-    <a href="/inventory" class="card">📦 재고 조회</a>
-    <a href="/qr" class="card">🔳 QR 스캔</a>
-</main>
-
-<footer>
-    <small>© PARS WMS</small>
-</footer>
+    <div class="grid">
+        <a href="/inbound-page" class="card green">📥 입고</a>
+        <a href="/outbound-page" class="card red">📤 출고</a>
+        <a href="/move-page" class="card blue">🔄 재고이동</a>
+        <a href="/inventory-page" class="card gray">📦 재고조회</a>
+        <a href="/history-page" class="card dark">🕘 작업이력</a>
+        <a href="/qr" class="card purple">📷 QR 스캔</a>
+    </div>
+</div>
 
 </body>
 </html>
