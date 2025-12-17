@@ -1,39 +1,119 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>입고 처리</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- 모바일 대응 필수 -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto;
+            background: #f4f6f8;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-    <!-- 공통 스타일 -->
-    <link rel="stylesheet" href="/static/style.css">
+        .container {
+            background: #ffffff;
+            width: 100%;
+            max-width: 420px;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-inbound {
+            background: #2ecc71;
+            color: #fff;
+            margin-bottom: 10px;
+        }
+
+        .btn-back {
+            background: #7f8c8d;
+            color: #fff;
+        }
+
+        .result {
+            margin-top: 15px;
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>📥 입고 처리</h1>
+    <h1>📦 입고 처리</h1>
 
-    <!-- 입고 처리 폼 -->
-    <form action="/inbound" method="post">
-        <input
-            type="text"
-            name="remark"
-            placeholder="입고 구분 (예: IN, 입고)"
-            required
-        >
+    <input
+        id="remark"
+        type="text"
+        placeholder="입고 구분 (예: IN, 입고)"
+    />
 
-        <button class="card green" type="submit">
-            입고 처리
-        </button>
-    </form>
+    <button class="btn-inbound" onclick="submitInbound()">
+        입고 처리
+    </button>
 
-    <!-- 메인 이동 -->
-    <a href="/" class="card gray">
-        ⬅ 메인으로
-    </a>
+    <button class="btn-back" onclick="location.href='/'">
+        ← 메인으로
+    </button>
+
+    <div id="result" class="result"></div>
 </div>
+
+<script>
+async function submitInbound() {
+    const remark = document.getElementById("remark").value;
+    const resultBox = document.getElementById("result");
+
+    if (!remark) {
+        resultBox.innerText = "입고 구분을 입력하세요.";
+        resultBox.style.color = "red";
+        return;
+    }
+
+    try {
+        const res = await fetch(`/inbound?remark=${encodeURIComponent(remark)}`, {
+            method: "POST"
+        });
+
+        const text = await res.text();
+
+        resultBox.innerText = text;
+        resultBox.style.color = "green";
+    } catch (err) {
+        resultBox.innerText = "입고 처리 실패";
+        resultBox.style.color = "red";
+    }
+}
+</script>
 
 </body>
 </html>
