@@ -1,26 +1,46 @@
-import qrcode
-import os
-
-def generate_qr_image(item_code, warehouse, location, lot_no, qty):
-    qr_text = f"ITEM={item_code};WH={warehouse};LOC={location};LOT={lot_no};QTY={qty}"
-
-    output_dir = "app/static/qr"
-    os.makedirs(output_dir, exist_ok=True)
-
-    filename = f"qr_{item_code}_{lot_no}.png"
-    output_path = os.path.join(output_dir, filename)
-
-    qr = qrcode.QRCode(
-        version=2,
-        error_correction=qrcode.constants.ERROR_CORRECT_M,
-        box_size=8,
-        border=2,
-    )
-    qr.add_data(qr_text)
-    qr.make(fit=True)
-
-    img = qr.make_image(fill_color="black", back_color="white")
-    img.save(output_path)
-
-    return f"/static/qr/{filename}"
-
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>QR Label</title>
+<style>
+@page {
+    size: 70mm 40mm;
+    margin: 0;
+}
+body {
+    width: 70mm;
+    height: 40mm;
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+.label {
+    display: flex;
+    padding: 2mm;
+}
+.qr img {
+    width: 28mm;
+    height: 28mm;
+}
+.info {
+    margin-left: 3mm;
+    font-size: 8pt;
+    line-height: 1.4;
+}
+</style>
+</head>
+<body>
+<div class="label">
+    <div class="qr">
+        <img src="{{ qr_url }}">
+    </div>
+    <div class="info">
+        <div><b>ITEM</b>: {{ item_code }}</div>
+        <div><b>LOT</b>: {{ lot_no }}</div>
+        <div><b>WH</b>: {{ warehouse }}</div>
+        <div><b>LOC</b>: {{ location }}</div>
+        <div><b>QTY</b>: {{ qty }}</div>
+    </div>
+</div>
+</body>
+</html>
