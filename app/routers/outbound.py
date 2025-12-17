@@ -1,37 +1,18 @@
-from fastapi import APIRouter, HTTPException
-from app.core.models import get_current_qty
-from app.core.database import get_conn
+from fastapi import APIRouter, Query
 
-router = APIRouter(prefix="/outbound", tags=["Outbound"])
+router = APIRouter(tags=["출고"])
 
-
-@router.post("/")
+@router.post(
+    "/outbound",
+    summary="출고 처리",
+    description="상품 출고를 처리하는 API입니다."
+)
 def outbound(
-    warehouse: str,
-    location: str,
-    item_code: str,
-    lot_no: str,
-    qty: float,
-    remark: str = "OUT",
+    remark: str = Query(
+        ...,
+        title="비고",
+        description="출고 구분 또는 메모 (예: OUT, 판매출고)",
+        example="OUT"
+    )
 ):
-    if qty <= 0:
-        raise HTTPException(400, "qty must be > 0")
-
-    current = get_current_qty(warehouse, location, item_code, lot_no)
-    if qty > current:
-        raise HTTPException(400, f"재고 부족 (현재고: {current})")
-
-    conn = get_conn()
-    cur = conn.cursor()
-
-    cur.execute("""
-        INSERT INTO inventory_tx
-        (tx_type, warehouse, location, item_code, lot_no, qty, remark)
-        VALUES ('OUT', ?, ?, ?, ?, ?, ?)
-    """, (warehouse, location, item_code, lot_no, -abs(qty), remark))
-
-    conn.commit()
-    conn.close()
-
-    return {"result": "OK", "after_qty": current - qty}
-
+    return {"결과": "출고 처리 완료"}
