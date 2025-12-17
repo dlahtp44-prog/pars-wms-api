@@ -8,6 +8,6 @@ router = APIRouter(tags=["QR"])
     description="품목 QR 라벨을 생성합니다."
 )
 def qr_label(
-    item_code: str = Query(..., title="품목코드", example="ITEM001")
+    item_code: str = Query(..., title="품목 코드", example="ITEM001")
 ):
-    return {"결과": "QR 생성 완료"}
+    return {"결과": "QR 라벨 생성 완료"}
