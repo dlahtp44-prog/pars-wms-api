@@ -9,16 +9,8 @@ templates = Jinja2Templates(directory="app/templates")
 def history_page(request: Request):
     conn = get_conn()
     cur = conn.cursor()
-
     cur.execute("""
-        SELECT
-            type,
-            warehouse,
-            location,
-            item,
-            qty,
-            remark,
-            created_at
+        SELECT type, item, qty, remark, created_at
         FROM history
         ORDER BY id DESC
     """)
@@ -27,8 +19,5 @@ def history_page(request: Request):
 
     return templates.TemplateResponse(
         "history.html",
-        {
-            "request": request,
-            "rows": rows
-        }
+        {"request": request, "rows": rows}
     )
