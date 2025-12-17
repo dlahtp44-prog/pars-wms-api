@@ -1,28 +1,14 @@
-############################
-# FastAPI Core
-############################
 fastapi==0.111.0
 uvicorn==0.29.0
 python-multipart==0.0.9
 jinja2==3.1.4
+
+# QR
 qrcode==7.4.2
-openpyxl==3.1.2
-aiofiles==23.2.1
-pandas==2.2.2
+Pillow>=10.0.0
 
-
-############################
-# QR / PDF
-############################
-qrcode==7.4.2
-reportlab==4.2.0
-
-############################
-# Excel Import / Export
-############################
+# Excel
 openpyxl==3.1.2
 
-############################
-# Static File Serving
-############################
+# Static
 aiofiles==23.2.1
