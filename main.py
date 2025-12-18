@@ -70,7 +70,7 @@ safe_include("app.pages.inventory_page")    # /inventory-page
 safe_include("app.pages.history_page")      # /history-page
 safe_include("app.pages.qr_page")            # /qr-page
 safe_include("app.pages.item_page")          # /item/{item_code}
-
+safe_include("app.pages.upload_page")
 # =========================
 # API Routers
 # =========================
@@ -83,7 +83,7 @@ safe_include("app.routers.history")
 safe_include("app.routers.location")
 safe_include("app.routers.qr_api")
 safe_include("app.routers.qr_process")
-
+safe_include("app.routers.upload_inventory")
 # =========================
 # Health Check
 # =========================
