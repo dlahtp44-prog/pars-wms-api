@@ -1,13 +1,42 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.db import init_db
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+import os
 
-app = FastAPI(title="PARS WMS")
+# =========================
+# App 생성
+# =========================
+app = FastAPI(
+    title="PARS WMS",
+    description="입고, 출고, 재고이동, 재고조회, 작업이력, QR 스캔 WMS",
+    version="1.0.0"
+)
 
+# =========================
+# DB 초기화 (startup)
+# =========================
 @app.on_event("startup")
 def startup():
+    from app.db import init_db
     init_db()
+    print("✅ DB 초기화 완료")
 
+# =========================
+# 경로 설정
+# =========================
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+STATIC_DIR = os.path.join(BASE_DIR, "app", "static")
+TEMPLATE_DIR = os.path.join(BASE_DIR, "app", "templates")
+
+if os.path.isdir(STATIC_DIR):
+    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+templates = Jinja2Templates(directory=TEMPLATE_DIR)
+
+# =========================
+# CORS
+# =========================
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -15,26 +44,44 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-def safe_include(path):
+# =========================
+# 안전한 Router 등록 함수
+# =========================
+def safe_include(path: str):
     try:
-        m = __import__(path, fromlist=["router"])
-        app.include_router(m.router)
+        module = __import__(path, fromlist=["router"])
+        app.include_router(module.router)
+        print(f"✅ {path} 등록")
     except Exception as e:
-        print(path, e)
+        print(f"❌ {path} 실패:", e)
 
-# Pages
 # =========================
-# Page Routers
+# Page Routers (HTML)
 # =========================
-safe_include("app.pages.index_page", "index_page")   # ← 이게 핵심
-safe_include("app.pages.inbound_page", "inbound_page")
-safe_include("app.pages.outbound_page", "outbound_page")
-safe_include("app.pages.move_page", "move_page")
-safe_include("app.pages.inventory_page", "inventory_page")
-safe_include("app.pages.history_page", "history_page")
-safe_include("app.pages.qr_page", "qr_page")
+safe_include("app.pages.index_page")       # /
+safe_include("app.pages.inbound_page")     # /inbound-page
+safe_include("app.pages.outbound_page")    # /outbound-page
+safe_include("app.pages.move_page")        # /move-page
+safe_include("app.pages.inventory_page")   # /inventory-page
+safe_include("app.pages.history_page")     # /history-page
+safe_include("app.pages.qr_page")           # /qr-page
+safe_include("app.pages.worker_page")
 
+# =========================
+# API Routers
+# =========================
+safe_include("app.routers.items")
+safe_include("app.routers.inbound")
+safe_include("app.routers.outbound")
+safe_include("app.routers.move")
+safe_include("app.routers.inventory")
+safe_include("app.routers.history")
+safe_include("app.routers.location")
+safe_include("app.routers.qr_api")
 
+# =========================
+# Health Check
+# =========================
 @app.get("/ping")
 def ping():
-    return {"status":"OK"}
+    return {"status": "OK"}
