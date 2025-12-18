@@ -1,13 +1,29 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>📦 재고 엑셀 업로드</h2>
 
-<form action="/api/upload/inventory" method="post" enctype="multipart/form-data">
-  <input type="file" name="file" accept=".csv,.xlsx" required>
+<h2>📦 재고 엑셀 업로드 (XLSX)</h2>
+
+<form
+  action="/api/upload/inventory-xlsx"
+  method="post"
+  enctype="multipart/form-data"
+>
+  <input type="file" name="file" accept=".xlsx" required>
   <button type="submit">업로드</button>
 </form>
 
-<p style="margin-top:10px;color:#666;">
-※ 컬럼: 장소명 / 브랜드 / 품번 / 품명 / LOT / 규격 / 로케이션 / 수량
-</p>
+<hr>
+
+<h4>📄 엑셀 컬럼 형식</h4>
+<ul>
+  <li>장소명</li>
+  <li>브랜드</li>
+  <li>품번</li>
+  <li>품명</li>
+  <li>LOT</li>
+  <li>규격</li>
+  <li>로케이션</li>
+  <li>수량</li>
+</ul>
+
 {% endblock %}
