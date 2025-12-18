@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>QR 스캔 / 조회</h2>
+
+<input
+  id="qr"
+  placeholder="QR 스캔 또는 품번 입력"
+  autofocus
+  style="width:100%; padding:10px; font-size:16px;"
+  onkeydown="if(event.key==='Enter'){ scan(); }"
+/>
+
+<div id="result" style="margin-top:15px;"></div>
+
+<script src="/static/qr.js"></script>
+{% endblock %}
