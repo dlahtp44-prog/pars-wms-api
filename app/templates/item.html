@@ -1,1 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>품목 상세 : {{ item_code }}</h2>
+
+<table>
+<tr>
+  <th>장소</th><th>LOT</th><th>규격</th>
+  <th>로케이션</th><th>현재고</th>
+</tr>
+{% for r in rows %}
+<tr>
+  <td>{{ r.location_name }}</td>
+  <td>{{ r.lot_no }}</td>
+  <td>{{ r.spec }}</td>
+  <td>{{ r.location }}</td>
+  <td>{{ r.qty }}</td>
+</tr>
+{% endfor %}
+</table>
+{% endblock %}
 
