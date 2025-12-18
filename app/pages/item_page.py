@@ -1,27 +1,26 @@
-
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 from app.db import get_conn
 
 router = APIRouter()
+
 templates = Jinja2Templates(directory="app/templates")
 
-@router.get("/item/{item}")
-def item_page(request: Request, item: str):
+@router.get("/item/{item_code}")
+def item_detail(request: Request, item_code: str):
     conn = get_conn()
-    cur = conn.cursor()
-    cur.execute("""
-        SELECT warehouse, brand, item, name, lot, spec, location, qty
-        FROM inventory
-        WHERE item = ?
-    """, (item,))
-    row = cur.fetchone()
+    rows = conn.execute(
+        "SELECT * FROM inventory WHERE item_code=?",
+        (item_code,)
+    ).fetchall()
     conn.close()
 
-    if not row:
-        return {"error": "품목 없음"}
-
     return templates.TemplateResponse(
-        "item_detail.html",
-        {"request": request, "r": row}
+        "item.html",
+        {
+            "request": request,
+            "item_code": item_code,
+            "rows": rows
+        }
     )
+
