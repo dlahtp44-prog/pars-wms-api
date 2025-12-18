@@ -1,8 +1,7 @@
 import sqlite3
 import os
-from datetime import datetime
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "wms.db")
+DB_PATH = os.path.join(os.path.dirname(__file__), "WMS.db")
 
 # =========================
 # DB Connection
@@ -12,6 +11,7 @@ def get_conn():
     conn.row_factory = sqlite3.Row
     return conn
 
+
 # =========================
 # DB 초기화
 # =========================
@@ -19,18 +19,17 @@ def init_db():
     conn = get_conn()
     cur = conn.cursor()
 
-    # 재고 테이블
+    # 재고 테이블 (예시)
     cur.execute("""
     CREATE TABLE IF NOT EXISTS inventory (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        location_name TEXT,
-        brand TEXT,
         item_code TEXT,
+        brand TEXT,
         item_name TEXT,
         lot_no TEXT,
         spec TEXT,
         location TEXT,
-        qty INTEGER DEFAULT 0
+        qty INTEGER,
+        PRIMARY KEY (item_code, location)
     )
     """)
 
@@ -38,57 +37,48 @@ def init_db():
     cur.execute("""
     CREATE TABLE IF NOT EXISTS history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        action TEXT,
-        location_name TEXT,
-        brand TEXT,
+        tx_type TEXT,
         item_code TEXT,
-        item_name TEXT,
-        lot_no TEXT,
-        spec TEXT,
-        location TEXT,
         qty INTEGER,
-        created_at TEXT
+        location TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
     """)
 
     conn.commit()
     conn.close()
 
+
 # =========================
-# 작업 이력 기록 (🔥 핵심)
+# ✅ 작업 이력 기록 (입고/출고/이동 공용)
 # =========================
-def log_history(
-    action,
-    location_name,
-    brand,
-    item_code,
-    item_name,
-    lot_no,
-    spec,
-    location,
-    qty
-):
+def log_history(tx_type: str, item_code: str, qty: int, location: str):
     conn = get_conn()
-    cur = conn.cursor()
-
-    cur.execute("""
-    INSERT INTO history (
-        action, location_name, brand,
-        item_code, item_name, lot_no,
-        spec, location, qty, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, (
-        action,
-        location_name,
-        brand,
-        item_code,
-        item_name,
-        lot_no,
-        spec,
-        location,
-        qty,
-        datetime.now().isoformat()
-    ))
-
+    conn.execute(
+        """
+        INSERT INTO history (tx_type, item_code, qty, location)
+        VALUES (?, ?, ?, ?)
+        """,
+        (tx_type, item_code, qty, location)
+    )
     conn.commit()
     conn.close()
+
+
+# =========================
+# ✅ 작업 이력 조회 (Page / API 공용)
+# =========================
+def get_history():
+    conn = get_conn()
+    rows = conn.execute("""
+        SELECT
+            tx_type,
+            item_code,
+            qty,
+            location,
+            created_at
+        FROM history
+        ORDER BY id DESC
+    """).fetchall()
+    conn.close()
+    return rows
