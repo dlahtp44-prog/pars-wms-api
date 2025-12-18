@@ -13,7 +13,7 @@ def init_db():
     conn = get_conn()
     cur = conn.cursor()
 
-    # 재고
+    # 재고 테이블
     cur.execute("""
     CREATE TABLE IF NOT EXISTS inventory (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -25,11 +25,11 @@ def init_db():
         spec TEXT,
         location TEXT,
         qty INTEGER DEFAULT 0,
-        UNIQUE(item_code, lot_no, location)
+        UNIQUE(item_code, location)
     )
     """)
 
-    # 작업이력
+    # 작업 이력
     cur.execute("""
     CREATE TABLE IF NOT EXISTS history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -43,6 +43,7 @@ def init_db():
 
     conn.commit()
     conn.close()
+
 
 
 # ✅ 작업이력 기록
