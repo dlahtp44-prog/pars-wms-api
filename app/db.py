@@ -4,7 +4,7 @@ import os
 DB_PATH = os.path.join(os.path.dirname(__file__), "WMS.db")
 
 def get_conn():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -15,16 +15,14 @@ def init_db():
     # inventory
     cur.execute("""
     CREATE TABLE IF NOT EXISTS inventory (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        location_name TEXT,
-        location TEXT NOT NULL,
-        brand TEXT,
-        item_code TEXT NOT NULL,
+        item_code TEXT,
         item_name TEXT,
+        brand TEXT,
         lot_no TEXT,
         spec TEXT,
-        qty INTEGER NOT NULL DEFAULT 0,
-        UNIQUE(item_code, location, lot_no)
+        location TEXT,
+        qty INTEGER,
+        PRIMARY KEY (item_code, lot_no, location)
     )
     """)
 
@@ -33,14 +31,10 @@ def init_db():
     CREATE TABLE IF NOT EXISTS history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         tx_type TEXT,
-        location_name TEXT,
-        location TEXT,
-        brand TEXT,
         item_code TEXT,
-        item_name TEXT,
         lot_no TEXT,
-        spec TEXT,
         qty INTEGER,
+        location TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
     """)
@@ -48,24 +42,9 @@ def init_db():
     conn.commit()
     conn.close()
 
-# ✅ 작업 이력 기록
-def log_history(tx_type, item_code, lot_no, qty, location):
-    conn = get_conn()
-    conn.execute("""
+
+def log_history(cur, tx_type, item_code, lot_no, qty, location):
+    cur.execute("""
         INSERT INTO history (tx_type, item_code, lot_no, qty, location)
         VALUES (?, ?, ?, ?, ?)
     """, (tx_type, item_code, lot_no, qty, location))
-    conn.commit()
-    conn.close()
-
-
-
-def get_history():
-    conn = get_conn()
-    rows = conn.execute("""
-        SELECT *
-        FROM history
-        ORDER BY id DESC
-    """).fetchall()
-    conn.close()
-    return rows
