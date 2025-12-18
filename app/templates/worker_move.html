@@ -1,38 +1,19 @@
-from fastapi import APIRouter, Form
-from fastapi.responses import RedirectResponse
-from app.db import get_conn, log_history
+{% extends "worker_base.html" %}
+{% block content %}
 
-router = APIRouter(prefix="/api", tags=["이동"])
+<h3>📦 재고 이동</h3>
 
-@router.post("/move")
-def move(
-    item_code: str = Form(...),
-    qty: int = Form(...),
-    to_location: str = Form(...)
-):
-    conn = get_conn()
-    cur = conn.cursor()
+<form action="/api/move" method="post">
+  <label>품번</label>
+  <input name="item_code" required>
 
-    # 기존 위치에서 차감
-    cur.execute("""
-        UPDATE inventory
-        SET qty = qty - ?
-        WHERE item_code = ?
-    """, (qty, item_code))
+  <label>이동 수량</label>
+  <input name="qty" type="number" required>
 
-    # 이동 위치에 추가 (없으면 신규)
-    cur.execute("""
-        INSERT INTO inventory (item_code, location, qty)
-        VALUES (?, ?, ?)
-        ON CONFLICT(item_code, location)
-        DO UPDATE SET qty = qty + ?
-    """, (item_code, to_location, qty, qty))
+  <label>이동 위치</label>
+  <input name="to_location" required>
 
-    log_history("이동", item_code, qty, to_location)
+  <button type="submit">이동 처리</button>
+</form>
 
-    conn.commit()
-    conn.close()
-
-    # ✅ 처리 후 작업자 메인 이동
-    return RedirectResponse(url="/worker", status_code=303)
-
+{% endblock %}
