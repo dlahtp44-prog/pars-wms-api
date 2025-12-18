@@ -1,37 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
 
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>QR 라벨 생성</title>
-</head>
-<body>
+<h3>QR 라벨 생성</h3>
 
-<h2>🏷 QR 라벨 생성</h2>
+<form action="/api/qr/label" method="post">
+  <input name="location_name" placeholder="장소명"><br>
+  <input name="brand" placeholder="브랜드"><br>
+  <input name="item_code" placeholder="품번"><br>
+  <input name="lot_no" placeholder="LOT"><br>
+  <input name="spec" placeholder="규격"><br>
+  <input name="location" placeholder="로케이션"><br>
 
-<input id="item" placeholder="품목 코드"><br><br>
-<input id="qty" type="number" placeholder="수량"><br><br>
-<input id="location" placeholder="위치"><br><br>
-<input id="lot" placeholder="LOT 번호"><br><br>
+  <select name="type">
+    <option value="IN">입고</option>
+    <option value="OUT">출고</option>
+    <option value="MOVE">이동</option>
+  </select>
 
-<button onclick="create()">라벨 생성</button>
+  <input name="qty" type="number" value="1"><br>
 
-<p id="result"></p>
+  <button type="submit">QR 라벨 생성</button>
+</form>
 
-<script>
-async function create(){
-  const url =
-    `/qr/label?item=${item.value}&qty=${qty.value}` +
-    `&location=${location.value}&lot=${lot.value}`;
+{% endblock %}
 
-  const res = await fetch(url, { method: "POST" });
-  const data = await res.json();
-
-  document.getElementById("result").innerHTML =
-    `<a href="${data.파일}" target="_blank">QR 라벨 다운로드</a>`;
-}
-</script>
-
-</body>
-</html>
