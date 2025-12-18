@@ -49,15 +49,13 @@ def init_db():
 # ✅ 작업이력 기록
 def log_history(tx_type, item_code, qty, location):
     conn = get_conn()
-    conn.execute(
-        """
+    conn.execute("""
         INSERT INTO history (tx_type, item_code, qty, location)
         VALUES (?, ?, ?, ?)
-        """,
-        (tx_type, item_code, qty, location)
-    )
+    """, (tx_type, item_code, qty, location))
     conn.commit()
     conn.close()
+
 
 
 # ✅ 작업이력 조회 (page + api 공용)
