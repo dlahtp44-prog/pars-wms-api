@@ -1,7 +1,21 @@
+# ======================
+# FastAPI Core
+# ======================
 fastapi==0.111.0
 uvicorn==0.29.0
-jinja2==3.1.4
 python-multipart==0.0.9
-qrcode==7.4.2
-reportlab==4.2.0
-pillow==10.3.0
+jinja2==3.1.4
+
+# ======================
+# Static / File
+# ======================
+aiofiles==23.2.1
+
+# ======================
+# NOTE: Railway 안정화
+# ======================
+# pandas ❌
+# openpyxl ❌
+# pillow ❌
+# reportlab ❌
+# qrcode ❌
