@@ -6,21 +6,27 @@ router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 
 @router.get("/inventory-page")
-def inventory_page(request: Request, highlight: str = ""):
+def inventory_page(request: Request):
     conn = get_conn()
-    cur = conn.cursor()
-    cur.execute("""
-        SELECT brand, item, name, lot, spec, location, qty
+    rows = conn.execute("""
+        SELECT
+            location_name,
+            brand,
+            item_code,
+            item_name,
+            lot_no,
+            spec,
+            location,
+            qty
         FROM inventory
-    """)
-    rows = cur.fetchall()
+        ORDER BY item_code
+    """).fetchall()
     conn.close()
 
     return templates.TemplateResponse(
         "inventory.html",
         {
             "request": request,
-            "rows": rows,
-            "highlight": highlight
+            "rows": rows
         }
     )
