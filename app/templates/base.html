@@ -1,30 +1,38 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
   <title>PARS WMS</title>
   <style>
-    body { display:flex; font-family:Arial; }
-    aside { width:200px; padding:20px; border-right:1px solid #ccc; }
-    main { flex:1; padding:20px; }
-    table { width:100%; border-collapse:collapse; }
-    th, td { border:1px solid #999; padding:8px; text-align:center; }
-    th { background:#ffeb00; }
-    a { text-decoration:none; }
+    body { margin:0; font-family:Arial }
+    .wrap { display:flex }
+    .menu {
+      width:180px; background:#f4f4f4; padding:15px
+    }
+    .menu a {
+      display:block; padding:8px; color:#000; text-decoration:none
+    }
+    .menu a:hover { background:#ddd }
+    .content { flex:1; padding:20px }
+    table { width:100%; border-collapse:collapse }
+    th, td { border:1px solid #ccc; padding:6px; text-align:center }
+    th { background:#ffe800 }
   </style>
 </head>
 <body>
-  <aside>
-    <div><a href="/inbound-page">입고</a></div>
-    <div><a href="/outbound-page">출고</a></div>
-    <div><a href="/move-page">재고이동</a></div>
-    <div><a href="/inventory-page">재고조회</a></div>
-    <div><a href="/history-page">작업이력</a></div>
-    <div><a href="/qr-page">QR스캔</a></div>
-  </aside>
+<div class="wrap">
+  <div class="menu">
+    <a href="/inbound-page">입고</a>
+    <a href="/outbound-page">출고</a>
+    <a href="/move-page">재고이동</a>
+    <a href="/inventory-page">재고조회</a>
+    <a href="/history-page">작업이력</a>
+    <a href="/qr-page">QR스캔</a>
+  </div>
 
-  <main>
+  <div class="content">
     {% block content %}{% endblock %}
-  </main>
+  </div>
+</div>
 </body>
 </html>
