@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 import os
 
 # =========================
@@ -14,7 +13,7 @@ app = FastAPI(
 )
 
 # =========================
-# DB 초기화 (startup)
+# DB 초기화
 # =========================
 @app.on_event("startup")
 def startup():
@@ -27,12 +26,9 @@ def startup():
 # =========================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "app", "static")
-TEMPLATE_DIR = os.path.join(BASE_DIR, "app", "templates")
 
 if os.path.isdir(STATIC_DIR):
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
-
-templates = Jinja2Templates(directory=TEMPLATE_DIR)
 
 # =========================
 # CORS
@@ -45,7 +41,7 @@ app.add_middleware(
 )
 
 # =========================
-# 안전한 Router 등록 함수
+# Router 안전 등록 함수
 # =========================
 def safe_include(path: str):
     try:
@@ -58,18 +54,15 @@ def safe_include(path: str):
 # =========================
 # Page Routers (HTML)
 # =========================
-safe_include("app.pages.index_page")       # /
-safe_include("app.pages.inbound_page")     # /inbound-page
-safe_include("app.pages.outbound_page")    # /outbound-page
-safe_include("app.pages.move_page")        # /move-page
-safe_include("app.pages.inventory_page")   # /inventory-page
-safe_include("app.pages.history_page")     # /history-page
-safe_include("app.pages.qr_page")           # /qr-page
-safe_include("app.pages.worker_page")
-safe_include("app.pages.inventory_page")
-safe_include("app.pages.qr_page")
-safe_include("app.pages.item_page")
-safe_include("app.pages.worker_page")
+safe_include("app.pages.index_page")        # /
+safe_include("app.pages.worker_page")       # /worker
+safe_include("app.pages.inbound_page")      # /inbound-page
+safe_include("app.pages.outbound_page")     # /outbound-page
+safe_include("app.pages.move_page")         # /move-page
+safe_include("app.pages.inventory_page")    # /inventory-page
+safe_include("app.pages.history_page")      # /history-page
+safe_include("app.pages.qr_page")            # /qr-page
+safe_include("app.pages.item_page")          # /item/{item_code}
 
 # =========================
 # API Routers
