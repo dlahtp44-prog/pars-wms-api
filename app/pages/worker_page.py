@@ -1,17 +1,7 @@
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 
-router = APIRouter()
-templates = Jinja2Templates(directory="app/templates")
-
-@router.get("/worker")
-def worker(request: Request):
-    return templates.TemplateResponse(
-        "worker.html",
-        {"request": request}
-    )
-
-
+router = APIRouter(prefix="/worker", tags=["Worker"])
 templates = Jinja2Templates(directory="app/templates")
 
 # =========================
