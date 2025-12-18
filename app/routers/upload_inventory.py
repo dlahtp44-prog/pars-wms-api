@@ -1,56 +1,39 @@
+from fastapi import APIRouter, UploadFile, File
+import sqlite3, csv, io
+from app.db import get_conn, log_history
 
-from fastapi import APIRouter, UploadFile, File, HTTPException
-import pandas as pd
-from app.db import get_conn
-
-router = APIRouter(
-    prefix="/api/upload",
-    tags=["Excel Upload"]
-)
+router = APIRouter(prefix="/api/upload", tags=["엑셀업로드"])
 
 @router.post("/inventory")
-async def upload_inventory_excel(file: UploadFile = File(...)):
-    if not file.filename.endswith(".xlsx"):
-        raise HTTPException(400, "엑셀(.xlsx) 파일만 업로드 가능합니다.")
-
-    # 엑셀 읽기
-    df = pd.read_excel(file.file)
-
-    required_cols = [
-        "장소명", "브랜드", "품번", "품명",
-        "LOT NO", "규격", "로케이션", "현재고"
-    ]
-
-    for col in required_cols:
-        if col not in df.columns:
-            raise HTTPException(400, f"엑셀 컬럼 누락: {col}")
+async def upload_inventory(file: UploadFile = File(...)):
+    content = await file.read()
+    reader = csv.DictReader(io.StringIO(content.decode("utf-8-sig")))
 
     conn = get_conn()
     cur = conn.cursor()
 
-    # 기존 재고 초기화 (초기 세팅용)
-    cur.execute("DELETE FROM inventory")
-
-    for _, row in df.iterrows():
+    for row in reader:
         cur.execute("""
             INSERT INTO inventory
-            (warehouse, brand, item, item_name, lot, spec, location, qty)
+            (location_name, brand, item_code, item_name, lot_no, spec, location, qty)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(item_code, location)
+            DO UPDATE SET qty = qty + excluded.qty
         """, (
             row["장소명"],
             row["브랜드"],
-            str(row["품번"]),
+            row["품번"],
             row["품명"],
-            row["LOT NO"],
+            row["LOT"],
             row["규격"],
             row["로케이션"],
-            int(row["현재고"])
+            int(row["수량"])
         ))
+
+        log_history("엑셀입고", row["품번"], row["수량"], row["로케이션"])
 
     conn.commit()
     conn.close()
 
-    return {
-        "result": "OK",
-        "message": f"{len(df)}건 재고 업로드 완료"
-    }
+    return {"result": "엑셀 업로드 완료"}
+
