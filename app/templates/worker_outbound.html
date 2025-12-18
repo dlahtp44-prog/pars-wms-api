@@ -1,1 +1,17 @@
+{% extends "worker_base.html" %}
+{% block content %}
+
+<h3>📤 출고 처리</h3>
+
+<form action="/api/outbound" method="post">
+  <label>품번</label>
+  <input name="item_code" required>
+
+  <label>수량</label>
+  <input name="qty" type="number" required>
+
+  <button type="submit">출고 처리</button>
+</form>
+
+{% endblock %}
 
