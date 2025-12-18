@@ -1,2 +1,12 @@
-import csv
-import io
+# =========================
+# FastAPI Core
+# =========================
+fastapi==0.111.0
+uvicorn==0.29.0
+jinja2==3.1.4
+python-multipart==0.0.9
+
+# =========================
+# Static / File
+# =========================
+aiofiles==23.2.1
