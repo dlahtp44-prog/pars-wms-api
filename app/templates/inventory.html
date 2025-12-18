@@ -1,6 +1,6 @@
 {% if rows %}
-<table border="1" style="width:100%; border-collapse:collapse;">
-  <tr style="background:#ffeb3b;">
+<table border="1" cellpadding="6" style="width:100%; border-collapse:collapse;">
+  <tr style="background:#ffe600;">
     <th>장소명</th>
     <th>브랜드</th>
     <th>품번</th>
@@ -16,7 +16,9 @@
     <td>{{ r.location_name }}</td>
     <td>{{ r.brand }}</td>
     <td>
-      <a href="/item/{{ r.item_code }}">{{ r.item_code }}</a>
+      <a href="/item/{{ r.item_code }}">
+        {{ r.item_code }}
+      </a>
     </td>
     <td>{{ r.item_name }}</td>
     <td>{{ r.lot_no }}</td>
@@ -29,5 +31,5 @@
   {% endfor %}
 </table>
 {% else %}
-<p>조회된 재고가 없습니다.</p>
+<p>조회 결과가 없습니다.</p>
 {% endif %}
