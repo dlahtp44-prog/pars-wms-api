@@ -13,6 +13,37 @@ button { background:#2ecc71; color:white; border:none; }
 </style>
 </head>
 <body>
+{% extends "base.html" %}
+{% block content %}
+
+<h2>📥 입고 처리</h2>
+
+<h3>① 수기 입력</h3>
+<form action="/api/inbound/manual" method="post">
+  <input name="item_code" placeholder="품번" required>
+  <input name="item_name" placeholder="제품명" required>
+  <input name="spec" placeholder="사이즈/규격" required>
+  <input name="lot_no" placeholder="LOT" required>
+  <input name="location_name" placeholder="창고명" required>
+  <input name="location" placeholder="로케이션" required>
+  <input name="qty" type="number" placeholder="수량" required>
+  <button type="submit">입고 처리</button>
+</form>
+
+<hr>
+
+<h3>② 엑셀(CSV) 업로드</h3>
+<form action="/api/inbound/upload" method="post" enctype="multipart/form-data">
+  <input type="file" name="file" accept=".csv" required>
+  <button type="submit">CSV 입고 업로드</button>
+</form>
+
+<p style="color:gray;">
+CSV 컬럼 순서:<br>
+item_code,item_name,spec,lot_no,location_name,location,qty
+</p>
+
+{% endblock %}
 
 <h2>📦 입고 처리</h2>
 
