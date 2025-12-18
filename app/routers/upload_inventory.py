@@ -1,5 +1,6 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
 import pandas as pd
+import json
 from app.db import get_conn, log_history
 
 router = APIRouter(prefix="/api/upload", tags=["엑셀업로드"])
@@ -14,12 +15,8 @@ async def upload_inventory_xlsx(file: UploadFile = File(...)):
     if not file.filename.endswith(".xlsx"):
         raise HTTPException(status_code=400, detail="xlsx 파일만 업로드 가능")
 
-    try:
-        df = pd.read_excel(file.file)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"엑셀 읽기 실패: {e}")
+    df = pd.read_excel(file.file)
 
-    # 컬럼 검증
     for col in REQUIRED_COLUMNS:
         if col not in df.columns:
             raise HTTPException(status_code=400, detail=f"필수 컬럼 누락: {col}")
@@ -28,45 +25,43 @@ async def upload_inventory_xlsx(file: UploadFile = File(...)):
     cur = conn.cursor()
 
     for idx, row in df.iterrows():
-        try:
-            qty = int(row["수량"])
+        qty = int(row["수량"])
 
-            cur.execute("""
-                INSERT INTO inventory
-                (location_name, brand, item_code, item_name, lot_no, spec, location, qty)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT(item_code, location)
-                DO UPDATE SET qty = qty + excluded.qty
-            """, (
-                row["장소명"],
-                row["브랜드"],
-                row["품번"],
-                row["품명"],
-                row["LOT"],
-                row["규격"],
-                row["로케이션"],
-                qty
-            ))
+        # ✅ QR 데이터 자동 생성
+        qr_payload = {
+            "type": "IN",
+            "item": row["품번"],
+            "lot": row["LOT"],
+            "location": row["로케이션"],
+            "qty": qty
+        }
 
-            log_history(
-                "엑셀입고",
-                row["품번"],
-                qty,
-                row["로케이션"]
-            )
+        qr_data = json.dumps(qr_payload, ensure_ascii=False)
 
-        except Exception as e:
-            conn.rollback()
-            conn.close()
-            raise HTTPException(
-                status_code=400,
-                detail=f"{idx+2}행 처리 실패: {e}"
-            )
+        cur.execute("""
+            INSERT INTO inventory
+            (location_name, brand, item_code, item_name,
+             lot_no, spec, location, qty, qr_data)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(item_code, location)
+            DO UPDATE SET
+                qty = qty + excluded.qty,
+                qr_data = excluded.qr_data
+        """, (
+            row["장소명"],
+            row["브랜드"],
+            row["품번"],
+            row["품명"],
+            row["LOT"],
+            row["규격"],
+            row["로케이션"],
+            qty,
+            qr_data
+        ))
+
+        log_history("엑셀입고", row["품번"], qty, row["로케이션"])
 
     conn.commit()
     conn.close()
 
-    return {
-        "result": "엑셀 업로드 완료",
-        "rows": len(df)
-    }
+    return {"result": "엑셀 업로드 + QR 생성 완료", "rows": len(df)}
