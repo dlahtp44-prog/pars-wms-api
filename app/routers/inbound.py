@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, Form
+from fastapi import APIRouter, Form, UploadFile, File
 from fastapi.responses import RedirectResponse
 import csv, io
 from app.db import get_conn, log_history
@@ -6,15 +6,16 @@ from app.db import get_conn, log_history
 router = APIRouter(prefix="/api/inbound", tags=["입고"])
 
 # =========================
-# 1️⃣ 수기 입고
+# 수기 입고
 # =========================
 @router.post("")
 def inbound(
+    location_name: str = Form(...),
+    brand: str = Form(...),
     item_code: str = Form(...),
     item_name: str = Form(...),
-    brand: str = Form(""),
-    lot_no: str = Form(""),
-    spec: str = Form(""),
+    lot_no: str = Form(...),
+    spec: str = Form(...),
     location: str = Form(...),
     qty: int = Form(...)
 ):
@@ -27,11 +28,11 @@ def inbound(
             lot_no, spec, location, qty
         )
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(item_code, location)
-        DO UPDATE SET qty = qty + excluded.qty
+        ON CONFLICT(item_code, lot_no, location)
+        DO UPDATE SET qty = qty + ?
     """, (
-        "", brand, item_code, item_name,
-        lot_no, spec, location, qty
+        location_name, brand, item_code, item_name,
+        lot_no, spec, location, qty, qty
     ))
 
     log_history("입고", item_code, qty, location)
@@ -39,13 +40,13 @@ def inbound(
     conn.commit()
     conn.close()
 
-    return RedirectResponse("/worker", status_code=303)
+    return RedirectResponse(url="/worker", status_code=303)
 
 # =========================
-# 2️⃣ 엑셀 업로드 입고
+# 엑셀(CSV) 입고
 # =========================
 @router.post("/upload")
-def upload_inventory(file: UploadFile = File(...)):
+def inbound_upload(file: UploadFile = File(...)):
     content = file.file.read().decode("utf-8")
     reader = csv.DictReader(io.StringIO(content))
 
@@ -59,16 +60,17 @@ def upload_inventory(file: UploadFile = File(...)):
                 lot_no, spec, location, qty
             )
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(item_code, location)
-            DO UPDATE SET qty = qty + excluded.qty
+            ON CONFLICT(item_code, lot_no, location)
+            DO UPDATE SET qty = qty + ?
         """, (
-            r.get("location_name", ""),
-            r.get("brand", ""),
+            r["location_name"],
+            r["brand"],
             r["item_code"],
             r["item_name"],
-            r.get("lot_no", ""),
-            r.get("spec", ""),
+            r["lot_no"],
+            r["spec"],
             r["location"],
+            int(r["qty"]),
             int(r["qty"])
         ))
 
@@ -77,4 +79,4 @@ def upload_inventory(file: UploadFile = File(...)):
     conn.commit()
     conn.close()
 
-    return RedirectResponse("/inventory-page", status_code=303)
+    return {"result": "엑셀 입고 완료"}
