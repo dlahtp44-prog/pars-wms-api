@@ -3,18 +3,41 @@
 
 <h3>📥 입고 처리</h3>
 
-<form method="post" action="/api/inbound">
+<form action="/api/inbound" method="post" enctype="multipart/form-data">
+
+  <label>장소명</label>
+  <input name="location_name" placeholder="서이천창고" required>
+
+  <label>브랜드</label>
+  <input name="brand" placeholder="FLORIM">
+
   <label>품번</label>
-  <input name="item_code" placeholder="품번" required>
+  <input name="item_code" required>
+
+  <label>품명</label>
+  <input name="item_name">
+
+  <label>규격</label>
+  <input name="spec" placeholder="600×600">
+
+  <label>LOT</label>
+  <input name="lot_no">
+
+  <label>로케이션</label>
+  <input name="location" placeholder="D01-01" required>
 
   <label>수량</label>
   <input name="qty" type="number" required>
 
-  <label>로케이션</label>
-  <input name="location" placeholder="예: D01-01">
-
   <button type="submit">입고 처리</button>
 </form>
 
-{% endblock %}
+<hr>
 
+<h4>📂 엑셀(CSV) 업로드 입고</h4>
+<form action="/api/inbound/upload" method="post" enctype="multipart/form-data">
+  <input type="file" name="file" accept=".csv" required>
+  <button type="submit">엑셀 입고</button>
+</form>
+
+{% endblock %}
