@@ -33,7 +33,6 @@ def worker_move(request: Request):
         {"request": request}
     )
 
-# ✅ 여기 추가됨
 @router.get("/inventory")
 def worker_inventory(request: Request):
     conn = get_conn()
@@ -58,5 +57,16 @@ def worker_inventory(request: Request):
             "request": request,
             "rows": rows,
             "title": "작업자 재고 조회"
+        }
+    )
+
+# ✅ 여기 추가됨
+@router.get("/qr")
+def worker_qr(request: Request):
+    return templates.TemplateResponse(
+        "qr.html",
+        {
+            "request": request,
+            "title": "작업자 QR 스캔"
         }
     )
