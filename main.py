@@ -66,6 +66,10 @@ safe_include("app.pages.inventory_page")   # /inventory-page
 safe_include("app.pages.history_page")     # /history-page
 safe_include("app.pages.qr_page")           # /qr-page
 safe_include("app.pages.worker_page")
+safe_include("app.pages.inventory_page")
+safe_include("app.pages.qr_page")
+safe_include("app.pages.item_page")
+safe_include("app.pages.worker_page")
 
 # =========================
 # API Routers
