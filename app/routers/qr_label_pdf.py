@@ -1,68 +1,66 @@
-
 from fastapi import APIRouter
-from reportlab.pdfgen import canvas
+from fastapi.responses import FileResponse
+from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
+from reportlab.pdfgen import canvas
 import qrcode
-import json
 import os
-from datetime import datetime
+import json
 
-router = APIRouter(tags=["QR 라벨 PDF"])
+router = APIRouter(prefix="/api", tags=["QR-LABEL"])
 
 OUTPUT_DIR = "app/static/labels"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-@router.post(
-    "/qr/label/pdf",
-    summary="QR 라벨 PDF 생성 (70x40mm)",
-    description="70×40mm 규격의 QR 라벨 PDF를 생성합니다."
-)
-def generate_qr_label_pdf(
-    item: str,
-    qty: int,
-    location: str,
-    lot: str,
-    action: str = "IN"
-):
-    # QR 데이터 (스캔용 JSON)
-    payload = {
-        "type": action,
-        "item": item,
-        "qty": qty,
-        "location": location,
-        "lot": lot
+LABEL_W = 50 * mm
+LABEL_H = 30 * mm
+
+@router.post("/qr/label")
+def create_qr_label(data: dict):
+    """
+    data = {
+      location_name, brand, item_code, lot_no,
+      spec, location, type, qty
     }
+    """
 
-    qr_text = json.dumps(payload, ensure_ascii=False)
-
-    filename = f"QR_{item}_{lot}_{datetime.now().strftime('%Y%m%d%H%M%S')}.pdf"
+    filename = f"qr_{data['item_code']}.pdf"
     filepath = os.path.join(OUTPUT_DIR, filename)
 
-    # 70x40mm PDF
-    c = canvas.Canvas(filepath, pagesize=(70 * mm, 40 * mm))
+    c = canvas.Canvas(filepath, pagesize=A4)
 
-    # QR 이미지 생성
-    qr_img = qrcode.make(qr_text)
-    qr_path = "temp_qr.png"
+    x, y = 10 * mm, A4[1] - 40 * mm
+
+    qr_payload = json.dumps({
+        "type": data["type"],
+        "item_code": data["item_code"],
+        "qty": data["qty"],
+        "to_location": data["location"]
+    }, ensure_ascii=False)
+
+    qr_img = qrcode.make(qr_payload)
+    qr_path = os.path.join(OUTPUT_DIR, "tmp_qr.png")
     qr_img.save(qr_path)
 
-    # QR 배치
-    c.drawImage(qr_path, 2 * mm, 8 * mm, 24 * mm, 24 * mm)
+    c.drawImage(qr_path, x, y, 20*mm, 20*mm)
 
-    # 텍스트
+    text_x = x + 22*mm
+    text_y = y + 15*mm
+
     c.setFont("Helvetica", 7)
-    c.drawString(28 * mm, 30 * mm, f"ITEM: {item}")
-    c.drawString(28 * mm, 24 * mm, f"LOT : {lot}")
-    c.drawString(28 * mm, 18 * mm, f"LOC : {location}")
-    c.drawString(28 * mm, 12 * mm, f"QTY : {qty}")
+    c.drawString(text_x, text_y, f"장소: {data['location_name']}")
+    c.drawString(text_x, text_y-8, f"브랜드: {data['brand']}")
+    c.drawString(text_x, text_y-16, f"품번: {data['item_code']}")
+    c.drawString(text_x, text_y-24, f"LOT: {data['lot_no']}")
+    c.drawString(text_x, text_y-32, f"규격: {data['spec']}")
+    c.drawString(text_x, text_y-40, f"LOC: {data['location']}")
 
+    c.showPage()
     c.save()
 
-    # 임시 QR 이미지 삭제
-    if os.path.exists(qr_path):
-        os.remove(qr_path)
+    return FileResponse(
+        filepath,
+        media_type="application/pdf",
+        filename=filename
+    )
 
-    return {
-        "결과": "QR 라벨 PDF 생성 완료",
-        "파일": f"/static/labels/{filename}"
-    }
