@@ -1,1 +1,20 @@
+{% extends "worker_base.html" %}
+{% block content %}
+
+<h3>📥 입고 처리</h3>
+
+<form method="post" action="/api/inbound">
+  <label>품번</label>
+  <input name="item_code" placeholder="품번" required>
+
+  <label>수량</label>
+  <input name="qty" type="number" required>
+
+  <label>로케이션</label>
+  <input name="location" placeholder="예: D01-01">
+
+  <button type="submit">입고 처리</button>
+</form>
+
+{% endblock %}
 
