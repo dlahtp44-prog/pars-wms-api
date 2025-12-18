@@ -1,21 +1,36 @@
 {% if rows %}
-<table>
-<tr>
-  <th>장소명</th><th>브랜드</th><th>품번</th>
-  <th>품명</th><th>LOT</th><th>규격</th>
-  <th>로케이션</th><th>현재고</th>
-</tr>
-{% for r in rows %}
-<tr>
-  <td>{{ r.location_name }}</td>
-  <td>{{ r.brand }}</td>
-  <td><a href="/item/{{ r.item_code }}">{{ r.item_code }}</a></td>
-  <td>{{ r.item_name }}</td>
-  <td>{{ r.lot_no }}</td>
-  <td>{{ r.spec }}</td>
-  <td>{{ r.location }}</td>
-  <td>{{ r.qty }}</td>
-</tr>
-{% endfor %}
+<table border="1" cellpadding="8" cellspacing="0" style="width:100%;">
+  <tr style="background:#ffe600;">
+    <th>장소명</th>
+    <th>브랜드</th>
+    <th>품번</th>
+    <th>품명</th>
+    <th>LOT NO</th>
+    <th>규격</th>
+    <th>로케이션</th>
+    <th>현재고</th>
+  </tr>
+
+  {% for r in rows %}
+  <tr>
+    <td>{{ r[0] }}</td>  <!-- 장소명 -->
+    <td>{{ r[1] }}</td>  <!-- 브랜드 -->
+
+    <!-- 🔗 품번 클릭 → item 상세 -->
+    <td>
+      <a href="/item/{{ r[2] }}">
+        {{ r[2] }}
+      </a>
+    </td>
+
+    <td>{{ r[3] }}</td>  <!-- 품명 -->
+    <td>{{ r[4] }}</td>  <!-- LOT -->
+    <td>{{ r[5] }}</td>  <!-- 규격 -->
+    <td>{{ r[6] }}</td>  <!-- 로케이션 -->
+    <td style="font-weight:bold; color:red;">{{ r[7] }}</td> <!-- 현재고 -->
+  </tr>
+  {% endfor %}
 </table>
+{% else %}
+<p>조회된 재고가 없습니다.</p>
 {% endif %}
