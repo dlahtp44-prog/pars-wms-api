@@ -15,10 +15,10 @@
   <button onclick="scan()">조회</button>
 </div>
 
-<!-- 재고 조회 결과 공통 테이블 -->
+<!-- ✅ 재고 조회 결과 테이블 (공통 사용) -->
 {% include "inventory.html" %}
 
-<!-- ⚠️ static 경로는 반드시 /static -->
+<!-- ✅ JS는 단 1번만 -->
 <script src="/static/qr.js"></script>
 
 {% endblock %}
