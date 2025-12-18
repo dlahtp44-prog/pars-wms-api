@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 import os
 
 # =========================
@@ -25,10 +26,16 @@ def startup():
 # 경로 설정
 # =========================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-STATIC_DIR = os.path.join(BASE_DIR, "app", "static")
+APP_DIR = os.path.join(BASE_DIR, "app")
+STATIC_DIR = os.path.join(APP_DIR, "static")
+TEMPLATE_DIR = os.path.join(APP_DIR, "templates")
 
+# static
 if os.path.isdir(STATIC_DIR):
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+# templates (중요)
+templates = Jinja2Templates(directory=TEMPLATE_DIR)
 
 # =========================
 # CORS
@@ -56,9 +63,9 @@ def safe_include(path: str):
 # =========================
 safe_include("app.pages.index_page")        # /
 safe_include("app.pages.worker_page")       # /worker
-safe_include("app.pages.inbound_page")      # /inbound-page
-safe_include("app.pages.outbound_page")     # /outbound-page
-safe_include("app.pages.move_page")         # /move-page
+safe_include("app.pages.inbound_page")      # /worker/inbound
+safe_include("app.pages.outbound_page")     # /worker/outbound
+safe_include("app.pages.move_page")         # /worker/move
 safe_include("app.pages.inventory_page")    # /inventory-page
 safe_include("app.pages.history_page")      # /history-page
 safe_include("app.pages.qr_page")            # /qr-page
