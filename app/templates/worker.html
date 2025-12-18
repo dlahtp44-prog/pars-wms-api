@@ -1,35 +1,28 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>작업자 화면</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body { font-family: sans-serif; text-align: center; padding: 20px; }
-    button {
-      width: 90%;
-      padding: 15px;
-      margin: 10px 0;
-      font-size: 18px;
-    }
-  </style>
+<meta charset="utf-8">
+<title>작업자 WMS</title>
+<style>
+body { font-family:Arial; padding:20px }
+button {
+  width:100%; padding:20px;
+  margin:10px 0; font-size:18px
+}
+</style>
 </head>
 <body>
-
-<h2>📦 PARS WMS 작업자</h2>
+<h2>작업 선택</h2>
 
 <button onclick="go('/inbound-page')">입고</button>
 <button onclick="go('/outbound-page')">출고</button>
-<button onclick="go('/move-page')">재고 이동</button>
-<button onclick="go('/inventory-page')">재고 조회</button>
-<button onclick="go('/history-page')">작업 이력</button>
+<button onclick="go('/move-page')">재고이동</button>
+<button onclick="go('/inventory-page')">재고조회</button>
+<button onclick="go('/history-page')">작업이력</button>
+<button onclick="go('/qr-page')">QR 스캔</button>
 
 <script>
-function go(url){
-  location.href = url;
-}
+function go(url){ location.href = url }
 </script>
-
 </body>
 </html>
-
