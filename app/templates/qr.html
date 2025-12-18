@@ -1,11 +1,24 @@
 {% extends "base.html" %}
 {% block content %}
+
 <h2>QR 스캔</h2>
 
-<input id="qr" placeholder="QR 스캔값" autofocus>
-<button onclick="scan()">조회</button>
+<div style="margin-bottom:15px;">
+  <input
+    id="qr"
+    name="qr"
+    placeholder="QR 스캔값 (품번 또는 QR)"
+    autofocus
+    style="width:300px; padding:8px;"
+    onkeydown="if(event.key==='Enter'){ scan(); }"
+  >
+  <button onclick="scan()">조회</button>
+</div>
 
+<!-- 재고 조회 결과 공통 테이블 -->
 {% include "inventory.html" %}
 
+<!-- ⚠️ static 경로는 반드시 /static -->
 <script src="/static/qr.js"></script>
+
 {% endblock %}
