@@ -82,6 +82,7 @@ safe_include("app.routers.inventory")
 safe_include("app.routers.history")
 safe_include("app.routers.location")
 safe_include("app.routers.qr_api")
+safe_include("app.routers.qr_process")
 
 # =========================
 # Health Check
