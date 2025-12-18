@@ -1,64 +1,74 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
-import csv, io, json
 from app.db import get_conn, log_history
+import csv
+import io
 
-router = APIRouter(prefix="/api/upload", tags=["업로드"])
+router = APIRouter(prefix="/api", tags=["엑셀업로드"])
 
-REQUIRED_COLUMNS = [
-    "장소명", "브랜드", "품번", "품명",
-    "LOT", "규격", "로케이션", "수량"
-]
-
-@router.post("/inventory-csv")
-async def upload_inventory_csv(file: UploadFile = File(...)):
+@router.post("/upload")
+async def upload_inventory(file: UploadFile = File(...)):
     if not file.filename.endswith(".csv"):
-        raise HTTPException(status_code=400, detail="CSV 파일만 가능")
+        raise HTTPException(400, "CSV 파일만 허용")
 
     content = await file.read()
-    reader = csv.DictReader(io.StringIO(content.decode("utf-8-sig")))
-
-    for col in REQUIRED_COLUMNS:
-        if col not in reader.fieldnames:
-            raise HTTPException(status_code=400, detail=f"필수 컬럼 누락: {col}")
+    reader = csv.DictReader(io.StringIO(content.decode("utf-8")))
 
     conn = get_conn()
     cur = conn.cursor()
 
-    count = 0
+    """
+    CSV 컬럼 예시:
+    type,location_name,brand,item_code,item_name,lot_no,spec,location,qty
+    IN,서이천창고,FLORIM,728750,Walks/1.0,H5415,600x600,D01-01,10
+    """
+
     for row in reader:
-        qty = int(row["수량"])
+        tx_type = row["type"]
+        item_code = row["item_code"]
+        qty = int(row["qty"])
+        location = row["location"]
 
-        qr_data = json.dumps({
-            "type": "IN",
-            "item": row["품번"],
-            "lot": row["LOT"],
-            "location": row["로케이션"],
-            "qty": qty
-        }, ensure_ascii=False)
+        # 재고 처리
+        if tx_type == "IN":
+            cur.execute("""
+                INSERT INTO inventory
+                (location_name, brand, item_code, item_name, lot_no, spec, location, qty)
+                VALUES (?,?,?,?,?,?,?,?)
+                ON CONFLICT(item_code, location)
+                DO UPDATE SET qty = qty + ?
+            """, (
+                row["location_name"], row["brand"], item_code,
+                row["item_name"], row["lot_no"], row["spec"],
+                location, qty, qty
+            ))
 
-        cur.execute("""
-            INSERT INTO inventory
-            (location_name, brand, item_code, item_name,
-             lot_no, spec, location, qty, qr_data)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(item_code, location)
-            DO UPDATE SET qty = qty + excluded.qty
-        """, (
-            row["장소명"],
-            row["브랜드"],
-            row["품번"],
-            row["품명"],
-            row["LOT"],
-            row["규격"],
-            row["로케이션"],
-            qty,
-            qr_data
-        ))
+        elif tx_type == "OUT":
+            cur.execute("""
+                UPDATE inventory
+                SET qty = qty - ?
+                WHERE item_code = ? AND location = ?
+            """, (qty, item_code, location))
 
-        log_history("CSV입고", row["품번"], qty, row["로케이션"])
-        count += 1
+        elif tx_type == "MOVE":
+            # 출발지 차감
+            cur.execute("""
+                UPDATE inventory
+                SET qty = qty - ?
+                WHERE item_code = ? AND location = ?
+            """, (qty, item_code, row["from_location"]))
+
+            # 도착지 증가
+            cur.execute("""
+                INSERT INTO inventory (item_code, location, qty)
+                VALUES (?,?,?)
+                ON CONFLICT(item_code, location)
+                DO UPDATE SET qty = qty + ?
+            """, (item_code, location, qty, qty))
+
+        # 작업이력 기록
+        log_history(tx_type, item_code, qty, location)
 
     conn.commit()
     conn.close()
 
-    return {"result": "CSV 업로드 완료", "rows": count}
+    return {"result": "엑셀 업로드 완료"}
