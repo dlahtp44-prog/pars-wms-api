@@ -23,12 +23,17 @@ def safe_include(path):
         print(path, e)
 
 # Pages
-safe_include("app.pages.inbound_page")
-safe_include("app.pages.outbound_page")
-safe_include("app.pages.move_page")
-safe_include("app.pages.inventory_page")
-safe_include("app.pages.history_page")
-safe_include("app.pages.qr_page")
+# =========================
+# Page Routers
+# =========================
+safe_include("app.pages.index_page", "index_page")   # ← 이게 핵심
+safe_include("app.pages.inbound_page", "inbound_page")
+safe_include("app.pages.outbound_page", "outbound_page")
+safe_include("app.pages.move_page", "move_page")
+safe_include("app.pages.inventory_page", "inventory_page")
+safe_include("app.pages.history_page", "history_page")
+safe_include("app.pages.qr_page", "qr_page")
+
 
 @app.get("/ping")
 def ping():
