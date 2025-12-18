@@ -1,99 +1,23 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8">
-  <title>재고 조회</title>
-  <style>
-    body { font-family: Arial, sans-serif; }
-    .container { display: flex; }
-    .menu {
-      width: 200px;
-      border-right: 1px solid #ccc;
-      padding: 10px;
-    }
-    .menu a {
-      display: block;
-      padding: 8px;
-      text-decoration: none;
-      color: #000;
-    }
-    .menu a:hover {
-      background: #f0f0f0;
-    }
-    .content {
-      flex: 1;
-      padding: 20px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      text-align: center;
-    }
-    th {
-      background: #ffe600;
-    }
-    .qty {
-      background: #ffe600;
-      font-weight: bold;
-      color: red;
-    }
-  </style>
-</head>
-<body>
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ title }}</h2>
 
-<div class="container">
-
-  <!-- 좌측 메뉴 -->
-  <div class="menu">
-    <a href="/inbound-page">입고</a>
-    <a href="/outbound-page">출고</a>
-    <a href="/move-page">재고이동</a>
-    <a href="/inventory-page">재고조회</a>
-    <a href="/history-page">작업이력</a>
-    <a href="/qr-page">QR스캔</a>
-  </div>
-
-  <!-- 조회 결과 -->
-  <div class="content">
-    <h2>재고 조회 결과</h2>
-
-    <table>
-      <tr>
-        <th>장소명</th>
-        <th>브랜드</th>
-        <th>품번</th>
-        <th>품명</th>
-        <th>LOT NO</th>
-        <th>규격</th>
-        <th>로케이션</th>
-        <th>현재고</th>
-      </tr>
-
-      {% for r in rows %}
-      <tr>
-        <td>{{ r.location_name }}</td>
-        <td>{{ r.brand }}</td>
-        <td>
-          <a href="/item/{{ r.item }}">
-            {{ r.item }}
-          </a>
-        </td>
-        <td>{{ r.name }}</td>
-        <td>{{ r.lot }}</td>
-        <td>{{ r.spec }}</td>
-        <td>{{ r.location }}</td>
-        <td class="qty">{{ r.qty }}</td>
-      </tr>
-      {% endfor %}
-    </table>
-
-  </div>
-
-</div>
-
-</body>
-</html>
+<table>
+<tr>
+  <th>장소명</th><th>브랜드</th><th>품번</th><th>품명</th>
+  <th>LOT NO</th><th>규격</th><th>로케이션</th><th>현재고</th>
+</tr>
+{% for r in rows %}
+<tr>
+  <td>{{ r.location_name }}</td>
+  <td>{{ r.brand }}</td>
+  <td><a href="/item/{{ r.item }}">{{ r.item }}</a></td>
+  <td>{{ r.name }}</td>
+  <td>{{ r.lot }}</td>
+  <td>{{ r.spec }}</td>
+  <td>{{ r.location }}</td>
+  <td>{{ r.qty }}</td>
+</tr>
+{% endfor %}
+</table>
+{% endblock %}
