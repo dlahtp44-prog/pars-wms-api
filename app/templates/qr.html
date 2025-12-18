@@ -1,35 +1,11 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="UTF-8">
-<title>QR 스캔</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<script src="https://unpkg.com/html5-qrcode"></script>
-</head>
+{% extends "base.html" %}
+{% block content %}
+<h2>QR 스캔</h2>
 
-<body>
-<h2>📷 QR 스캔</h2>
-<div id="reader" style="width:100%"></div>
+<input id="qr" placeholder="QR 스캔값" autofocus>
+<button onclick="scan()">조회</button>
 
-<script>
-function onScanSuccess(text) {
-  fetch("/qr/process", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ qr_data: text })
-  })
-  .then(res => res.json())
-  .then(data => {
-    alert(JSON.stringify(data, null, 2));
-  });
-}
+{% include "inventory.html" %}
 
-new Html5Qrcode("reader").start(
-  { facingMode: "environment" },
-  { fps: 10, qrbox: 250 },
-  onScanSuccess
-);
-</script>
-</body>
-</html>
-
+<script src="/static/qr.js"></script>
+{% endblock %}
