@@ -84,7 +84,6 @@ safe_include("app.routers.location")
 safe_include("app.routers.qr_api")
 safe_include("app.routers.qr_process")
 safe_include("app.routers.upload_inventory")
-safe_include("app.routers.qr_label")
 safe_include("app.routers.upload_outbound")
 
 
