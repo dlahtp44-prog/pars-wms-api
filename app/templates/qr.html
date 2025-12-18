@@ -1,25 +1,19 @@
-{% extends "base.html" %}
+{% extends "worker_base.html" %}
 {% block content %}
 
-<h2>QR 스캔</h2>
+<h3>QR 스캔</h3>
 
-<div style="margin-bottom:15px;">
-  <input
-    id="qr"
-    name="qr"
-    placeholder="QR 스캔값 (품번 또는 QR)"
-    autofocus
-    style="width:300px; padding:8px;"
-    onkeydown="if(event.key==='Enter'){ scan(); }"
-  >
-  <button onclick="scan()">조회</button>
-</div>
+<input
+  id="qr"
+  placeholder="QR 스캔 또는 품번 입력"
+  autofocus
+  onkeydown="if(event.key==='Enter'){ scan(); }"
+/>
 
-<!-- ✅ 재고 조회 결과 테이블 (공통 사용) -->
+<button onclick="scan()">조회</button>
+
 {% include "inventory.html" %}
-{"type":"IN","item":"728750","lot":"H5415","location":"D01-01","qty":10}
 
-<!-- ✅ JS는 단 1번만 -->
 <script src="/static/qr.js"></script>
 
 {% endblock %}
