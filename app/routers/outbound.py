@@ -6,38 +6,38 @@ router = APIRouter(prefix="/api", tags=["출고"])
 
 @router.post("/outbound")
 def outbound(
+    location_name: str = Form(...),
+    brand: str = Form(""),
     item_code: str = Form(...),
-    lot_no: str = Form(...),
+    item_name: str = Form(""),
+    spec: str = Form(""),
+    lot_no: str = Form(""),
     location: str = Form(...),
     qty: int = Form(...)
 ):
     conn = get_conn()
     cur = conn.cursor()
 
-    # 현재 재고 조회
+    # 재고 확인
     row = cur.execute("""
-        SELECT * FROM inventory
-        WHERE item_code=? AND lot_no=? AND location=?
-    """, (item_code, lot_no, location)).fetchone()
+        SELECT qty FROM inventory
+        WHERE item_code=? AND location=?
+    """, (item_code, location)).fetchone()
 
     if not row or row["qty"] < qty:
         conn.close()
-        raise HTTPException(400, "출고 재고 부족")
+        raise HTTPException(status_code=400, detail="출고 재고 부족")
 
     # 재고 차감
     cur.execute("""
         UPDATE inventory
         SET qty = qty - ?
-        WHERE item_code=? AND lot_no=? AND location=?
-    """, (qty, item_code, lot_no, location))
+        WHERE item_code=? AND location=?
+    """, (qty, item_code, location))
 
-    # 이력 기록
-    log_history("출고", {
-        **row,
-        "qty": qty
-    })
+    log_history("출고", item_code, qty, location)
 
     conn.commit()
     conn.close()
 
-    return RedirectResponse("/inventory-page", status_code=303)
+    return RedirectResponse("/worker", status_code=303)
