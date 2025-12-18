@@ -5,15 +5,33 @@
 
 <input
   id="qr"
-  placeholder="QR 스캔 또는 품번 입력"
+  placeholder="QR 스캔"
   autofocus
   onkeydown="if(event.key==='Enter'){ scan(); }"
 />
 
-<button onclick="scan()">조회</button>
+<button onclick="scan()">자동 처리</button>
 
-{% include "inventory.html" %}
+<div id="result" style="margin-top:15px;"></div>
 
-<script src="/static/qr.js"></script>
+<script>
+async function scan() {
+  const qr = document.getElementById("qr").value;
+
+  const res = await fetch("/api/qr/process", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ qr_data: qr })
+  });
+
+  const data = await res.json();
+
+  document.getElementById("result").innerHTML =
+    "✅ 처리 완료 : " + data.action;
+
+  // 0.7초 후 작업자 메인 복귀
+  setTimeout(() => location.href = "/worker", 700);
+}
+</script>
 
 {% endblock %}
