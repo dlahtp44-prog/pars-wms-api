@@ -8,12 +8,10 @@ templates = Jinja2Templates(directory="app/templates")
 @router.get("/history-page")
 def history_page(request: Request):
     rows = get_history()
-
     return templates.TemplateResponse(
         "history.html",
         {
             "request": request,
-            "rows": rows,
-            "title": "작업 이력"
+            "rows": rows
         }
     )
