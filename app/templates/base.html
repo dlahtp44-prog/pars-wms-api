@@ -21,14 +21,15 @@
 </head>
 <body>
 <div class="wrap">
-  <div class="menu">
-    <a href="/inbound-page">입고</a>
-    <a href="/outbound-page">출고</a>
-    <a href="/move-page">재고이동</a>
-    <a href="/inventory-page">재고조회</a>
-    <a href="/history-page">작업이력</a>
-    <a href="/qr-page">QR스캔</a>
-  </div>
+<nav class="side-menu">
+  <a href="/worker/inbound">입고</a>
+  <a href="/worker/outbound">출고</a>
+  <a href="/worker/move">재고이동</a>
+  <a href="/inventory-page">재고조회</a>
+  <a href="/history-page">작업이력</a>
+  <a href="/qr-page">QR스캔</a>
+</nav>
+
 
   <div class="content">
     {% block content %}{% endblock %}
