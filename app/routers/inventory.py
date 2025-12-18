@@ -54,3 +54,29 @@ def inventory(warehouse: str | None = None, q: str | None = None):
             for r in rows
         ]
     }
+@router.get("/inventory")
+def worker_inventory(request: Request):
+    conn = get_conn()
+    rows = conn.execute("""
+        SELECT
+            location_name,
+            brand,
+            item_code,
+            item_name,
+            lot_no,
+            spec,
+            location,
+            qty
+        FROM inventory
+        ORDER BY item_code
+    """).fetchall()
+    conn.close()
+
+    return templates.TemplateResponse(
+        "inventory.html",
+        {
+            "request": request,
+            "rows": rows,
+            "title": "작업자 재고 조회"
+        }
+    )
