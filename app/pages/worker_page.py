@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
-from app.db import get_conn
 
 router = APIRouter(prefix="/worker")
 templates = Jinja2Templates(directory="app/templates")
+
 
 @router.get("")
 def worker_home(request: Request):
@@ -12,12 +12,14 @@ def worker_home(request: Request):
         {"request": request}
     )
 
+
 @router.get("/inbound")
 def worker_inbound(request: Request):
     return templates.TemplateResponse(
         "worker_inbound.html",
         {"request": request}
     )
+
 
 @router.get("/outbound")
 def worker_outbound(request: Request):
@@ -26,6 +28,7 @@ def worker_outbound(request: Request):
         {"request": request}
     )
 
+
 @router.get("/move")
 def worker_move(request: Request):
     return templates.TemplateResponse(
@@ -33,40 +36,18 @@ def worker_move(request: Request):
         {"request": request}
     )
 
-@router.get("/inventory")
-def worker_inventory(request: Request):
-    conn = get_conn()
-    rows = conn.execute("""
-        SELECT
-            location_name,
-            brand,
-            item_code,
-            item_name,
-            lot_no,
-            spec,
-            location,
-            qty
-        FROM inventory
-        ORDER BY item_code
-    """).fetchall()
-    conn.close()
 
-    return templates.TemplateResponse(
-        "inventory.html",
-        {
-            "request": request,
-            "rows": rows,
-            "title": "작업자 재고 조회"
-        }
-    )
-
-# ✅ 여기 추가됨
 @router.get("/qr")
 def worker_qr(request: Request):
     return templates.TemplateResponse(
         "qr.html",
-        {
-            "request": request,
-            "title": "작업자 QR 스캔"
-        }
+        {"request": request}
+    )
+
+
+@router.get("/inventory")
+def worker_inventory(request: Request):
+    return templates.TemplateResponse(
+        "inventory.html",
+        {"request": request, "rows": []}
     )
