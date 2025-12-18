@@ -1,17 +1,12 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter
 from app.db import get_conn
 
 router = APIRouter(prefix="/api/inventory", tags=["재고"])
 
 @router.get("")
-def inventory_search(
-    location: str | None = Query(None),
-    item_code: str | None = Query(None)
-):
+def inventory_list():
     conn = get_conn()
-    cur = conn.cursor()
-
-    sql = """
+    rows = conn.execute("""
         SELECT
             location_name,
             brand,
@@ -22,19 +17,8 @@ def inventory_search(
             location,
             qty
         FROM inventory
-        WHERE 1=1
-    """
-    params = []
-
-    if location:
-        sql += " AND location = ?"
-        params.append(location)
-
-    if item_code:
-        sql += " AND item_code = ?"
-        params.append(item_code)
-
-    rows = cur.execute(sql, params).fetchall()
+        WHERE qty > 0
+        ORDER BY item_code, location
+    """).fetchall()
     conn.close()
-
     return [dict(r) for r in rows]
