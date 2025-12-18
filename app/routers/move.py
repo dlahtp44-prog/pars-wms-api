@@ -2,65 +2,89 @@ from fastapi import APIRouter, Form, HTTPException
 from fastapi.responses import RedirectResponse
 from app.db import get_conn, log_history
 
-router = APIRouter(prefix="/api", tags=["재고이동"])
+router = APIRouter(prefix="/api/move", tags=["이동"])
 
-@router.post("/move")
-def move(
+@router.post("")
+def move_inventory(
     item_code: str = Form(...),
     lot_no: str = Form(...),
+    qty: int = Form(...),
     from_location: str = Form(...),
-    to_location: str = Form(...),
-    qty: int = Form(...)
+    to_location: str = Form(...)
 ):
     conn = get_conn()
     cur = conn.cursor()
 
-    # 출발지 재고
+    # =========================
+    # 1️⃣ 출발지 재고 확인
+    # =========================
     row = cur.execute("""
-        SELECT * FROM inventory
-        WHERE item_code=? AND lot_no=? AND location=?
+        SELECT
+            location_name,
+            brand,
+            item_name,
+            spec,
+            qty
+        FROM inventory
+        WHERE item_code = ?
+          AND lot_no = ?
+          AND location = ?
     """, (item_code, lot_no, from_location)).fetchone()
 
-    if not row or row["qty"] < qty:
+    if not row:
         conn.close()
-        raise HTTPException(400, "이동 재고 부족")
+        raise HTTPException(status_code=400, detail="출발지 재고 없음")
 
-    # 출발지 차감
+    if row["qty"] < qty:
+        conn.close()
+        raise HTTPException(status_code=400, detail="이동 수량이 재고보다 많습니다")
+
+    location_name = row["location_name"]
+    brand = row["brand"]
+    item_name = row["item_name"]
+    spec = row["spec"]
+
+    # =========================
+    # 2️⃣ 출발지 재고 차감
+    # =========================
     cur.execute("""
         UPDATE inventory
         SET qty = qty - ?
-        WHERE item_code=? AND lot_no=? AND location=?
+        WHERE item_code = ?
+          AND lot_no = ?
+          AND location = ?
     """, (qty, item_code, lot_no, from_location))
 
-    # 도착지 추가
+    # =========================
+    # 3️⃣ 도착지 재고 추가 (없으면 생성)
+    # =========================
     cur.execute("""
         INSERT INTO inventory (
-            location_name, location,
-            brand, item_code, item_name,
-            lot_no, spec, qty
+            location_name, brand, item_code, item_name,
+            lot_no, spec, location, qty
         )
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(item_code, location, lot_no)
-        DO UPDATE SET qty = qty + excluded.qty
+        ON CONFLICT(item_code, lot_no, location)
+        DO UPDATE SET qty = qty + ?
     """, (
-        row["location_name"],
-        to_location,
-        row["brand"],
-        row["item_code"],
-        row["item_name"],
-        row["lot_no"],
-        row["spec"],
-        qty
+        location_name, brand, item_code, item_name,
+        lot_no, spec, to_location, qty, qty
     ))
 
-    # 이력 (출발 → 도착)
-    log_history("이동", {
-        **row,
-        "location": f"{from_location} → {to_location}",
-        "qty": qty
-    })
+    # =========================
+    # 4️⃣ 작업이력 기록
+    # =========================
+    log_history(
+        "이동",
+        item_code,
+        qty,
+        f"{from_location} → {to_location}"
+    )
 
     conn.commit()
     conn.close()
 
-    return RedirectResponse("/inventory-page", status_code=303)
+    # =========================
+    # 5️⃣ 작업자 메인 이동
+    # =========================
+    return RedirectResponse(url="/worker", status_code=303)
