@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>📦 재고 엑셀 업로드</h2>
+
+<form action="/api/upload/inventory" method="post" enctype="multipart/form-data">
+  <input type="file" name="file" accept=".csv,.xlsx" required>
+  <button type="submit">업로드</button>
+</form>
+
+<p style="margin-top:10px;color:#666;">
+※ 컬럼: 장소명 / 브랜드 / 품번 / 품명 / LOT / 규격 / 로케이션 / 수량
+</p>
+{% endblock %}
