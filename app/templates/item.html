@@ -1,35 +1,29 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h2>품목 상세 : {{ item_code }}</h2>
+<h2>📦 품번 상세 : {{ item_code }}</h2>
 
-<table border="1" cellpadding="8" cellspacing="0">
-  <tr style="background:#ffe600;">
+<table border="1" cellpadding="6"
+       style="width:100%; border-collapse:collapse;">
+  <tr style="background:#f2f2f2;">
     <th>장소명</th>
-    <th>브랜드</th>
-    <th>품번</th>
-    <th>품명</th>
-    <th>LOT NO</th>
+    <th>LOT</th>
     <th>규격</th>
     <th>로케이션</th>
-    <th>현재고</th>
+    <th>재고</th>
   </tr>
 
   {% for r in rows %}
   <tr>
-    <td>{{ r[0] }}</td>  <!-- warehouse -->
-    <td>{{ r[1] }}</td>  <!-- brand -->
-    <td>{{ r[2] }}</td>  <!-- item_code -->
-    <td>{{ r[3] }}</td>  <!-- item_name -->
-    <td>{{ r[4] }}</td>  <!-- lot_no -->
-    <td>{{ r[5] }}</td>  <!-- spec -->
-    <td>{{ r[6] }}</td>  <!-- location -->
-    <td style="font-weight:bold; color:red;">{{ r[7] }}</td> <!-- qty -->
+    <td>{{ r.location_name }}</td>
+    <td>{{ r.lot_no }}</td>
+    <td>{{ r.spec }}</td>
+    <td>{{ r.location }}</td>
+    <td>{{ r.qty }}</td>
   </tr>
   {% endfor %}
 </table>
 
-<br>
-<a href="/inventory-page">← 재고조회로 돌아가기</a>
+<a href="/inventory-page">← 재고 조회로</a>
 
 {% endblock %}
