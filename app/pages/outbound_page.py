@@ -1,9 +1,12 @@
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 
-router = APIRouter()
+router = APIRouter(prefix="/worker")
 templates = Jinja2Templates(directory="app/templates")
 
-@router.get("/outbound-page", summary="출고 화면")
-def outbound_page(request: Request):
-    return templates.TemplateResponse("outbound.html", {"request": request})
+@router.get("/outbound")
+def worker_outbound(request: Request):
+    return templates.TemplateResponse(
+        "worker_outbound.html",
+        {"request": request}
+    )
