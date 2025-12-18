@@ -1,43 +1,34 @@
 {% extends "worker_base.html" %}
 {% block content %}
 
-<h3>📤 출고 처리</h3>
+<h2>📤 출고 처리</h2>
 
-<form action="/api/outbound" method="post" enctype="multipart/form-data">
-
-  <label>장소명</label>
-  <input name="location_name" placeholder="서이천창고" required>
-
-  <label>브랜드</label>
-  <input name="brand">
+<form method="post" action="/api/outbound">
 
   <label>품번</label>
-  <input name="item_code" required>
+  <input name="item_code" required placeholder="728750">
 
-  <label>품명</label>
-  <input name="item_name">
+  <label>제품명</label>
+  <input name="item_name" required placeholder="Walks/1.0 White">
 
-  <label>규격</label>
-  <input name="spec">
+  <label>사이즈 / 규격</label>
+  <input name="spec" required placeholder="600×600">
 
-  <label>LOT</label>
-  <input name="lot_no">
+  <label>LOT NO</label>
+  <input name="lot_no" required placeholder="H5415">
+
+  <label>창고명</label>
+  <input name="location_name" required placeholder="서이천창고">
 
   <label>로케이션</label>
-  <input name="location" placeholder="D01-01" required>
+  <input name="location" required placeholder="D01-01">
 
   <label>출고 수량</label>
   <input name="qty" type="number" required>
 
-  <button type="submit">출고 처리</button>
-</form>
-
-<hr>
-
-<h4>📂 엑셀(CSV) 출고</h4>
-<form action="/api/outbound/upload" method="post" enctype="multipart/form-data">
-  <input type="file" name="file" accept=".csv" required>
-  <button type="submit">엑셀 출고</button>
+  <button type="submit" style="background:#ff5252;color:#fff;">
+    출고 처리
+  </button>
 </form>
 
 {% endblock %}
