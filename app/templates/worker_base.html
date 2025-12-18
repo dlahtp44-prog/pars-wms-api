@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>PARS WMS (작업자)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f7f7f7;
+    }
+
+    header {
+      background: #222;
+      color: #fff;
+      padding: 14px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    nav {
+      display: flex;
+      justify-content: space-around;
+      background: #eee;
+      padding: 12px 0;
+      border-bottom: 1px solid #ccc;
+    }
+
+    nav a {
+      text-decoration: none;
+      color: #000;
+      font-weight: bold;
+      font-size: 15px;
+    }
+
+    main {
+      padding: 16px;
+    }
+
+    button {
+      padding: 14px;
+      width: 100%;
+      margin-top: 12px;
+      font-size: 16px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin-top: 8px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>PARS WMS · 작업자</header>
+
+<nav>
+  <a href="/worker/inbound">입고</a>
+  <a href="/worker/outbound">출고</a>
+  <a href="/worker/move">이동</a>
+  <a href="/worker/inventory">재고</a>
+  <a href="/worker/qr">QR</a>
+</nav>
+
+<main>
+  {% block content %}{% endblock %}
+</main>
+
+</body>
+</html>
