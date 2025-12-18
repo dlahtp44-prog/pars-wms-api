@@ -49,27 +49,15 @@ def init_db():
     conn.close()
 
 # ✅ 작업 이력 기록
-def log_history(tx_type, row):
+def log_history(tx_type, item_code, qty, location):
     conn = get_conn()
     conn.execute("""
-        INSERT INTO history (
-            tx_type, location_name, location,
-            brand, item_code, item_name, lot_no, spec,
-            qty
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, (
-        tx_type,
-        row["location_name"],
-        row["location"],
-        row["brand"],
-        row["item_code"],
-        row["item_name"],
-        row["lot_no"],
-        row["spec"],
-        row["qty"]
-    ))
+        INSERT INTO history (tx_type, item_code, qty, location)
+        VALUES (?, ?, ?, ?)
+    """, (tx_type, item_code, qty, location))
     conn.commit()
     conn.close()
+
 
 def get_history():
     conn = get_conn()
