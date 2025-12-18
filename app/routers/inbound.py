@@ -1,48 +1,52 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Form
+from fastapi.responses import RedirectResponse
 from app.db import get_conn, log_history
 
-router = APIRouter(tags=["입고"])
+router = APIRouter(prefix="/api", tags=["입고"])
 
-@router.post("/inbound", summary="입고 처리")
+@router.post("/inbound")
 def inbound(
-    warehouse: str,
-    location: str,
-    item: str,
-    qty: int,
-    remark: str = ""
+    location_name: str = Form(...),
+    location: str = Form(...),
+    brand: str = Form(...),
+    item_code: str = Form(...),
+    item_name: str = Form(...),
+    lot_no: str = Form(...),
+    spec: str = Form(...),
+    qty: int = Form(...)
 ):
     conn = get_conn()
     cur = conn.cursor()
 
-    # 재고 존재 확인
-    cur.execute(
-        "SELECT qty FROM inventory WHERE item=? AND location=?",
-        (item, location)
-    )
-    row = cur.fetchone()
+    # 재고 반영
+    cur.execute("""
+        INSERT INTO inventory (
+            location_name, location,
+            brand, item_code, item_name,
+            lot_no, spec, qty
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(item_code, location, lot_no)
+        DO UPDATE SET qty = qty + excluded.qty
+    """, (
+        location_name, location,
+        brand, item_code, item_name,
+        lot_no, spec, qty
+    ))
 
-    if row:
-        cur.execute(
-            "UPDATE inventory SET qty = qty + ? WHERE item=? AND location=?",
-            (qty, item, location)
-        )
-    else:
-        cur.execute(
-            "INSERT INTO inventory (item, qty, location) VALUES (?, ?, ?)",
-            (item, qty, location)
-        )
+    # 이력 기록
+    log_history("입고", {
+        "location_name": location_name,
+        "location": location,
+        "brand": brand,
+        "item_code": item_code,
+        "item_name": item_name,
+        "lot_no": lot_no,
+        "spec": spec,
+        "qty": qty
+    })
 
     conn.commit()
     conn.close()
 
-    # ✅ 작업이력 기록
-    log_history(
-        type="입고",
-        warehouse=warehouse,
-        location=location,
-        item=item,
-        qty=qty,
-        remark=remark
-    )
-
-    return {"result": "입고 완료"}
+    return RedirectResponse("/inventory-page", status_code=303)
