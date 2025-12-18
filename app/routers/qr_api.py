@@ -15,12 +15,14 @@ def qr_search(q: str = Query(...)):
             lot_no,
             spec,
             location,
-            qty
+            qty,
+            qr_data
         FROM inventory
         WHERE
             item_code LIKE ?
             OR lot_no LIKE ?
-    """, (f"%{q}%", f"%{q}%")).fetchall()
-    conn.close()
+            OR qr_data LIKE ?
+    """, (f"%{q}%", f"%{q}%", f"%{q}%")).fetchall()
 
+    conn.close()
     return [dict(r) for r in rows]
