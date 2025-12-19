@@ -13,20 +13,19 @@ def outbound(
     conn = get_conn()
     cur = conn.cursor()
 
-    cur.execute("""
-        SELECT qty FROM inventory
-        WHERE item_code = ? AND location = ?
-    """, (item_code, location))
-    row = cur.fetchone()
+    row = cur.execute(
+        "SELECT qty FROM inventory WHERE item_code=? AND location=?",
+        (item_code, location)
+    ).fetchone()
 
     if not row or row["qty"] < qty:
         conn.close()
-        raise HTTPException(status_code=400, detail="재고 부족")
+        raise HTTPException(400, "재고 부족")
 
     cur.execute("""
         UPDATE inventory
         SET qty = qty - ?
-        WHERE item_code = ? AND location = ?
+        WHERE item_code=? AND location=?
     """, (qty, item_code, location))
 
     log_history("출고", item_code, qty, location)
@@ -34,4 +33,4 @@ def outbound(
     conn.commit()
     conn.close()
 
-    return RedirectResponse("/worker", status_code=303)
+    return RedirectResponse("/worker/inventory", status_code=303)
