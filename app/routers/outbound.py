@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Form, HTTPException
-from fastapi.responses import RedirectResponse
 from app.db import get_conn, log_history
 
 router = APIRouter(prefix="/api/outbound", tags=["출고"])
@@ -13,10 +12,10 @@ def outbound(
     conn = get_conn()
     cur = conn.cursor()
 
-    row = cur.execute(
-        "SELECT qty FROM inventory WHERE item_code=? AND location=?",
-        (item_code, location)
-    ).fetchone()
+    row = cur.execute("""
+        SELECT qty FROM inventory
+        WHERE item_code=? AND location=?
+    """, (item_code, location)).fetchone()
 
     if not row or row["qty"] < qty:
         conn.close()
@@ -33,4 +32,4 @@ def outbound(
     conn.commit()
     conn.close()
 
-    return RedirectResponse("/worker/inventory", status_code=303)
+    return {"result": "출고 완료"}
