@@ -4,15 +4,14 @@
 <h2>📥 입고 처리</h2>
 
 <form method="post" action="/api/inbound">
-
-  <input name="location_name" placeholder="창고명" required>
-  <input name="brand" placeholder="브랜드" required>
+  <input name="warehouse" placeholder="창고 (예: 서이천)" required>
+  <input name="location" placeholder="로케이션 (D01-01)" required>
+  <input name="brand" placeholder="브랜드">
   <input name="item_code" placeholder="품번" required>
   <input name="item_name" placeholder="품명" required>
-  <input name="lot_no" placeholder="LOT" required>
-  <input name="spec" placeholder="규격" required>
-  <input name="location" placeholder="로케이션" required>
-  <input name="qty" type="number" placeholder="수량" required>
+  <input name="lot_no" placeholder="LOT">
+  <input name="spec" placeholder="규격">
+  <input name="qty" type="number" step="0.01" placeholder="수량" required>
 
   <button type="submit">입고 처리</button>
 </form>
