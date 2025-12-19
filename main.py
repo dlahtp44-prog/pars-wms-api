@@ -63,9 +63,6 @@ def safe_include(path: str):
 # =========================
 safe_include("app.pages.index_page")        # /
 safe_include("app.pages.worker_page")       # /worker
-safe_include("app.pages.inbound_page")      # /worker/inbound
-safe_include("app.pages.outbound_page")     # /worker/outbound
-safe_include("app.pages.move_page")         # /worker/move
 safe_include("app.pages.inventory_page")    # /inventory-page
 safe_include("app.pages.history_page")      # /history-page
 safe_include("app.pages.qr_page")            # /qr-page
