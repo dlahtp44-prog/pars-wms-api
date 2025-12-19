@@ -8,7 +8,6 @@ def get_conn():
     conn.row_factory = sqlite3.Row
     return conn
 
-
 def init_db():
     conn = get_conn()
     cur = conn.cursor()
@@ -16,7 +15,6 @@ def init_db():
     # 재고 테이블
     cur.execute("""
     CREATE TABLE IF NOT EXISTS inventory (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
         location_name TEXT,
         brand TEXT,
         item_code TEXT,
@@ -24,8 +22,8 @@ def init_db():
         lot_no TEXT,
         spec TEXT,
         location TEXT,
-        qty INTEGER DEFAULT 0,
-        UNIQUE(item_code, location)
+        qty INTEGER,
+        PRIMARY KEY (item_code, location)
     )
     """)
 
@@ -44,32 +42,23 @@ def init_db():
     conn.commit()
     conn.close()
 
-
-
-# ✅ 작업이력 기록
 def log_history(tx_type, item_code, qty, location):
     conn = get_conn()
-    conn.execute("""
-        INSERT INTO history (tx_type, item_code, qty, location)
-        VALUES (?, ?, ?, ?)
-    """, (tx_type, item_code, qty, location))
+    conn.execute(
+        "INSERT INTO history (tx_type, item_code, qty, location) VALUES (?, ?, ?, ?)",
+        (tx_type, item_code, qty, location)
+    )
     conn.commit()
     conn.close()
 
-
-
-# ✅ 작업이력 조회 (page + api 공용)
-def get_history():
+def get_inventory():
     conn = get_conn()
     rows = conn.execute("""
         SELECT
-            tx_type,
-            item_code,
-            qty,
-            location,
-            created_at
-        FROM history
-        ORDER BY id DESC
+            location_name, brand, item_code, item_name,
+            lot_no, spec, location, qty
+        FROM inventory
+        ORDER BY location, item_code
     """).fetchall()
     conn.close()
     return rows
