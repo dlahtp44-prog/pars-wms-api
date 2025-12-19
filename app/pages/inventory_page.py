@@ -14,7 +14,7 @@ def inventory_page(
     conn = get_conn()
     cur = conn.cursor()
 
-    query = """
+    sql = """
         SELECT
             location_name,
             brand,
@@ -30,22 +30,20 @@ def inventory_page(
     params = []
 
     if location:
-        query += " AND location LIKE ?"
+        sql += " AND location LIKE ?"
         params.append(f"%{location}%")
 
     if item_code:
-        query += " AND item_code LIKE ?"
+        sql += " AND item_code LIKE ?"
         params.append(f"%{item_code}%")
 
-    rows = cur.execute(query, params).fetchall()
+    rows = cur.execute(sql, params).fetchall()
     conn.close()
 
     return templates.TemplateResponse(
-        "inventory_page.html",
+        "inventory.html",
         {
             "request": request,
-            "rows": rows,
-            "location": location,
-            "item_code": item_code
+            "rows": rows
         }
     )
