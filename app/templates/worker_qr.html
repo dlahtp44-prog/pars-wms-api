@@ -1,7 +1,7 @@
 {% extends "worker_base.html" %}
 {% block content %}
 
-<h2>📷 QR FIFO 출고</h2>
+<h2>📷 QR 자동 처리 (출고 / 이동)</h2>
 
 <input
   id="qr"
@@ -10,12 +10,13 @@
   onkeydown="if(event.key==='Enter'){ send(); }"
 >
 
-<button onclick="send()">출고 처리</button>
+<button onclick="send()">처리</button>
 
 <script>
 async function send(){
   const qr = document.getElementById("qr").value;
-  await fetch("/api/qr/out", {
+
+  await fetch("/api/qr/process", {
     method:"POST",
     headers:{ "Content-Type":"application/x-www-form-urlencoded" },
     body:"qr="+encodeURIComponent(qr)
