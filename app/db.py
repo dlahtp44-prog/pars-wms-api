@@ -90,3 +90,32 @@ def get_history(limit: int = 200):
     rows = [dict(r) for r in cur.fetchall()]
     conn.close()
     return rows
+    def log_history(
+    tx_type: str,
+    warehouse: str,
+    location: str,
+    item_code: str,
+    lot_no: str,
+    qty: float,
+    remark: str = ""
+):
+    conn = get_conn()
+    cur = conn.cursor()
+
+    cur.execute("""
+        INSERT INTO history
+        (tx_type, warehouse, location, item_code, lot_no, qty, remark)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, (
+        tx_type,
+        warehouse,
+        location,
+        item_code,
+        lot_no,
+        qty,
+        remark
+    ))
+
+    conn.commit()
+    conn.close()
+
