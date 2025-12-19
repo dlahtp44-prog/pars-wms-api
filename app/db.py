@@ -31,9 +31,6 @@ def init_db():
 # History 조회
 # =========================
 def get_history(limit: int = 100):
-    """
-    작업 이력 조회
-    """
     conn = get_conn()
     cur = conn.cursor()
 
@@ -55,6 +52,7 @@ def get_history(limit: int = 100):
     conn.close()
 
     return [dict(r) for r in rows]
+]
 
 
 def log_history(tx_type, item_code, qty, location):
