@@ -5,31 +5,16 @@
 
 <form method="post" action="/api/inbound">
 
-  <label>품번</label>
-  <input name="item_code" required>
+  <input name="location_name" placeholder="창고명" required>
+  <input name="brand" placeholder="브랜드" required>
+  <input name="item_code" placeholder="품번" required>
+  <input name="item_name" placeholder="품명" required>
+  <input name="lot_no" placeholder="LOT" required>
+  <input name="spec" placeholder="규격" required>
+  <input name="location" placeholder="로케이션" required>
+  <input name="qty" type="number" placeholder="수량" required>
 
-  <label>제품명</label>
-  <input name="item_name" required>
-
-  <label>규격</label>
-  <input name="spec" required>
-
-  <label>LOT NO</label>
-  <input name="lot_no" required>
-
-  <label>창고명</label>
-  <input name="location_name" required>
-
-  <label>로케이션</label>
-  <input name="location" placeholder="D01-01" required>
-
-  <label>수량</label>
-  <input name="qty" type="number" required>
-
-  <button type="submit"
-          style="background:#2ecc71;color:#fff;width:100%;padding:12px;">
-    입고 처리
-  </button>
+  <button type="submit">입고 처리</button>
 </form>
 
 {% endblock %}
