@@ -1,16 +1,18 @@
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
-from app.db import get_conn
+from app.db import get_inventory
 
-router = APIRouter()
+router = APIRouter(prefix="/worker")
 templates = Jinja2Templates(directory="app/templates")
 
-@router.get("/inventory-page")
-def inventory_page(
-    request: Request,
-    location: str = "",
-    item_code: str = ""
-):
+@router.get("/inventory")
+def inventory_page(request: Request):
+    rows = get_inventory()
+    return templates.TemplateResponse(
+        "inventory.html",
+        {"request": request, "rows": rows}
+    )
+
     conn = get_conn()
     cur = conn.cursor()
 
