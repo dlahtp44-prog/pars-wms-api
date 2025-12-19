@@ -1,42 +1,35 @@
 {% extends "worker_base.html" %}
 {% block content %}
 
-<h3>📥 입고 처리</h3>
+<h2>📥 입고 처리</h2>
 
 <form method="post" action="/api/inbound">
-  <label>장소명</label>
-  <input name="location_name" required placeholder="서이천창고">
-
-  <label>브랜드</label>
-  <input name="brand" required placeholder="FLORIM">
 
   <label>품번</label>
-  <input name="item_code" required placeholder="728750">
+  <input name="item_code" required>
 
-  <label>품명</label>
-  <input name="item_name" required placeholder="Walks/1.0 Wh">
-
-  <label>LOT NO</label>
-  <input name="lot_no" required placeholder="H5415">
+  <label>제품명</label>
+  <input name="item_name" required>
 
   <label>규격</label>
-  <input name="spec" required placeholder="600*600">
+  <input name="spec" required>
+
+  <label>LOT NO</label>
+  <input name="lot_no" required>
+
+  <label>창고명</label>
+  <input name="location_name" required>
 
   <label>로케이션</label>
-  <input name="location" required placeholder="D01-01">
+  <input name="location" placeholder="D01-01" required>
 
   <label>수량</label>
   <input name="qty" type="number" required>
 
-  <button type="submit">입고 처리</button>
-</form>
-
-<hr>
-
-<h4>📄 엑셀 입고</h4>
-<form method="post" action="/api/inbound/upload" enctype="multipart/form-data">
-  <input type="file" name="file" accept=".csv">
-  <button type="submit">엑셀 업로드</button>
+  <button type="submit"
+          style="background:#2ecc71;color:#fff;width:100%;padding:12px;">
+    입고 처리
+  </button>
 </form>
 
 {% endblock %}
