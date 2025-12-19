@@ -1,1 +1,18 @@
+{% extends "worker_base.html" %}
+{% block content %}
+
+<h2>📤 엑셀 FIFO 출고 업로드</h2>
+
+<form method="post" action="/api/outbound/upload" enctype="multipart/form-data">
+  <input type="file" name="file" accept=".csv,.xlsx" required>
+  <button type="submit" style="background:#ff5252;color:#fff;">
+    엑셀 FIFO 출고 실행
+  </button>
+</form>
+
+<p style="color:#888">
+※ LOT은 자동 FIFO 처리됩니다.
+</p>
+
+{% endblock %}
 
