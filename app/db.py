@@ -4,6 +4,7 @@ from pathlib import Path
 
 DB_PATH = Path(__file__).parent.parent / "WMS.db"
 
+
 def get_conn():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -53,7 +54,7 @@ def init_db():
 
 
 # =====================
-# 조회 함수들 (중요)
+# 조회 함수들
 # =====================
 
 def get_inventory():
@@ -90,7 +91,13 @@ def get_history(limit: int = 200):
     rows = [dict(r) for r in cur.fetchall()]
     conn.close()
     return rows
-    def log_history(
+
+
+# =====================
+# 이력 기록 (🔥 중요)
+# =====================
+
+def log_history(
     tx_type: str,
     warehouse: str,
     location: str,
@@ -118,4 +125,3 @@ def get_history(limit: int = 200):
 
     conn.commit()
     conn.close()
-
