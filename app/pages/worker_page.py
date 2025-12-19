@@ -1,9 +1,13 @@
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 
-router = APIRouter(prefix="/worker")
+router = APIRouter(prefix="/worker", tags=["Worker Pages"])
 templates = Jinja2Templates(directory="app/templates")
 
+
+# =========================
+# 작업자 메인
+# =========================
 @router.get("")
 def worker_home(request: Request):
     return templates.TemplateResponse(
@@ -12,6 +16,9 @@ def worker_home(request: Request):
     )
 
 
+# =========================
+# 작업자 입고
+# =========================
 @router.get("/inbound")
 def worker_inbound(request: Request):
     return templates.TemplateResponse(
@@ -20,6 +27,9 @@ def worker_inbound(request: Request):
     )
 
 
+# =========================
+# 작업자 출고
+# =========================
 @router.get("/outbound")
 def worker_outbound(request: Request):
     return templates.TemplateResponse(
@@ -28,6 +38,9 @@ def worker_outbound(request: Request):
     )
 
 
+# =========================
+# 작업자 재고 이동
+# =========================
 @router.get("/move")
 def worker_move(request: Request):
     return templates.TemplateResponse(
@@ -36,17 +49,12 @@ def worker_move(request: Request):
     )
 
 
+# =========================
+# 작업자 QR 스캔
+# =========================
 @router.get("/qr")
 def worker_qr(request: Request):
     return templates.TemplateResponse(
         "qr.html",
         {"request": request}
-    )
-
-
-@router.get("/inventory")
-def worker_inventory(request: Request):
-    return templates.TemplateResponse(
-        "inventory.html",
-        {"request": request, "rows": []}
     )
