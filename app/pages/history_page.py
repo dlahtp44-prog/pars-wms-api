@@ -10,8 +10,5 @@ def history_page(request: Request):
     rows = get_history()
     return templates.TemplateResponse(
         "history.html",
-        {
-            "request": request,
-            "rows": rows
-        }
+        {"request": request, "rows": rows}
     )
