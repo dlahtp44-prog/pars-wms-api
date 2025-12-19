@@ -1,33 +1,70 @@
 from fastapi import APIRouter, Form, HTTPException
 from app.db import get_conn, log_history
 
-router = APIRouter(prefix="/api/outbound", tags=["출고"])
+router = APIRouter(
+    prefix="/api/outbound",
+    tags=["Outbound"]
+)
 
 @router.post("")
 def outbound(
-    item_code: str = Form(...),
+    warehouse: str = Form(...),
     location: str = Form(...),
-    qty: int = Form(...)
+    item_code: str = Form(...),
+    item_name: str = Form(""),
+    brand: str = Form(""),
+    lot_no: str = Form(""),
+    spec: str = Form(""),
+    qty: float = Form(...)
 ):
     conn = get_conn()
     cur = conn.cursor()
 
-    row = cur.execute("""
-        SELECT qty FROM inventory
-        WHERE item_code=? AND location=?
-    """, (item_code, location)).fetchone()
-
-    if not row or row["qty"] < qty:
-        conn.close()
-        raise HTTPException(400, "재고 부족")
-
+    # 1️⃣ 현재 재고 확인
     cur.execute("""
-        UPDATE inventory
-        SET qty = qty - ?
-        WHERE item_code=? AND location=?
-    """, (qty, item_code, location))
+        SELECT qty
+        FROM inventory
+        WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?
+    """, (warehouse, location, item_code, lot_no))
 
-    log_history("출고", item_code, qty, location)
+    row = cur.fetchone()
+    current_qty = row["qty"] if row else 0
+
+    if current_qty < qty:
+        conn.close()
+        raise HTTPException(
+            status_code=400,
+            detail=f"재고 부족 (현재 {current_qty})"
+        )
+
+    # 2️⃣ 재고 차감 (UPSERT)
+    cur.execute("""
+        INSERT INTO inventory
+        (warehouse, location, brand, item_code, item_name, lot_no, spec, qty)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(warehouse, location, item_code, lot_no)
+        DO UPDATE SET qty = qty - excluded.qty
+    """, (
+        warehouse,
+        location,
+        brand,
+        item_code,
+        item_name,
+        lot_no,
+        spec,
+        qty
+    ))
+
+    # 3️⃣ 이력 기록
+    log_history(
+        tx_type="출고",
+        warehouse=warehouse,
+        location=location,
+        item_code=item_code,
+        lot_no=lot_no,
+        qty=-qty,
+        remark="출고 처리"
+    )
 
     conn.commit()
     conn.close()
