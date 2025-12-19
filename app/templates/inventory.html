@@ -1,17 +1,18 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h2>재고 조회</h2>
+<h2>📦 재고 조회</h2>
 
-<form method="get" action="/inventory-page">
-  로케이션:
-  <input name="location" placeholder="D01-01">
-
-  품번:
-  <input name="item_code" placeholder="728750">
-
+<form method="get" style="margin-bottom:15px;">
+  <input name="location" placeholder="로케이션 (예: D01-01)">
+  <input name="item_code" placeholder="품번">
   <button type="submit">검색</button>
 </form>
+
+{% include "components/inventory_table.html" %}
+
+{% endblock %}
+
 
 <hr>
 
