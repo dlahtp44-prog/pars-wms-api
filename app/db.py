@@ -27,20 +27,35 @@ def init_db():
     )
     """)
 
-    # 작업 이력
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS history (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        tx_type TEXT,
-        item_code TEXT,
-        qty INTEGER,
-        location TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-    """)
+# =========================
+# History 조회
+# =========================
+def get_history(limit: int = 100):
+    """
+    작업 이력 조회
+    """
+    conn = get_conn()
+    cur = conn.cursor()
 
-    conn.commit()
+    cur.execute("""
+        SELECT
+            id,
+            tx_type,
+            item_code,
+            qty,
+            location,
+            remark,
+            created_at
+        FROM inventory_tx
+        ORDER BY id DESC
+        LIMIT ?
+    """, (limit,))
+
+    rows = cur.fetchall()
     conn.close()
+
+    return [dict(r) for r in rows]
+
 
 def log_history(tx_type, item_code, qty, location):
     conn = get_conn()
