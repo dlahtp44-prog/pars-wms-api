@@ -1,10 +1,8 @@
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
-from app.db import get_inventory
 
 router = APIRouter(prefix="/worker")
 templates = Jinja2Templates(directory="app/templates")
-
 
 @router.get("")
 def worker_home(request: Request):
@@ -13,14 +11,12 @@ def worker_home(request: Request):
         {"request": request}
     )
 
-
 @router.get("/inbound")
 def worker_inbound(request: Request):
     return templates.TemplateResponse(
         "worker_inbound.html",
         {"request": request}
     )
-
 
 @router.get("/outbound")
 def worker_outbound(request: Request):
@@ -29,27 +25,9 @@ def worker_outbound(request: Request):
         {"request": request}
     )
 
-
 @router.get("/move")
 def worker_move(request: Request):
     return templates.TemplateResponse(
         "worker_move.html",
-        {"request": request}
-    )
-
-
-@router.get("/inventory")
-def worker_inventory(request: Request):
-    rows = get_inventory()
-    return templates.TemplateResponse(
-        "inventory.html",
-        {"request": request, "rows": rows}
-    )
-
-
-@router.get("/qr")
-def worker_qr(request: Request):
-    return templates.TemplateResponse(
-        "qr.html",
         {"request": request}
     )
