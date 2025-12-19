@@ -30,37 +30,3 @@
 </table>
 
 {% endblock %}
-
-
-
-<hr>
-
-<table border="1" cellpadding="6" style="width:100%; border-collapse:collapse;">
-  <tr style="background:#f2f2f2;">
-    <th>장소명</th>
-    <th>브랜드</th>
-    <th>품번</th>
-    <th>품명</th>
-    <th>LOT NO</th>
-    <th>규격</th>
-    <th>로케이션</th>
-    <th>현재고</th>
-  </tr>
-
-  {% for r in rows %}
-  <tr>
-    <td>{{ r.location_name }}</td>
-    <td>{{ r.brand }}</td>
-    <td>{{ r.item_code }}</td>
-    <td>{{ r.item_name }}</td>
-    <td>{{ r.lot_no }}</td>
-    <td>{{ r.spec }}</td>
-    <td>{{ r.location }}</td>
-    <td style="background:#ffeb3b; text-align:center;">
-      {{ r.qty }}
-    </td>
-  </tr>
-  {% endfor %}
-</table>
-
-{% endblock %}
