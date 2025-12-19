@@ -1,0 +1,26 @@
+{% extends "worker_base.html" %}
+{% block content %}
+
+<h2>📷 QR FIFO 출고</h2>
+
+<input
+  id="qr"
+  placeholder="QR 스캔"
+  autofocus
+  onkeydown="if(event.key==='Enter'){ send(); }"
+>
+
+<button onclick="send()">출고 처리</button>
+
+<script>
+async function send(){
+  const qr = document.getElementById("qr").value;
+  await fetch("/api/qr/out", {
+    method:"POST",
+    headers:{ "Content-Type":"application/x-www-form-urlencoded" },
+    body:"qr="+encodeURIComponent(qr)
+  });
+}
+</script>
+
+{% endblock %}
