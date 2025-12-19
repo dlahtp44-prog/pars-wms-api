@@ -31,3 +31,9 @@ def worker_move(request: Request):
         "worker_move.html",
         {"request": request}
     )
+@router.get("/qr")
+def worker_qr(request: Request):
+    return templates.TemplateResponse(
+        "worker_qr.html",
+        {"request": request}
+    )
