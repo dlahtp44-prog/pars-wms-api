@@ -15,9 +15,7 @@ def init_db():
     conn = get_conn()
     cur = conn.cursor()
 
-    # =====================
     # inventory 테이블
-    # =====================
     cur.execute("""
     CREATE TABLE IF NOT EXISTS inventory (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -32,9 +30,13 @@ def init_db():
     )
     """)
 
-    # =====================
+    # ✅ UNIQUE INDEX (UPSERT 필수)
+    cur.execute("""
+    CREATE UNIQUE INDEX IF NOT EXISTS ux_inventory
+    ON inventory (warehouse, location, item_code, lot_no)
+    """)
+
     # history 테이블
-    # =====================
     cur.execute("""
     CREATE TABLE IF NOT EXISTS history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -51,6 +53,7 @@ def init_db():
 
     conn.commit()
     conn.close()
+
 
 
 # =====================
