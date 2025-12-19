@@ -1,26 +1,41 @@
 {% extends "worker_base.html" %}
 {% block content %}
 
-<h3>🔁 재고 이동</h3>
+<h2>🔄 재고 이동</h2>
 
 <form method="post" action="/api/move">
 
-  <label>품번</label>
-  <input name="item_code" required placeholder="728750">
-
-  <label>LOT NO</label>
-  <input name="lot_no" required placeholder="H5415">
-
-  <label>이동 수량</label>
-  <input name="qty" type="number" required>
+  <label>창고명</label>
+  <input name="warehouse" required placeholder="서이천창고">
 
   <label>출발 로케이션</label>
   <input name="from_location" required placeholder="D01-01">
 
   <label>도착 로케이션</label>
-  <input name="to_location" required placeholder="D01-02">
+  <input name="to_location" required placeholder="D02-03">
 
-  <button type="submit">이동 처리</button>
+  <label>브랜드</label>
+  <input name="brand" placeholder="FLORIM">
+
+  <label>품번</label>
+  <input name="item_code" required placeholder="728750">
+
+  <label>품명</label>
+  <input name="item_name" placeholder="Walks/1.0 White">
+
+  <label>LOT NO</label>
+  <input name="lot_no" placeholder="H5415">
+
+  <label>규격</label>
+  <input name="spec" placeholder="600×600">
+
+  <label>이동 수량</label>
+  <input name="qty" type="number" required>
+
+  <button type="submit" style="background:#ff9800;color:#fff;">
+    재고 이동
+  </button>
+
 </form>
 
 {% endblock %}
