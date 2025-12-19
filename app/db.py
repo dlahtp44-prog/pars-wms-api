@@ -35,7 +35,7 @@ def init_db():
     )
     """)
 
-    # 작업 이력 테이블
+    # 작업 이력
     cur.execute("""
     CREATE TABLE IF NOT EXISTS history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -49,6 +49,46 @@ def init_db():
 
     conn.commit()
     conn.close()
+
+# =========================
+# 재고 조회 (🔥 이번 에러의 핵심)
+# =========================
+def get_inventory(
+    location: str | None = None,
+    item_code: str | None = None
+):
+    conn = get_conn()
+    cur = conn.cursor()
+
+    sql = """
+        SELECT
+            location_name,
+            brand,
+            item_code,
+            item_name,
+            lot_no,
+            spec,
+            location,
+            qty
+        FROM inventory
+        WHERE 1=1
+    """
+    params = []
+
+    if location:
+        sql += " AND location = ?"
+        params.append(location)
+
+    if item_code:
+        sql += " AND item_code = ?"
+        params.append(item_code)
+
+    sql += " ORDER BY item_code, location"
+
+    cur.execute(sql, params)
+    rows = cur.fetchall()
+    conn.close()
+    return rows
 
 # =========================
 # 작업 이력 기록
@@ -70,7 +110,7 @@ def log_history(tx_type: str, item_code: str, qty: int, location: str):
     conn.close()
 
 # =========================
-# 작업 이력 조회 (🔥 모든 에러의 핵심)
+# 작업 이력 조회
 # =========================
 def get_history(limit: int = 100):
     conn = get_conn()
