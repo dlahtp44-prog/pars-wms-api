@@ -37,3 +37,4 @@ def worker_qr(request: Request):
         "worker_qr.html",
         {"request": request}
     )
+
