@@ -4,23 +4,27 @@
 <h2>📤 출고 처리</h2>
 
 <form method="post" action="/api/outbound">
+
+  <label>창고명</label>
+  <input name="warehouse" required placeholder="서이천창고">
+
+  <label>로케이션</label>
+  <input name="location" required placeholder="D01-01">
+
+  <label>브랜드</label>
+  <input name="brand" placeholder="FLORIM">
+
   <label>품번</label>
   <input name="item_code" required placeholder="728750">
 
-  <label>제품명</label>
+  <label>품명</label>
   <input name="item_name" placeholder="Walks/1.0 White">
-
-  <label>사이즈 / 규격</label>
-  <input name="spec" placeholder="600×600">
 
   <label>LOT NO</label>
   <input name="lot_no" placeholder="H5415">
 
-  <label>창고명</label>
-  <input name="location_name" placeholder="서이천창고">
-
-  <label>로케이션</label>
-  <input name="location" required placeholder="D01-01">
+  <label>규격</label>
+  <input name="spec" placeholder="600×600">
 
   <label>출고 수량</label>
   <input name="qty" type="number" required>
@@ -28,6 +32,7 @@
   <button type="submit" style="background:#ff5252;color:#fff;">
     출고 처리
   </button>
+
 </form>
 
 {% endblock %}
