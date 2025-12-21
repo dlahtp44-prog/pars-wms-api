@@ -6,7 +6,4 @@ templates = Jinja2Templates(directory="app/templates")
 
 @router.get("/inbound")
 def worker_inbound(request: Request):
-    return templates.TemplateResponse(
-        "worker_inbound.html",
-        {"request": request}
-    )
+    return templates.TemplateResponse("worker_inbound.html", {"request": request})
