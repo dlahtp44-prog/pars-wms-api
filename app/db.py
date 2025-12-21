@@ -4,18 +4,15 @@ from pathlib import Path
 
 DB_PATH = Path(__file__).parent.parent / "WMS.db"
 
-
 def get_conn():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
-
 def init_db():
     conn = get_conn()
     cur = conn.cursor()
 
-    # inventory 테이블
     cur.execute("""
     CREATE TABLE IF NOT EXISTS inventory (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -30,13 +27,6 @@ def init_db():
     )
     """)
 
-    # ✅ UNIQUE INDEX (UPSERT 필수)
-    cur.execute("""
-    CREATE UNIQUE INDEX IF NOT EXISTS ux_inventory
-    ON inventory (warehouse, location, item_code, lot_no)
-    """)
-
-    # history 테이블
     cur.execute("""
     CREATE TABLE IF NOT EXISTS history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -51,14 +41,19 @@ def init_db():
     )
     """)
 
+    # ✅ QR 오류 로그 테이블 추가
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS qr_errors (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        qr_raw TEXT,
+        err_type TEXT,
+        err_msg TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
     conn.commit()
     conn.close()
-
-
-
-# =====================
-# 조회 함수들
-# =====================
 
 def get_inventory():
     conn = get_conn()
@@ -81,7 +76,6 @@ def get_inventory():
     conn.close()
     return rows
 
-
 def get_history(limit: int = 200):
     conn = get_conn()
     cur = conn.cursor()
@@ -95,11 +89,7 @@ def get_history(limit: int = 200):
     conn.close()
     return rows
 
-
-# =====================
-# 이력 기록 (🔥 중요)
-# =====================
-
+# ✅ 작업이력 기록(라우터들이 찾는 함수)
 def log_history(
     tx_type: str,
     warehouse: str,
@@ -111,20 +101,35 @@ def log_history(
 ):
     conn = get_conn()
     cur = conn.cursor()
-
     cur.execute("""
         INSERT INTO history
         (tx_type, warehouse, location, item_code, lot_no, qty, remark)
         VALUES (?, ?, ?, ?, ?, ?, ?)
-    """, (
-        tx_type,
-        warehouse,
-        location,
-        item_code,
-        lot_no,
-        qty,
-        remark
-    ))
-
+    """, (tx_type, warehouse, location, item_code, lot_no, qty, remark))
     conn.commit()
     conn.close()
+
+# ✅ QR 오류 기록
+def log_qr_error(qr_raw: str, err_type: str, err_msg: str):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO qr_errors (qr_raw, err_type, err_msg)
+        VALUES (?, ?, ?)
+    """, (qr_raw, err_type, err_msg))
+    conn.commit()
+    conn.close()
+
+# ✅ QR 오류 조회(관리자 화면용)
+def get_qr_errors(limit: int = 200):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT *
+        FROM qr_errors
+        ORDER BY created_at DESC
+        LIMIT ?
+    """, (limit,))
+    rows = [dict(r) for r in cur.fetchall()]
+    conn.close()
+    return rows
