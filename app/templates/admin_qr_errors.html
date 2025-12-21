@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h3 class="fw-bold mb-3">📌 QR 오류 로그</h3>
+
+<table class="table table-bordered table-striped">
+  <thead class="table-dark">
+    <tr>
+      <th>ID</th>
+      <th>시간</th>
+      <th>에러 타입</th>
+      <th>에러 메시지</th>
+      <th>QR 원문</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in rows %}
+    <tr>
+      <td>{{ r.id }}</td>
+      <td>{{ r.created_at }}</td>
+      <td>{{ r.err_type }}</td>
+      <td style="max-width:250px; word-break:break-word;">{{ r.err_msg }}</td>
+      <td style="max-width:350px; word-break:break-word;">{{ r.qr_raw }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}
