@@ -1,18 +1,27 @@
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import RedirectResponse
-from app.db import get_conn, log_history, log_qr_error
+from app.db import log_qr_error, is_blocked_action
+import json
 
 router = APIRouter(prefix="/api/qr", tags=["QR"])
 
 @router.post("/process")
-def qr_process(qr: str):
+def process_qr(qr_data: str):
     try:
-        # OUT|WH=서이천창고|FROM=D01-01|ITEM=728750|QTY=8
-        # MOVE|WH=서이천창고|FROM=D01-01|TO=D02-03|ITEM=728750|QTY=5
-        parts = dict(
-            p.split("=") if "=" in p else ("TYPE", p)
-            for p in qr.split("|")
-        )
+        data = json.loads(qr_data)
+        action = data.get("type")
+
+        if action in ("OUT", "MOVE") and is_blocked_action(action):
+            raise HTTPException(
+                status_code=403,
+                detail="QR 오류 누적으로 출고/이동이 차단되었습니다"
+            )
+
+        return {"result": "처리 성공", "data": data}
+
+    except Exception as e:
+        log_qr_error(qr_data, "CRITICAL", str(e))
+        raise HTTPException(status_code=400, detail="QR 처리 실패")
+
 
         action = parts["TYPE"]
         warehouse = parts["WH"]
