@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
+from app.db import get_unchecked_qr_error_count
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -8,5 +9,8 @@ templates = Jinja2Templates(directory="app/templates")
 def index(request: Request):
     return templates.TemplateResponse(
         "index.html",
-        {"request": request}
+        {
+            "request": request,
+            "qr_error_cnt": get_unchecked_qr_error_count()
+        }
     )
