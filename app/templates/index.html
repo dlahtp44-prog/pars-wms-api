@@ -8,12 +8,23 @@
     <h1>PARS WMS 메인</h1>
 
     <ul>
-        <li><a href="/inventory-page">재고조회</a></li>
-        <li><a href="/inbound-page">입고</a></li>
-        <li><a href="/outbound-page">출고</a></li>
-        <li><a href="/move-page">재고이동</a></li>
-        <li><a href="/history-page">작업이력</a></li>
-        <li><a href="/qr-page">QR 스캔</a></li>
-    </ul>
+<a href="/qr-page" style="position:relative;">
+  QR
+  {% if qr_error_cnt > 0 %}
+  <span style="
+    background:red;
+    color:white;
+    border-radius:50%;
+    padding:2px 6px;
+    font-size:12px;
+    position:absolute;
+    top:-6px;
+    right:-10px;
+  ">
+    {{ qr_error_cnt }}
+  </span>
+  {% endif %}
+</a>
+
 </body>
 </html>
