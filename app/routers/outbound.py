@@ -1,18 +1,17 @@
-from fastapi import APIRouter, Form, HTTPException
-from app.db import get_conn, log_history
+from fastapi import APIRouter, HTTPException
+from app.db import is_blocked_action
 
-router = APIRouter(
-    prefix="/api/outbound",
-    tags=["Outbound"]
-)
+router = APIRouter(prefix="/api/outbound")
 
 @router.post("")
-def outbound_fifo(
-    warehouse: str = Form(...),
-    location: str = Form(...),
-    item_code: str = Form(...),
-    qty: float = Form(...)
-):
+def outbound():
+    if is_blocked_action("OUT"):
+        raise HTTPException(
+            status_code=403,
+            detail="QR 오류 누적으로 출고가 차단됨"
+        )
+    return {"result": "출고 처리"}
+
     conn = get_conn()
     cur = conn.cursor()
 
