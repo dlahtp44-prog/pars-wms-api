@@ -1,10 +1,17 @@
-from fastapi import APIRouter, Form, HTTPException
-from app.db import get_conn, log_history
+from fastapi import APIRouter, HTTPException
+from app.db import is_blocked_action
 
-router = APIRouter(
-    prefix="/api/move",
-    tags=["Move"]
-)
+router = APIRouter(prefix="/api/move")
+
+@router.post("")
+def move():
+    if is_blocked_action("MOVE"):
+        raise HTTPException(
+            status_code=403,
+            detail="QR 오류 누적으로 이동이 차단됨"
+        )
+    return {"result": "이동 처리"}
+
 
 @router.post("")
 def move_inventory(
