@@ -23,6 +23,7 @@ def process_qr(qr_data: str):
         raise HTTPException(status_code=400, detail="QR 처리 실패")
 
 
+
         action = parts["TYPE"]
         warehouse = parts["WH"]
         from_loc = parts["FROM"]
