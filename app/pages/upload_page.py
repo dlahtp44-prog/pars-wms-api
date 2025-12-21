@@ -6,7 +6,4 @@ templates = Jinja2Templates(directory="app/templates")
 
 @router.get("/upload-page")
 def upload_page(request: Request):
-    return templates.TemplateResponse(
-        "upload.html",
-        {"request": request}
-    )
+    return templates.TemplateResponse("upload.html", {"request": request})
