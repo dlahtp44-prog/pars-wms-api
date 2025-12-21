@@ -1,20 +1,16 @@
-
 from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-import os
+from app.db import get_qr_errors, mark_qr_errors_checked
 
-from app.db import get_qr_errors
+router = APIRouter(prefix="/admin")
+templates = Jinja2Templates(directory="app/templates")
 
-BASE_DIR = os.path.dirname(os.path.dirname(__file__))  # app/pages -> app
-templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
-
-router = APIRouter(prefix="/admin", tags=["admin"])
-
-@router.get("/qr-errors", response_class=HTMLResponse)
-def qr_errors_page(request: Request):
+@router.get("/qr-dashboard")
+def qr_dashboard(request: Request):
     rows = get_qr_errors(200)
+    mark_qr_errors_checked()  # 접속 시 자동 초기화
+
     return templates.TemplateResponse(
-        "admin_qr_errors.html",
+        "admin_qr_dashboard.html",
         {"request": request, "rows": rows}
     )
