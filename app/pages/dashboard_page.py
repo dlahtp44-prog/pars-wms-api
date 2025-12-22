@@ -5,20 +5,11 @@ from app.db import get_inventory, dashboard_summary
 router = APIRouter(prefix="/dashboard")
 templates = Jinja2Templates(directory="app/templates")
 
-
 @router.get("")
 def dashboard_page(request: Request):
     rows = get_inventory()
     summary = dashboard_summary()
-
     return templates.TemplateResponse(
         "dashboard.html",
-        {
-            "request": request,
-            "rows": rows,
-            "inbound_today": summary["inbound_today"],
-            "outbound_today": summary["outbound_today"],
-            "total_stock": summary["total_stock"],
-            "negative_stock": summary["negative_stock"]
-        }
+        {"request": request, "rows": rows, "summary": summary}
     )
