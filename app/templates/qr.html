@@ -1,10 +1,29 @@
 {% extends "worker_base.html" %}
 {% block content %}
 
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>QR 스캔</title>
+</head>
+<body>
 <h2>📷 QR 스캔</h2>
-<video id="preview" width="100%"></video>
-<script src="/static/qr.js"></script>
 
+<input id="qr" placeholder="QR 코드 값">
+<button onclick="send()">입고/이동 처리</button>
+
+<script>
+function send(){
+  fetch('/api/qr/process', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({qr:document.getElementById('qr').value})
+  }).then(()=>alert('처리 완료'));
+}
+</script>
+</body>
+</html>
 
 
 <h3>QR 스캔</h3>
