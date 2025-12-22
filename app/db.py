@@ -4,7 +4,6 @@ from pathlib import Path
 
 DB_PATH = Path(__file__).parent.parent / "WMS.db"
 
-
 def get_conn():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -30,7 +29,7 @@ def init_db():
     )
     """)
 
-    # UNIQUE (UPSERT 대비)
+    # UPSERT용 UNIQUE INDEX
     cur.execute("""
     CREATE UNIQUE INDEX IF NOT EXISTS ux_inventory
     ON inventory (warehouse, location, item_code, lot_no)
@@ -55,9 +54,9 @@ def init_db():
     conn.close()
 
 
-# =========================
-# 재고 조회
-# =========================
+# =====================
+# 조회
+# =====================
 def get_inventory():
     conn = get_conn()
     cur = conn.cursor()
@@ -80,9 +79,6 @@ def get_inventory():
     return rows
 
 
-# =========================
-# 이력 조회
-# =========================
 def get_history(limit: int = 200):
     conn = get_conn()
     cur = conn.cursor()
@@ -97,9 +93,9 @@ def get_history(limit: int = 200):
     return rows
 
 
-# =========================
-# 이력 기록 (공용)
-# =========================
+# =====================
+# 이력 기록 (모든 router 공용)
+# =====================
 def log_history(
     tx_type: str,
     warehouse: str,
