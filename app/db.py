@@ -1,5 +1,7 @@
+# app/db.py
 import sqlite3
 from pathlib import Path
+from typing import List, Dict
 
 DB_PATH = Path(__file__).parent.parent / "WMS.db"
 
@@ -31,9 +33,14 @@ def init_db():
         item_name TEXT,
         lot_no TEXT,
         spec TEXT,
-        qty REAL DEFAULT 0,
-        UNIQUE(warehouse, location, item_code, lot_no)
+        qty REAL DEFAULT 0
     )
+    """)
+
+    # UNIQUE (UPSERT용)
+    cur.execute("""
+    CREATE UNIQUE INDEX IF NOT EXISTS ux_inventory
+    ON inventory (warehouse, location, item_code, lot_no)
     """)
 
     # history
@@ -58,7 +65,7 @@ def init_db():
 # =====================
 # 재고 조회
 # =====================
-def get_inventory():
+def get_inventory() -> List[Dict]:
     conn = get_conn()
     cur = conn.cursor()
     cur.execute("""
@@ -78,11 +85,12 @@ def get_inventory():
 # =====================
 # 이력 조회
 # =====================
-def get_history(limit: int = 200):
+def get_history(limit: int = 200) -> List[Dict]:
     conn = get_conn()
     cur = conn.cursor()
     cur.execute("""
-        SELECT * FROM history
+        SELECT *
+        FROM history
         ORDER BY created_at DESC
         LIMIT ?
     """, (limit,))
@@ -92,9 +100,17 @@ def get_history(limit: int = 200):
 
 
 # =====================
-# 이력 기록
+# 이력 기록 (공용)
 # =====================
-def log_history(tx_type, warehouse, location, item_code, lot_no, qty, remark=""):
+def log_history(
+    tx_type: str,
+    warehouse: str,
+    location: str,
+    item_code: str,
+    lot_no: str,
+    qty: float,
+    remark: str = ""
+):
     conn = get_conn()
     cur = conn.cursor()
     cur.execute("""
@@ -107,7 +123,72 @@ def log_history(tx_type, warehouse, location, item_code, lot_no, qty, remark="")
 
 
 # =====================
-# 관리자 롤백
+# 공용 재고 처리 (입고/출고/이동/QR)
+# =====================
+def add_inventory(
+    tx_type: str,          # IN | OUT | MOVE | 입고 | 출고 | 이동
+    warehouse: str,
+    location: str,
+    item_code: str,
+    item_name: str,
+    lot_no: str,
+    spec: str,
+    qty: float,
+    remark: str = ""
+):
+    conn = get_conn()
+    cur = conn.cursor()
+
+    # 출고 / 이동 → 음수 방지
+    if tx_type in ("OUT", "출고", "MOVE", "이동"):
+        cur.execute("""
+            SELECT IFNULL(SUM(qty),0)
+            FROM inventory
+            WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?
+        """, (warehouse, location, item_code, lot_no))
+        current_qty = cur.fetchone()[0]
+
+        if current_qty < qty:
+            conn.close()
+            raise ValueError("재고 부족 (음수 방지)")
+
+        qty = -qty
+
+    # UPSERT
+    cur.execute("""
+        INSERT INTO inventory
+        (warehouse, location, brand, item_code, item_name, lot_no, spec, qty)
+        VALUES (?, ?, '', ?, ?, ?, ?, ?)
+        ON CONFLICT(warehouse, location, item_code, lot_no)
+        DO UPDATE SET qty = qty + excluded.qty
+    """, (
+        warehouse, location,
+        item_code, item_name,
+        lot_no, spec,
+        qty
+    ))
+
+    # 이력
+    cur.execute("""
+        INSERT INTO history
+        (tx_type, warehouse, location, item_code, lot_no, qty, remark)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, (
+        tx_type,
+        warehouse,
+        location,
+        item_code,
+        lot_no,
+        qty,
+        remark
+    ))
+
+    conn.commit()
+    conn.close()
+
+
+# =====================
+# 롤백 (관리자)
 # =====================
 def rollback(history_id: int):
     conn = get_conn()
@@ -119,16 +200,14 @@ def rollback(history_id: int):
         conn.close()
         raise ValueError("이력 없음")
 
-    qty = row["qty"]
-    if row["tx_type"] in ("IN", "입고"):
-        qty = -qty
+    revert_qty = -row["qty"]
 
     cur.execute("""
         UPDATE inventory
         SET qty = qty + ?
         WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?
     """, (
-        qty,
+        revert_qty,
         row["warehouse"],
         row["location"],
         row["item_code"],
@@ -180,53 +259,27 @@ def dashboard_summary():
 
 
 # =====================
-# 공용 재고 처리 (QR / 입고 / 출고 / 이동)
+# 대시보드 그래프 (최근 N일)
 # =====================
-def add_inventory(
-    tx_type: str,
-    warehouse: str,
-    location: str,
-    item_code: str,
-    item_name: str,
-    lot_no: str,
-    spec: str,
-    qty: float,
-    remark: str = ""
-):
+def dashboard_trend(days: int = 7):
     conn = get_conn()
     cur = conn.cursor()
 
-    # 출고/이동 음수 방지
-    if tx_type in ("OUT", "출고", "MOVE", "이동"):
-        cur.execute("""
-            SELECT IFNULL(SUM(qty),0)
-            FROM inventory
-            WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?
-        """, (warehouse, location, item_code, lot_no))
-        current_qty = cur.fetchone()[0]
-
-        if current_qty < qty:
-            conn.close()
-            raise ValueError("재고 부족")
-
-        qty = -qty
-
     cur.execute("""
-        INSERT INTO inventory
-        (warehouse, location, brand, item_code, item_name, lot_no, spec, qty)
-        VALUES (?, ?, '', ?, ?, ?, ?, ?)
-        ON CONFLICT(warehouse, location, item_code, lot_no)
-        DO UPDATE SET qty = qty + excluded.qty
-    """, (
-        warehouse, location,
-        item_code, item_name,
-        lot_no, spec, qty
-    ))
+        SELECT
+          DATE(created_at) as d,
+          SUM(CASE WHEN tx_type IN ('IN','입고') THEN qty ELSE 0 END) as inbound,
+          SUM(CASE WHEN tx_type IN ('OUT','출고') THEN qty ELSE 0 END) as outbound
+        FROM history
+        WHERE DATE(created_at) >= DATE('now', ?)
+        GROUP BY DATE(created_at)
+        ORDER BY d
+    """, (f"-{days} day",))
 
-    log_history(
-        tx_type, warehouse, location,
-        item_code, lot_no, qty, remark
-    )
-
-    conn.commit()
+    rows = cur.fetchall()
     conn.close()
+
+    return [
+        {"date": r["d"], "inbound": r["inbound"], "outbound": r["outbound"]}
+        for r in rows
+    ]
