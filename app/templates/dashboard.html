@@ -4,77 +4,51 @@
   <meta charset="UTF-8">
   <title>PARS WMS Dashboard</title>
   <style>
-    body {
-      font-family: Arial;
-      background:#f3f4f6;
-      margin:0;
-      padding:20px;
-    }
+    body { font-family: Arial; background:#f3f4f6; margin:0; padding:20px; }
     h1 { margin-bottom:20px; }
-
-    .grid {
+    table { width:100%; border-collapse:collapse; background:white; }
+    th, td { padding:10px; border:1px solid #ddd; text-align:center; }
+    th { background:#e5e7eb; }
+    .summary {
       display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+      grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
       gap:15px;
+      margin-bottom:20px;
     }
-
     .card {
-      background:#fff;
+      background:white;
       padding:20px;
       border-radius:12px;
       box-shadow:0 2px 6px rgba(0,0,0,.08);
     }
-
-    .card h2 {
-      margin:0;
-      font-size:14px;
-      color:#6b7280;
-    }
-
-    .card p {
-      font-size:26px;
-      margin-top:8px;
-    }
-
-    .actions button {
-      width:100%;
-      padding:14px;
-      margin-top:10px;
-      font-size:16px;
-      border:none;
-      border-radius:10px;
-      background:#2563eb;
-      color:white;
-    }
+    .card h3 { margin:0; font-size:14px; color:#6b7280; }
+    .card p { font-size:28px; margin-top:8px; }
   </style>
 </head>
 
 <body>
-  <h1>📊 PARS WMS Dashboard</h1>
+  <h1>📊 재고 대시보드</h1>
 
-  <div class="grid">
+  <div class="summary">
     <div class="card">
-      <h2>오늘 입고</h2>
-      <p>{{ inbound_today }}</p>
-    </div>
-    <div class="card">
-      <h2>오늘 출고</h2>
-      <p>{{ outbound_today }}</p>
-    </div>
-    <div class="card">
-      <h2>총 재고</h2>
-      <p>{{ total_stock }}</p>
-    </div>
-    <div class="card">
-      <h2>위치 미지정</h2>
-      <p style="color:red;">{{ no_location }}</p>
+      <h3>총 재고 수량</h3>
+      <p>{{ total }}</p>
     </div>
   </div>
 
-  <div class="actions">
-    <button onclick="location.href='/worker'">👷 작업자 화면</button>
-    <button onclick="location.href='/inventory-page'">📦 재고 조회</button>
-    <button onclick="location.href='/qr-page'">📷 QR 스캔</button>
-  </div>
+  <table>
+    <tr>
+      <th>품번</th>
+      <th>LOT</th>
+      <th>수량</th>
+    </tr>
+    {% for r in rows %}
+    <tr>
+      <td>{{ r.item_code }}</td>
+      <td>{{ r.lot_no }}</td>
+      <td>{{ r.qty }}</td>
+    </tr>
+    {% endfor %}
+  </table>
 </body>
 </html>
