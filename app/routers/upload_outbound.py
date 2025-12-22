@@ -1,86 +1,36 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File
 import csv, io
 from app.db import get_conn, log_history
 
-router = APIRouter(
-    prefix="/api/outbound",
-    tags=["Outbound"]
-)
+router = APIRouter(prefix="/api", tags=["업로드"])
 
-@router.post("/upload")
-def upload_outbound_fifo(file: UploadFile = File(...)):
+@router.post("/outbound/upload")
+def upload_outbound(file: UploadFile = File(...)):
     content = file.file.read().decode("utf-8-sig")
     reader = csv.DictReader(io.StringIO(content))
 
     conn = get_conn()
     cur = conn.cursor()
 
-    try:
-        for r in reader:
-            warehouse = r["warehouse"]
-            location = r["location"]
-            item_code = r["item_code"]
-            qty = float(r["qty"])
+    for r in reader:
+        warehouse = r.get("warehouse", "") or r.get("창고", "")
+        location = r.get("location", "") or r.get("로케이션", "")
+        item_code = r.get("item_code", "") or r.get("품번", "")
+        lot_no = r.get("lot_no", "") or r.get("LOT", "") or r.get("LOT NO", "")
+        qty = float(r.get("qty", 0) or r.get("수량", 0) or 0)
+        remark = r.get("remark", "") or r.get("비고", "")
 
-            # =========================
-            # FIFO 대상 LOT 조회
-            # =========================
-            cur.execute("""
-                SELECT id, lot_no, qty
-                FROM inventory
-                WHERE warehouse=? AND location=? AND item_code=? AND qty > 0
-                ORDER BY id ASC
-            """, (warehouse, location, item_code))
+        cur.execute("""
+            INSERT INTO inventory (warehouse, location, item_code, lot_no, qty, updated_at)
+            VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(warehouse, location, item_code, lot_no)
+            DO UPDATE SET
+                qty = qty - excluded.qty,
+                updated_at=CURRENT_TIMESTAMP
+        """, (warehouse, location, item_code, lot_no, qty))
 
-            lots = cur.fetchall()
-            if not lots:
-                raise HTTPException(
-                    400,
-                    f"출고 불가: {item_code} 재고 없음"
-                )
+        log_history("출고", warehouse, location, item_code, "", lot_no, "", qty, f"CSV 업로드 {remark}")
 
-            remain = qty
-
-            # =========================
-            # FIFO 차감
-            # =========================
-            for lot in lots:
-                if remain <= 0:
-                    break
-
-                deduct = min(lot["qty"], remain)
-
-                cur.execute("""
-                    UPDATE inventory
-                    SET qty = qty - ?
-                    WHERE id = ?
-                """, (deduct, lot["id"]))
-
-                log_history(
-                    tx_type="출고",
-                    warehouse=warehouse,
-                    location=location,
-                    item_code=item_code,
-                    lot_no=lot["lot_no"],
-                    qty=deduct,
-                    remark="엑셀 FIFO 출고"
-                )
-
-                remain -= deduct
-
-            if remain > 0:
-                raise HTTPException(
-                    400,
-                    f"{item_code} 출고 수량 부족"
-                )
-
-        conn.commit()
-
-    except Exception:
-        conn.rollback()
-        raise
-
-    finally:
-        conn.close()
-
-    return {"result": "엑셀 FIFO 출고 완료"}
+    conn.commit()
+    conn.close()
+    return {"result": "OK", "msg": "출고 업로드 완료"}
