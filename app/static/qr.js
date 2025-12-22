@@ -54,5 +54,8 @@ function goMove(item, lot, loc){
 }
 navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
 .then(stream => {
-  document.getElementById("video").srcObject = stream;
+  const video = document.getElementById("preview");
+  video.srcObject = stream;
+  video.play();
 });
+
