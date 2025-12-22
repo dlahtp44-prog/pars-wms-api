@@ -1,5 +1,8 @@
 fastapi==0.111.0
 uvicorn==0.29.0
-jinja2==3.1.4
 python-multipart==0.0.9
+jinja2==3.1.4
 aiofiles==23.2.1
+
+# 세션(관리자 로그인)용 - starlette SessionMiddleware 서명에 필요
+itsdangerous==2.2.0
