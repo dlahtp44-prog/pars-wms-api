@@ -1,27 +1,29 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h2 class="title">📷 QR 카메라 스캔</h2>
+<h2 class="title">📷 QR 스캔</h2>
 
 <div class="card">
-  <div class="row">
-    <button class="btn" onclick="startCamera()">카메라 시작</button>
-    <button class="btn gray" onclick="stopCamera()">카메라 중지</button>
-  </div>
-
-  <video id="preview" playsinline></video>
-  <canvas id="canvas" style="display:none;"></canvas>
-
-  <p class="hint">※ 휴대폰은 “환경(후면) 카메라”로 자동 시도</p>
+  <button class="btn" onclick="startCamera()">카메라 시작</button>
+  <video id="preview"></video>
+  <p class="hint">휴대폰은 후면 카메라 자동 사용</p>
 </div>
 
 <div class="card">
-  <h3 class="subtitle">수기 입력(백업)</h3>
-  <div class="row">
-    <input id="qrText" placeholder="QR 텍스트 or 품번 입력" />
-    <button class="btn" onclick="manualSearch()">조회</button>
-  </div>
-  <div id="result"></div>
+  <input id="qrText" placeholder="QR 또는 품번 직접 입력">
+  <button class="btn gray" onclick="manualSearch()">조회</button>
+</div>
+
+<div class="tablewrap">
+<table class="inventory">
+<thead>
+<tr>
+  <th>창고</th><th>로케이션</th><th>품번</th><th>LOT</th>
+  <th class="right">수량</th><th>작업</th>
+</tr>
+</thead>
+<tbody id="result"></tbody>
+</table>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
