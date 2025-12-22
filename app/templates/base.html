@@ -1,34 +1,54 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>PARS WMS</title>
+
+  <link rel="manifest" href="/static/manifest.json">
+  <meta name="theme-color" content="#111827"/>
+
   <style>
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#f3f4f6}
-    header{background:#111827;color:#fff;padding:12px 14px;display:flex;gap:10px;align-items:center;justify-content:space-between}
-    header a{color:#fff;text-decoration:none;font-weight:800}
-    .wrap{max-width:1200px;margin:0 auto;padding:14px}
-    nav{display:flex;flex-wrap:wrap;gap:8px}
-    nav a{background:#1f2937;color:#fff;text-decoration:none;padding:8px 10px;border-radius:10px;font-size:13px}
+    body{font-family:Arial;margin:0;background:#f3f4f6}
+    header{background:#111827;color:#fff;padding:12px;font-weight:800}
+    .wrap{max-width:1100px;margin:0 auto;padding:14px}
+    .title{margin:0 0 12px 0;font-size:20px}
+    .subtitle{margin:8px 0;font-size:15px}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    @media(min-width:900px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+    .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:12px}
+    .card .label{color:#6b7280;font-size:12px}
+    .card .value{font-size:22px;font-weight:800;margin-top:4px}
+    .card.warn{border-color:#ef4444}
+    .actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
+    @media(min-width:900px){.actions{grid-template-columns:repeat(4,minmax(0,1fr))}}
+    .btn{display:block;text-align:center;padding:10px;border-radius:10px;background:#111827;color:#fff;text-decoration:none;border:none}
+    .btn.gray{background:#6b7280}
+    input{width:100%;padding:10px;border-radius:10px;border:1px solid #e5e7eb;margin:8px 0}
+    .row{display:flex;gap:8px}
+    .tablewrap{overflow:auto;border:1px solid #e5e7eb;border-radius:12px;background:#fff;margin-top:10px}
+    .table{width:100%;border-collapse:collapse;font-size:13px;min-width:1100px}
+    .table th,.table td{padding:10px;border-bottom:1px solid #f1f5f9;white-space:nowrap}
+    .table th{background:#111827;color:#fff;position:sticky;top:0}
+    .right{text-align:right}
+    .smallbtn{display:inline-block;padding:6px 10px;border-radius:10px;background:#111827;color:#fff;text-decoration:none;border:none}
+    .smallbtn.gray{background:#6b7280}
+    video{width:100%;background:#000;border-radius:12px;margin-top:10px}
+    .hint{color:#6b7280;font-size:12px;margin-top:8px}
   </style>
 </head>
 <body>
-<header>
-  <a href="/dashboard">PARS WMS</a>
-  <nav>
-    <a href="/dashboard">대시보드</a>
-    <a href="/inbound-page">입고</a>
-    <a href="/outbound-page">출고</a>
-    <a href="/move-page">이동</a>
-    <a href="/inventory-page">재고</a>
-    <a href="/history-page">이력</a>
-    <a href="/qr-page">QR</a>
-    <a href="/admin">관리자</a>
-  </nav>
-</header>
+<header>PARS WMS</header>
 <div class="wrap">
   {% block content %}{% endblock %}
 </div>
+
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/static/sw.js");
+  });
+}
+</script>
 </body>
 </html>
