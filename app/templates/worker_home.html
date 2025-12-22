@@ -1,3 +1,14 @@
+{% extends "worker_base.html" %}
+
+{% block content %}
+
+<h3>작업 선택</h3>
+
+<a href="/worker/inbound"><button>📦 입고</button></a>
+<a href="/worker/outbound"><button>🚚 출고</button></a>
+<a href="/worker/move"><button>🔁 재고 이동</button></a>
+<a href="/worker/inventory"><button>📊 재고 조회</button></a>
+
 <a href="/worker/qr" style="position:relative; display:inline-block;">
   <button>
     📷 QR 스캔
@@ -17,3 +28,5 @@
     {% endif %}
   </button>
 </a>
+
+{% endblock %}
