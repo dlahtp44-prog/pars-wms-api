@@ -3,32 +3,52 @@
 <head>
   <meta charset="UTF-8">
   <title>PARS WMS</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 { margin-bottom: 20px; }
+    .menu button {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      margin-bottom: 12px;
+      font-size: 16px;
+      border: none;
+      border-radius: 10px;
+      background: #2563eb;
+      color: white;
+      cursor: pointer;
+    }
+  </style>
 </head>
+
 <body>
+  <h1>📦 PARS WMS 메인</h1>
 
-<h1>PARS WMS 메인</h1>
-
-<ul>
-  <li>
-    <a href="/qr-page" style="position:relative;">
-      QR
-      {% if qr_error_cnt > 0 %}
-      <span style="
-        background:red;
-        color:white;
-        border-radius:50%;
-        padding:2px 6px;
-        font-size:12px;
-        position:absolute;
-        top:-6px;
-        right:-10px;
-      ">
-        {{ qr_error_cnt }}
-      </span>
-      {% endif %}
+  <div class="menu">
+    <a href="/dashboard">
+      <button>📊 대시보드</button>
     </a>
-  </li>
-</ul>
 
+    <a href="/worker">
+      <button>👷 작업자 화면</button>
+    </a>
+
+    <a href="/inventory-page">
+      <button>📋 재고 조회</button>
+    </a>
+
+    <a href="/history-page">
+      <button>🕒 작업 이력</button>
+    </a>
+
+    <a href="/qr-page">
+      <button>📷 QR 스캔</button>
+    </a>
+  </div>
 </body>
 </html>
