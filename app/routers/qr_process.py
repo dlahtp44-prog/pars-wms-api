@@ -9,20 +9,41 @@ class QR(BaseModel):
 
 @router.post("/process")
 def process(qr: QR):
-    # 예: warehouse|location|item_code|lot|qty
-    w, l, i, lot, qty = qr.qr.split("|")
+    # tx|warehouse|from_loc|to_loc|item|lot|qty
+    tx, w, f, t, i, lot, qty = qr.qr.split("|")
     qty = float(qty)
 
     conn = get_conn()
     cur = conn.cursor()
-    cur.execute("""
+
+    if tx == "IN":
+        cur.execute("""
         INSERT INTO inventory (warehouse, location, item_code, lot_no, qty)
         VALUES (?, ?, ?, ?, ?)
         ON CONFLICT(warehouse, location, item_code, lot_no)
         DO UPDATE SET qty = qty + excluded.qty
-    """, (w, l, i, lot, qty))
+        """, (w, t, i, lot, qty))
+
+    elif tx == "OUT":
+        cur.execute("""
+        UPDATE inventory SET qty = qty - ?
+        WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?
+        """, (qty, w, f, i, lot))
+
+    elif tx == "MOVE":
+        cur.execute("""
+        UPDATE inventory SET qty = qty - ?
+        WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?
+        """, (qty, w, f, i, lot))
+
+        cur.execute("""
+        INSERT INTO inventory (warehouse, location, item_code, lot_no, qty)
+        VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(warehouse, location, item_code, lot_no)
+        DO UPDATE SET qty = qty + excluded.qty
+        """, (w, t, i, lot, qty))
+
     conn.commit()
     conn.close()
-
-    log_history("QR", w, l, i, lot, qty)
-    return {"ok": True}
+    log_history(tx, w, f, i, lot, qty)
+    return {"result":"OK"}
