@@ -1,20 +1,16 @@
 from fastapi import APIRouter
-from app.db import get_conn, log_history
+from app.db import get_history, rollback
 
-router = APIRouter(prefix="/api/history")
+router = APIRouter(prefix="/api/history", tags=["이력"])
+
+@router.get("")
+def history_list(limit: int = 300):
+    return get_history(limit=limit)
 
 @router.post("/rollback/{history_id}")
-def rollback(history_id: int):
-    conn = get_conn()
-    cur = conn.cursor()
+def history_rollback(history_id: int):
+    return rollback(history_id)
 
-    row = cur.execute(
-        "SELECT * FROM history WHERE id=?",
-        (history_id,)
-    ).fetchone()
-
-    if not row:
-        return {"error": "기록 없음"}
 
     # 반대 작업
     sign = -1 if row["tx_type"] in ("입고", "IN") else 1
