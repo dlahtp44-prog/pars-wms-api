@@ -233,3 +233,70 @@ def dashboard_trend(days: int = 7):
             "outbound": r["outbound"]
         } for r in rows
     ]
+    def add_inventory(
+    tx_type: str,
+    warehouse: str,
+    location: str,
+    item_code: str,
+    item_name: str,
+    lot_no: str,
+    spec: str,
+    qty: float,
+    remark: str = ""
+):
+    """
+    QR / 입고 / 출고 / 이동 공용 재고 처리 함수
+    tx_type: IN | OUT | MOVE
+    """
+
+    conn = get_conn()
+    cur = conn.cursor()
+
+    # 출고 / 이동 시 음수 방지
+    if tx_type in ("OUT", "출고", "MOVE", "이동"):
+        cur.execute("""
+            SELECT IFNULL(SUM(qty),0)
+            FROM inventory
+            WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?
+        """, (warehouse, location, item_code, lot_no))
+        current_qty = cur.fetchone()[0]
+
+        if current_qty < qty:
+            conn.close()
+            raise ValueError("재고 부족 (음수 방지)")
+
+        qty = -qty  # 출고/이동은 차감
+
+    # 재고 반영 (UPSERT)
+    cur.execute("""
+        INSERT INTO inventory
+        (warehouse, location, brand, item_code, item_name, lot_no, spec, qty)
+        VALUES (?, ?, '', ?, ?, ?, ?, ?)
+        ON CONFLICT(warehouse, location, item_code, lot_no)
+        DO UPDATE SET
+            qty = qty + excluded.qty
+    """, (
+        warehouse, location,
+        item_code, item_name,
+        lot_no, spec,
+        qty
+    ))
+
+    # 이력 기록
+    cur.execute("""
+        INSERT INTO history
+        (tx_type, warehouse, location, item_code, lot_no, qty, remark)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, (
+        tx_type,
+        warehouse,
+        location,
+        item_code,
+        lot_no,
+        qty,
+        remark
+    ))
+
+    conn.commit()
+    conn.close()
+
