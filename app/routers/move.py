@@ -1,51 +1,39 @@
-from fastapi import APIRouter, Form, HTTPException
+from fastapi import APIRouter, Form
 from app.db import get_conn, log_history
 
-router = APIRouter(prefix="/api", tags=["이동"])
+router = APIRouter(prefix="/api/move")
 
-@router.post("/move")
+@router.post("")
 def move(
     warehouse: str = Form(...),
     from_location: str = Form(...),
     to_location: str = Form(...),
     item_code: str = Form(...),
-    lot_no: str = Form(...),
-    qty: float = Form(...),
-    remark: str = Form("")
+    lot_no: str = Form(""),
+    qty: float = Form(...)
 ):
     conn = get_conn()
     cur = conn.cursor()
 
-    row = cur.execute("""
-        SELECT SUM(qty) as qty
-        FROM inventory
+    # 출고
+    cur.execute("""
+        UPDATE inventory
+        SET qty = qty - ?
         WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?
-    """, (warehouse, from_location, item_code, lot_no)).fetchone()
+    """, (qty, warehouse, from_location, item_code, lot_no))
 
-    current_qty = float(row["qty"] or 0)
-    if current_qty < qty:
-        conn.close()
-        raise HTTPException(400, f"재고 부족 (현재 {current_qty})")
-
-    # 출발지 -
+    # 입고
     cur.execute("""
-        INSERT INTO inventory (warehouse, location, item_code, lot_no, qty, updated_at)
-        VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        INSERT INTO inventory
+        (warehouse, location, item_code, lot_no, qty)
+        VALUES (?, ?, ?, ?, ?)
         ON CONFLICT(warehouse, location, item_code, lot_no)
-        DO UPDATE SET qty = qty - excluded.qty, updated_at=CURRENT_TIMESTAMP
-    """, (warehouse, from_location, item_code, lot_no, qty))
-
-    # 도착지 +
-    cur.execute("""
-        INSERT INTO inventory (warehouse, location, item_code, lot_no, qty, updated_at)
-        VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-        ON CONFLICT(warehouse, location, item_code, lot_no)
-        DO UPDATE SET qty = qty + excluded.qty, updated_at=CURRENT_TIMESTAMP
+        DO UPDATE SET qty = qty + excluded.qty
     """, (warehouse, to_location, item_code, lot_no, qty))
+
+    log_history("MOVE", warehouse, from_location, item_code, lot_no, -qty, "이동 출고")
+    log_history("MOVE", warehouse, to_location, item_code, lot_no, qty, "이동 입고")
 
     conn.commit()
     conn.close()
-
-    log_history("이동", warehouse, from_location, item_code, "", lot_no, "", qty, f"→ {to_location} {remark}")
-
     return {"result": "OK"}
