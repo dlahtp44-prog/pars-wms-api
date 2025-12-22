@@ -30,6 +30,12 @@ def init_db():
     )
     """)
 
+    # UNIQUE (UPSERT 대비)
+    cur.execute("""
+    CREATE UNIQUE INDEX IF NOT EXISTS ux_inventory
+    ON inventory (warehouse, location, item_code, lot_no)
+    """)
+
     # history
     cur.execute("""
     CREATE TABLE IF NOT EXISTS history (
@@ -50,17 +56,12 @@ def init_db():
 
 
 # =========================
-# ✅ 재고 조회 (필터 대응)
+# 재고 조회
 # =========================
-def get_inventory(
-    warehouse: str | None = None,
-    location: str | None = None,
-    q: str | None = None
-):
+def get_inventory():
     conn = get_conn()
     cur = conn.cursor()
-
-    sql = """
+    cur.execute("""
         SELECT
             warehouse,
             location,
@@ -69,37 +70,11 @@ def get_inventory(
             item_name,
             lot_no,
             spec,
-            SUM(qty) as qty
+            SUM(qty) AS qty
         FROM inventory
-        WHERE 1=1
-    """
-    params = []
-
-    if warehouse:
-        sql += " AND warehouse = ?"
-        params.append(warehouse)
-
-    if location:
-        sql += " AND location = ?"
-        params.append(location)
-
-    if q:
-        sql += """
-        AND (
-            item_code LIKE ?
-            OR item_name LIKE ?
-            OR lot_no LIKE ?
-        )
-        """
-        kw = f"%{q}%"
-        params.extend([kw, kw, kw])
-
-    sql += """
         GROUP BY warehouse, location, item_code, lot_no
         ORDER BY item_code
-    """
-
-    cur.execute(sql, params)
+    """)
     rows = [dict(r) for r in cur.fetchall()]
     conn.close()
     return rows
@@ -123,7 +98,7 @@ def get_history(limit: int = 200):
 
 
 # =========================
-# 이력 기록 (모든 router에서 사용)
+# 이력 기록 (공용)
 # =========================
 def log_history(
     tx_type: str,
