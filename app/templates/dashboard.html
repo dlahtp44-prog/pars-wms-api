@@ -1,122 +1,101 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <title>PARS WMS Dashboard</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background:#f3f4f6;
-            margin:0;
-        }
-        .container {
-            padding:20px;
-        }
-        h1 {
-            margin-bottom:20px;
-        }
-        .grid {
-            display:grid;
-            grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));
-            gap:15px;
-            margin-bottom:30px;
-        }
-        .card {
-            background:#fff;
-            padding:20px;
-            border-radius:12px;
-            box-shadow:0 2px 6px rgba(0,0,0,.08);
-        }
-        .card h2 {
-            margin:0;
-            font-size:14px;
-            color:#6b7280;
-        }
-        .card p {
-            font-size:26px;
-            margin-top:8px;
-            font-weight:bold;
-        }
-        table {
-            width:100%;
-            border-collapse:collapse;
-            background:#fff;
-            border-radius:12px;
-            overflow:hidden;
-            box-shadow:0 2px 6px rgba(0,0,0,.08);
-        }
-        th, td {
-            padding:10px;
-            border-bottom:1px solid #e5e7eb;
-            text-align:left;
-        }
-        th {
-            background:#f9fafb;
-        }
-        .actions {
-            margin-top:30px;
-            display:grid;
-            grid-template-columns:repeat(auto-fit, minmax(160px, 1fr));
-            gap:12px;
-        }
-        .actions a button {
-            width:100%;
-            padding:14px;
-            font-size:16px;
-            border:none;
-            border-radius:10px;
-            background:#2563eb;
-            color:white;
-            cursor:pointer;
-        }
-    </style>
+<meta charset="UTF-8">
+<title>PARS WMS Dashboard</title>
+
+<style>
+body { margin:0; font-family:Arial; background:#f3f4f6; }
+.container { padding:20px; }
+
+.grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+  gap:15px;
+}
+
+.card {
+  background:#fff;
+  padding:18px;
+  border-radius:14px;
+  box-shadow:0 2px 6px rgba(0,0,0,.08);
+}
+
+.card h2 { margin:0; font-size:14px; color:#6b7280; }
+.card p { font-size:26px; margin-top:8px; font-weight:bold; }
+
+.card.red {
+  background:#fee2e2;
+  color:#991b1b;
+}
+
+table {
+  width:100%;
+  border-collapse:collapse;
+  background:#fff;
+  margin-top:25px;
+  border-radius:14px;
+  overflow:hidden;
+}
+
+th, td {
+  padding:10px;
+  border-bottom:1px solid #e5e7eb;
+}
+
+th { background:#f9fafb; }
+
+@media(max-width:600px){
+  .card p { font-size:20px; }
+}
+</style>
 </head>
 
 <body>
 <div class="container">
-    <h1>📊 PARS WMS 대시보드</h1>
 
-    <!-- 요약 카드 -->
-    <div class="grid">
-        <div class="card">
-            <h2>총 재고 수량</h2>
-            <p>{{ total }}</p>
-        </div>
-        <div class="card">
-            <h2>품목 수</h2>
-            <p>{{ rows | length }}</p>
-        </div>
-    </div>
+<h1>📊 PARS WMS 대시보드</h1>
 
-    <!-- 재고 테이블 -->
-    <h2>📦 재고 현황</h2>
-    <table>
-        <tr>
-            <th>창고</th>
-            <th>위치</th>
-            <th>품번</th>
-            <th>LOT</th>
-            <th>수량</th>
-        </tr>
-        {% for r in rows %}
-        <tr>
-            <td>{{ r.warehouse }}</td>
-            <td>{{ r.location }}</td>
-            <td>{{ r.item_code }}</td>
-            <td>{{ r.lot_no }}</td>
-            <td>{{ r.qty }}</td>
-        </tr>
-        {% endfor %}
-    </table>
+<!-- 요약 카드 -->
+<div class="grid">
+  <div class="card">
+    <h2>오늘 입고</h2>
+    <p>{{ summary.inbound_today }}</p>
+  </div>
 
-    <!-- 이동 버튼 -->
-    <div class="actions">
-        <a href="/worker/inbound"><button>📥 입고</button></a>
-        <a href="/worker/outbound"><button>📤 출고</button></a>
-        <a href="/worker/move"><button>🔄 이동</button></a>
-        <a href="/inventory-page"><button>📋 재고 조회</button></a>
-        <a href="/qr-page"><button>📷 QR 스캔</button></a>
-    </div>
+  <div class="card">
+    <h2>오늘 출고</h2>
+    <p>{{ summary.outbound_today }}</p>
+  </div>
+
+  <div class="card">
+    <h2>총 재고</h2>
+    <p>{{ summary.total_stock }}</p>
+  </div>
+
+  {% if summary.negative_cnt > 0 %}
+  <div class="card red">
+    <h2>⚠ 음수 재고</h2>
+    <p>{{ summary.negative_cnt }} 건</p>
+  </div>
+  {% endif %}
+</div>
+
+<!-- LOT 그래프 -->
+<h2 style="margin-top:30px;">📦 LOT별 재고 TOP 10</h2>
+<table>
+<tr>
+  <th>LOT</th>
+  <th>수량</th>
+</tr>
+{% for r in lot_rows %}
+<tr>
+  <td>{{ r.lot_no }}</td>
+  <td>{{ r.qty }}</td>
+</tr>
+{% endfor %}
+</table>
+
 </div>
 </body>
 </html>
