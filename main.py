@@ -45,6 +45,7 @@ safe_include("app.pages.qr_page")           # /qr-page
 safe_include("app.pages.item_page")         # /item/{item_code}
 safe_include("app.pages.upload_page")       # /upload-page
 safe_include("app.pages.admin_page")        # /admin-page
+safe_include("app.pages.dashboard_page")
 
 # APIs
 safe_include("app.routers.items")
