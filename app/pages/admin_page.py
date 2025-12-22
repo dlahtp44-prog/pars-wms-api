@@ -6,8 +6,9 @@ router = APIRouter(prefix="/admin")
 templates = Jinja2Templates(directory="app/templates")
 
 @router.get("")
-def admin(request: Request):
+def admin_home(request: Request):
+    rows = get_history()
     return templates.TemplateResponse(
         "admin.html",
-        {"request": request, "rows": get_history()}
+        {"request": request, "rows": rows}
     )
