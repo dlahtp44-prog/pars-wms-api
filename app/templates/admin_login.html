@@ -1,5 +1,13 @@
-<h3>🔐 관리자 로그인</h3>
-<form method="post">
-  <input type="password" name="password" placeholder="비밀번호">
-  <button>접속</button>
-</form>
+{% extends "base.html" %}
+{% block content %}
+<h2 class="title">🔐 관리자 로그인</h2>
+
+<div class="card">
+  {% if error %}<p style="color:#ef4444;"><b>{{ error }}</b></p>{% endif %}
+  <form method="post" action="/admin/login">
+    <input name="password" type="password" placeholder="관리자 비밀번호" required />
+    <button class="btn" type="submit">로그인</button>
+  </form>
+  <p class="hint">Railway Variables에 <b>ADMIN_PASSWORD</b> 설정 권장</p>
+</div>
+{% endblock %}
