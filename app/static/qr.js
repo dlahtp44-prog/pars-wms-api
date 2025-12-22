@@ -44,14 +44,16 @@ async function scan(){
 }
 
 function goOutbound(item, lot, loc){
+  // 작업자 화면으로 통일
   location.href =
-    `/outbound-page?item_code=${item}&lot_no=${lot}&location=${loc}`;
+    `/worker/outbound?item_code=${item}&lot_no=${lot}&location=${loc}`;
 }
 
 function goMove(item, lot, loc){
   location.href =
-    `/move-page?item_code=${item}&lot_no=${lot}&from_location=${loc}`;
+    `/worker/move?item_code=${item}&lot_no=${lot}&from_location=${loc}`;
 }
+
 navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
 .then(stream => {
   const video = document.getElementById("preview");
