@@ -1,47 +1,37 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="row" style="justify-content:space-between;align-items:center;">
-  <h2 class="title">🛠 관리자</h2>
-  <a class="btn gray" href="/admin/logout">로그아웃</a>
-</div>
+<h2 class="title">🛠 관리자 (이력 롤백)</h2>
 
 <div class="tablewrap">
-  <table class="table">
-    <thead>
-      <tr>
-        <th>ID</th><th>구분</th><th>창고</th><th>로케이션</th><th>브랜드</th><th>품번</th><th>품명</th><th>LOT</th><th>규격</th>
-        <th class="right">수량</th><th>작업</th>
-      </tr>
-    </thead>
-    <tbody>
-    {% for r in rows %}
-      <tr>
-        <td>{{ r.id }}</td>
-        <td>{{ r.tx_type }}</td>
-        <td>{{ r.warehouse }}</td>
-        <td>{{ r.location }}</td>
-        <td>{{ r.brand }}</td>
-        <td>{{ r.item_code }}</td>
-        <td>{{ r.item_name }}</td>
-        <td>{{ r.lot_no }}</td>
-        <td>{{ r.spec }}</td>
-        <td class="right"><b>{{ r.qty }}</b></td>
-        <td>
-          <button class="smallbtn" onclick="doRollback({{r.id}})">롤백</button>
-        </td>
-      </tr>
-    {% endfor %}
-    </tbody>
-  </table>
+<table class="inventory">
+<thead>
+<tr>
+  <th>ID</th><th>구분</th><th>품번</th><th>LOT</th>
+  <th class="right">수량</th><th>작업</th>
+</tr>
+</thead>
+<tbody>
+{% for r in rows %}
+<tr>
+  <td>{{ r.id }}</td>
+  <td>{{ r.tx_type }}</td>
+  <td>{{ r.item_code }}</td>
+  <td>{{ r.lot_no }}</td>
+  <td class="right"><b>{{ r.qty }}</b></td>
+  <td>
+    <button class="btn warn" onclick="rollback({{r.id}})">롤백</button>
+  </td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
 </div>
 
 <script>
-async function doRollback(id){
-  if(!confirm("이 작업을 롤백(되돌리기)할까요?")) return;
-  const res = await fetch(`/api/history/rollback/${id}`, {method:"POST"});
-  const j = await res.json();
-  alert(j.msg || "완료");
+async function rollback(id){
+  if(!confirm("정말 롤백할까요?")) return;
+  await fetch(`/api/history/rollback/${id}`,{method:"POST"});
   location.reload();
 }
 </script>
