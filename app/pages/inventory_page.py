@@ -11,8 +11,5 @@ def inventory_page(request: Request):
     rows = get_inventory()
     return templates.TemplateResponse(
         "inventory.html",
-        {
-            "request": request,
-            "rows": rows
-        }
+        {"request": request, "rows": rows}
     )
