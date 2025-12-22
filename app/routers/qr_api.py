@@ -1,35 +1,41 @@
-from fastapi import APIRouter, Query
-from app.db import get_conn
+from fastapi import APIRouter
+from pydantic import BaseModel
+from app.db import add_inventory
 
-router = APIRouter(prefix="/api", tags=["QR"])
+router = APIRouter(prefix="/api")
 
-@router.get("/qr-search")
-def qr_search(q: str = Query(..., min_length=1)):
+class QRBody(BaseModel):
+    qr: str
+
+@router.post("/qr")
+def process_qr(body: QRBody):
     """
-    q로 inventory에서 item_code / lot_no / location 등 검색
+    QR 포맷 예시:
+    W1|B01-01-02-A|ITEM001|LOT123|10|IN
     """
-    conn = get_conn()
-    cur = conn.cursor()
+    try:
+        parts = body.qr.split("|")
+        if len(parts) != 6:
+            return {"ok": False, "msg": "QR 형식 오류"}
 
-    kw = f"%{q}%"
-    cur.execute("""
-        SELECT
-            COALESCE(warehouse,'') as location_name,
-            item_code,
-            lot_no,
-            location,
-            SUM(qty) as qty
-        FROM inventory
-        WHERE
-          item_code LIKE ?
-          OR lot_no LIKE ?
-          OR location LIKE ?
-          OR item_name LIKE ?
-        GROUP BY warehouse, location, item_code, lot_no
-        ORDER BY item_code
-        LIMIT 200
-    """, (kw, kw, kw, kw))
+        warehouse, location, item, lot, qty, tx = parts
+        qty = float(qty)
 
-    rows = [dict(r) for r in cur.fetchall()]
-    conn.close()
-    return rows
+        if tx == "OUT":
+            qty = -qty
+
+        add_inventory(
+            warehouse=warehouse,
+            location=location,
+            item=item,
+            lot=lot,
+            qty=qty
+        )
+
+        return {"ok": True}
+
+    except ValueError as e:
+        return {"ok": False, "msg": str(e)}
+
+    except Exception:
+        return {"ok": False, "msg": "처리 실패"}
