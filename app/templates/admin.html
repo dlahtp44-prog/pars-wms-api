@@ -1,20 +1,39 @@
-from fastapi import APIRouter, Request, Depends
-from fastapi.templating import Jinja2Templates
-from app.db import get_history, rollback
-from app.auth import require_role
+{% extends "base.html" %}
+{% block content %}
 
-router = APIRouter(prefix="/admin")
-templates = Jinja2Templates(directory="app/templates")
+<h2>🛠 관리자 이력 관리</h2>
 
-@router.get("")
-def admin(request: Request, _:None=Depends(require_role("admin"))):
-    rows = get_history()
-    return templates.TemplateResponse(
-        "admin.html",
-        {"request": request, "rows": rows}
-    )
+<table border="1" style="width:100%;border-collapse:collapse;">
+  <tr>
+    <th>ID</th>
+    <th>구분</th>
+    <th>품번</th>
+    <th>LOT</th>
+    <th>수량</th>
+    <th>시간</th>
+    <th>작업</th>
+  </tr>
+  {% for r in rows %}
+  <tr>
+    <td>{{ r.id }}</td>
+    <td>{{ r.tx_type }}</td>
+    <td>{{ r.item_code }}</td>
+    <td>{{ r.lot_no }}</td>
+    <td>{{ r.qty }}</td>
+    <td>{{ r.created_at }}</td>
+    <td>
+      <button onclick="rollback({{ r.id }})">롤백</button>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
 
-@router.post("/rollback/{tx_id}")
-def do_rollback(tx_id: int, _:None=Depends(require_role("admin"))):
-    rollback(tx_id)
-    return {"ok": True}
+<script>
+function rollback(id){
+  if(!confirm("정말 롤백하시겠습니까?")) return;
+  fetch(`/admin/rollback/${id}`, {method:"POST"})
+    .then(()=>location.reload());
+}
+</script>
+
+{% endblock %}
