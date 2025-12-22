@@ -1,31 +1,29 @@
+# main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
-
 
 app = FastAPI(title="PARS WMS")
 
-@app.on_event("startup")
-def startup():
-    from app.db import init_db
-    init_db()
-    print("✅ DB 초기화 완료")
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-APP_DIR = os.path.join(BASE_DIR, "app")
-STATIC_DIR = os.path.join(APP_DIR, "static")
-
-if os.path.isdir(STATIC_DIR):
-    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
-
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# DB init
+@app.on_event("startup")
+def startup():
+    from app.db import init_db
+    init_db()
+    print("✅ DB 초기화 완료")
+
+# static
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 def safe_include(path: str):
     try:
@@ -35,23 +33,21 @@ def safe_include(path: str):
     except Exception as e:
         print(f"❌ {path} 실패:", e)
 
-# Pages
-safe_include("app.pages.index_page")        # /
-safe_include("app.pages.worker_page")       # /worker
-safe_include("app.pages.inbound_page")      # /worker/inbound
-safe_include("app.pages.outbound_page")     # /worker/outbound
-safe_include("app.pages.move_page")         # /worker/move
-safe_include("app.pages.inventory_page")    # /inventory-page
-safe_include("app.pages.history_page")      # /history-page
-safe_include("app.pages.qr_page")           # /qr-page
-safe_include("app.pages.item_page")         # /item/{item_code}
-safe_include("app.pages.upload_page")       # /upload-page
-safe_include("app.pages.admin_page")        # /admin-page
+# pages
+safe_include("app.pages.index_page")
+safe_include("app.pages.worker_page")
+safe_include("app.pages.inbound_page")
+safe_include("app.pages.outbound_page")
+safe_include("app.pages.move_page")
+safe_include("app.pages.inventory_page")
+safe_include("app.pages.history_page")
+safe_include("app.pages.qr_page")
+safe_include("app.pages.item_page")
+safe_include("app.pages.upload_page")
 safe_include("app.pages.dashboard_page")
+safe_include("app.pages.admin_page")
 
-
-
-# APIs
+# routers
 safe_include("app.routers.items")
 safe_include("app.routers.inbound")
 safe_include("app.routers.outbound")
@@ -63,7 +59,7 @@ safe_include("app.routers.qr_api")
 safe_include("app.routers.qr_process")
 safe_include("app.routers.upload_inventory")
 safe_include("app.routers.upload_outbound")
-safe_include("app.routers.dashboard_api"
+
 @app.get("/ping")
 def ping():
     return {"status": "OK"}
