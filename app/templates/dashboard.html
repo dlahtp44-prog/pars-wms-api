@@ -1,25 +1,28 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body>
-<h2>📊 WMS 대시보드</h2>
+{% extends "base.html" %}
+{% block content %}
 
-<canvas id="chart"></canvas>
+<h2>📊 대시보드</h2>
 
-<script>
-new Chart(document.getElementById("chart"), {
-  type: "bar",
-  data: {
-    labels: ["입고", "출고", "총재고", "음수"],
-    datasets: [{
-      data: [{{ inbound }}, {{ outbound }}, {{ total }}, {{ negative }}],
-      backgroundColor: ["#22c55e","#ef4444","#3b82f6","#dc2626"]
-    }]
-  }
-});
-</script>
-</body>
-</html>
+<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">
+  <div>오늘 입고: <b>{{ summary.inbound_today }}</b></div>
+  <div>오늘 출고: <b>{{ summary.outbound_today }}</b></div>
+  <div>총 재고: <b>{{ summary.total_stock }}</b></div>
+  <div style="color:red">음수 재고: <b>{{ summary.negative_stock }}</b></div>
+</div>
+
+<hr>
+
+<table border="1" style="width:100%;margin-top:10px;">
+<tr>
+  <th>품번</th><th>LOT</th><th>수량</th>
+</tr>
+{% for r in rows %}
+<tr>
+  <td>{{ r.item_code }}</td>
+  <td>{{ r.lot_no }}</td>
+  <td>{{ r.qty }}</td>
+</tr>
+{% endfor %}
+</table>
+
+{% endblock %}
