@@ -3,7 +3,6 @@ from pathlib import Path
 
 DB_PATH = Path(__file__).parent.parent / "WMS.db"
 
-
 def get_conn():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -14,7 +13,7 @@ def init_db():
     conn = get_conn()
     cur = conn.cursor()
 
-    # inventory
+    # 재고
     cur.execute("""
     CREATE TABLE IF NOT EXISTS inventory (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -30,7 +29,7 @@ def init_db():
     )
     """)
 
-    # history
+    # 이력
     cur.execute("""
     CREATE TABLE IF NOT EXISTS history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -56,10 +55,8 @@ def get_inventory():
     conn = get_conn()
     cur = conn.cursor()
     cur.execute("""
-        SELECT
-            warehouse, location, brand,
-            item_code, item_name, lot_no,
-            spec, SUM(qty) as qty
+        SELECT warehouse, location, item_code, item_name, lot_no, spec,
+               SUM(qty) AS qty
         FROM inventory
         GROUP BY warehouse, location, item_code, lot_no
         ORDER BY item_code
@@ -73,8 +70,7 @@ def get_history(limit=200):
     conn = get_conn()
     cur = conn.cursor()
     cur.execute("""
-        SELECT *
-        FROM history
+        SELECT * FROM history
         ORDER BY created_at DESC
         LIMIT ?
     """, (limit,))
@@ -83,9 +79,6 @@ def get_history(limit=200):
     return rows
 
 
-# =========================
-# 이력 기록
-# =========================
 def log_history(tx_type, warehouse, location, item_code, lot_no, qty, remark=""):
     conn = get_conn()
     cur = conn.cursor()
