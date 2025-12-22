@@ -92,22 +92,29 @@ def dashboard_summary():
     cur = conn.cursor()
 
     cur.execute("""
-        SELECT IFNULL(SUM(qty),0) FROM history
-        WHERE tx_type='IN' AND DATE(created_at)=DATE('now')
+        SELECT IFNULL(SUM(qty),0)
+        FROM history
+        WHERE tx_type='입고'
+        AND DATE(created_at)=DATE('now','localtime')
     """)
-    inbound = cur.fetchone()[0]
+    inbound_today = cur.fetchone()[0]
 
     cur.execute("""
-        SELECT IFNULL(SUM(qty),0) FROM history
-        WHERE tx_type='OUT' AND DATE(created_at)=DATE('now')
+        SELECT IFNULL(SUM(qty),0)
+        FROM history
+        WHERE tx_type='출고'
+        AND DATE(created_at)=DATE('now','localtime')
     """)
-    outbound = cur.fetchone()[0]
+    outbound_today = cur.fetchone()[0]
 
     cur.execute("SELECT IFNULL(SUM(qty),0) FROM inventory")
-    total = cur.fetchone()[0]
+    total_stock = cur.fetchone()[0]
 
-    cur.execute("SELECT COUNT(*) FROM inventory WHERE qty < 0")
+    cur.execute("""
+        SELECT COUNT(*) FROM inventory WHERE qty < 0
+    """)
     negative = cur.fetchone()[0]
 
     conn.close()
-    return inbound, outbound, total, negative
+    return inbound_today, outbound_today, total_stock, negative
+
