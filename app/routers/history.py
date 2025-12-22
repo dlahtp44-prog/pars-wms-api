@@ -3,26 +3,37 @@ from app.db import get_conn, log_history
 
 router = APIRouter(prefix="/api/history")
 
-@router.post("/rollback/{id}")
-def rollback(tx_id: int):
+@router.post("/rollback/{history_id}")
+def rollback(history_id: int):
     conn = get_conn()
     cur = conn.cursor()
 
-    cur.execute("SELECT * FROM history WHERE id=?", (tx_id,))
-    row = cur.fetchone()
-    if not row:
-        return {"error": "없음"}
+    row = cur.execute(
+        "SELECT * FROM history WHERE id=?",
+        (history_id,)
+    ).fetchone()
 
-    qty = -row["qty"]
+    if not row:
+        return {"error": "기록 없음"}
+
+    # 반대 작업
+    sign = -1 if row["tx_type"] in ("입고", "IN") else 1
+
     cur.execute("""
         UPDATE inventory
         SET qty = qty + ?
         WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?
-    """, (qty, row["warehouse"], row["location"], row["item_code"], row["lot_no"]))
+    """, (
+        sign * row["qty"],
+        row["warehouse"],
+        row["location"],
+        row["item_code"],
+        row["lot_no"]
+    ))
 
-    log_history("ROLLBACK", row["warehouse"], row["location"],
-                row["item_code"], row["lot_no"], qty, "복구")
-
+    cur.execute("DELETE FROM history WHERE id=?", (history_id,))
     conn.commit()
     conn.close()
-    return {"result": "OK"}
+
+    return {"result": "rollback ok"}
+
