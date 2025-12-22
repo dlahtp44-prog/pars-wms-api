@@ -2,6 +2,36 @@ from fastapi import APIRouter, UploadFile, File
 import csv, io
 from app.db import get_conn, log_history
 
+router = APIRouter(prefix="/api/inbound")
+
+@router.post("/upload")
+def upload_inventory(file: UploadFile = File(...)):
+    content = file.file.read().decode("utf-8")
+    reader = csv.DictReader(io.StringIO(content))
+
+    conn = get_conn()
+    cur = conn.cursor()
+
+    for r in reader:
+        cur.execute("""
+            INSERT INTO inventory
+            (warehouse, location, brand, item_code, item_name, lot_no, spec, qty)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(warehouse, location, item_code, lot_no)
+            DO UPDATE SET qty = qty + ?
+        """, (
+            r["warehouse"], r["location"], r["brand"],
+            r["item_code"], r["item_name"], r["lot_no"],
+            r["spec"], int(r["qty"]), int(r["qty"])
+        ))
+
+        log_history("IN", r["warehouse"], r["location"],
+                    r["item_code"], r["lot_no"], int(r["qty"]))
+
+    conn.commit()
+    conn.close()
+    return {"result": "입고 엑셀 처리 완료"}
+
 router = APIRouter(prefix="/api", tags=["업로드"])
 
 @router.post("/inbound/upload")
