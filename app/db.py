@@ -1,6 +1,5 @@
 import sqlite3
 from pathlib import Path
-from datetime import date
 
 DB_PATH = Path(__file__).parent.parent / "WMS.db"
 
@@ -14,16 +13,16 @@ def init_db():
     conn = get_conn()
     cur = conn.cursor()
 
+    # 재고
     cur.execute("""
     CREATE TABLE IF NOT EXISTS inventory (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         warehouse TEXT,
         location TEXT,
-        brand TEXT,
         item_code TEXT,
         item_name TEXT,
         lot_no TEXT,
-        spec TEXT,
+        shade TEXT,
         qty REAL DEFAULT 0
     )
     """)
@@ -33,6 +32,7 @@ def init_db():
     ON inventory (warehouse, location, item_code, lot_no)
     """)
 
+    # 이력
     cur.execute("""
     CREATE TABLE IF NOT EXISTS history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -42,7 +42,7 @@ def init_db():
         item_code TEXT,
         lot_no TEXT,
         qty REAL,
-        created_at DATE DEFAULT (DATE('now'))
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
     """)
 
@@ -50,56 +50,13 @@ def init_db():
     conn.close()
 
 
-# -------------------------
-# 재고 조회
-# -------------------------
-def get_inventory():
+def log_history(tx_type, w, l, i, lot, qty):
     conn = get_conn()
     cur = conn.cursor()
     cur.execute("""
-        SELECT item_code, lot_no, SUM(qty) as qty
-        FROM inventory
-        GROUP BY item_code, lot_no
-    """)
-    rows = [dict(r) for r in cur.fetchall()]
-    conn.close()
-    return rows
-
-
-# -------------------------
-# 대시보드용 집계
-# -------------------------
-def dashboard_summary():
-    conn = get_conn()
-    cur = conn.cursor()
-
-    today = date.today().isoformat()
-
-    cur.execute("SELECT SUM(qty) FROM history WHERE tx_type='IN' AND created_at=?", (today,))
-    inbound = cur.fetchone()[0] or 0
-
-    cur.execute("SELECT SUM(qty) FROM history WHERE tx_type='OUT' AND created_at=?", (today,))
-    outbound = cur.fetchone()[0] or 0
-
-    cur.execute("SELECT SUM(qty) FROM inventory")
-    total = cur.fetchone()[0] or 0
-
-    cur.execute("SELECT COUNT(*) FROM inventory WHERE qty < 0")
-    negative = cur.fetchone()[0] or 0
-
-    conn.close()
-    return inbound, outbound, total, negative
-
-
-# -------------------------
-# 이력 기록
-# -------------------------
-def log_history(tx_type, warehouse, location, item_code, lot_no, qty):
-    conn = get_conn()
-    cur = conn.cursor()
-    cur.execute("""
-        INSERT INTO history (tx_type, warehouse, location, item_code, lot_no, qty)
+        INSERT INTO history
+        (tx_type, warehouse, location, item_code, lot_no, qty)
         VALUES (?, ?, ?, ?, ?, ?)
-    """, (tx_type, warehouse, location, item_code, lot_no, qty))
+    """, (tx_type, w, l, i, lot, qty))
     conn.commit()
     conn.close()
