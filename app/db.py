@@ -115,6 +115,28 @@ def rollback(history_id: int):
     conn.commit()
     conn.close()
     return True
+def remove_inventory(warehouse, location, item_code, lot_no, qty):
+    conn = get_conn()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT qty FROM inventory
+        WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?
+    """, (warehouse, location, item_code, lot_no))
+    row = cur.fetchone()
+
+    if not row or row["qty"] < qty:
+        conn.close()
+        raise ValueError("재고 부족")
+
+    cur.execute("""
+        UPDATE inventory
+        SET qty = qty - ?
+        WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?
+    """, (qty, warehouse, location, item_code, lot_no))
+
+    conn.commit()
+    conn.close()
 
 
 def dashboard_summary():
