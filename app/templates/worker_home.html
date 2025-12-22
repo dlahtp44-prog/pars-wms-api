@@ -1,32 +1,32 @@
 {% extends "worker_base.html" %}
-
 {% block content %}
 
-<h3>작업 선택</h3>
+<h2>👷 작업자 작업 선택</h2>
 
-<a href="/worker/inbound"><button>📦 입고</button></a>
-<a href="/worker/outbound"><button>🚚 출고</button></a>
-<a href="/worker/move"><button>🔁 재고 이동</button></a>
-<a href="/worker/inventory"><button>📊 재고 조회</button></a>
+<div style="margin-top:20px;">
+  <a href="/dashboard">
+    <button>📊 대시보드</button>
+  </a>
 
-<a href="/worker/qr" style="position:relative; display:inline-block;">
-  <button>
-    📷 QR 스캔
-    {% if qr_error_cnt > 0 %}
-      <span style="
-        background:red;
-        color:white;
-        border-radius:50%;
-        padding:2px 6px;
-        font-size:12px;
-        position:absolute;
-        top:-6px;
-        right:-10px;
-      ">
-        {{ qr_error_cnt }}
-      </span>
-    {% endif %}
-  </button>
-</a>
+  <a href="/worker/inbound">
+    <button>📥 입고</button>
+  </a>
+
+  <a href="/worker/outbound">
+    <button>📤 출고</button>
+  </a>
+
+  <a href="/worker/move">
+    <button>🔄 이동</button>
+  </a>
+
+  <a href="/worker/inventory">
+    <button>📦 재고 조회</button>
+  </a>
+
+  <a href="/worker/qr">
+    <button>📷 QR 스캔</button>
+  </a>
+</div>
 
 {% endblock %}
