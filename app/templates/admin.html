@@ -1,68 +1,100 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h2 class="title">🛠 관리자</h2>
+<h2 class="title">🛠 관리자 대시보드</h2>
 
-<div class="grid">
-  <div class="card"><div class="label">오늘 입고</div><div class="value">{{ summary.inbound_today }}</div></div>
-  <div class="card"><div class="label">오늘 출고</div><div class="value">{{ summary.outbound_today }}</div></div>
-  <div class="card"><div class="label">총 재고</div><div class="value">{{ summary.total_stock }}</div></div>
-  <div class="card warn"><div class="label">음수 재고</div><div class="value">{{ summary.negative_stock }}</div></div>
-</div>
-
-<div class="actions">
-  <a class="btn" href="/upload-page">CSV 업로드</a>
-  <a class="btn" href="/history-page">이력/롤백</a>
-  <a class="btn" href="/inventory-page">재고조회</a>
-  <a class="btn" href="/dashboard">대시보드</a>
-</div>
-
-<hr class="hr">
-
-<h3 class="subtitle">최근 이력 30건</h3>
 <div class="tablewrap">
-<table class="table">
-  <thead>
-    <tr>
-      <th>ID</th><th>시간</th><th>유형</th><th>창고</th><th>로케이션</th><th>품번</th><th>LOT</th><th class="right">수량</th><th>비고</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for r in hist %}
-    <tr>
-      <td>{{ r.id }}</td>
-      <td>{{ r.created_at }}</td>
-      <td>{{ r.tx_type }}</td>
-      <td>{{ r.warehouse }}</td>
-      <td>{{ r.location }}</td>
-      <td>{{ r.item_code }}</td>
-      <td>{{ r.lot_no }}</td>
-      <td class="right">{{ r.qty }}</td>
-      <td>{{ r.remark }}</td>
-    </tr>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>구분</th>
+        <th>품번</th>
+        <th>LOT</th>
+        <th class="right">수량</th>
+        <th>처리</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for r in rows %}
+      <tr>
+        <td>{{ r.id }}</td>
+        <td>{{ r.tx_type }}</td>
+        <td>{{ r.item_code }}</td>
+        <td>{{ r.lot_no }}</td>
+        <td class="right">{{ r.qty }}</td>
+        <td>
+          <button class="btn danger"
+            onclick="rollback({{ r.id }})">
+            롤백
+          </button>
+        </td>
+      </tr>
     {% endfor %}
-  </tbody>
-</table>
+    </tbody>
+  </table>
 </div>
+
+<script>
+function rollback(id){
+  if(!confirm("이 이력을 롤백하시겠습니까?")) return;
+  fetch(`/api/history/rollback/${id}`, { method:"POST" })
+    .then(r => r.json())
+    .then(() => location.reload());
+}
+</script>
 
 <style>
-  .title{margin:0 0 12px 0;font-size:20px}
-  .subtitle{margin:16px 0 8px 0;font-size:16px}
-  .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-  @media(min-width:900px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
-  .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:12px}
-  .card .label{color:#6b7280;font-size:12px}
-  .card .value{font-size:22px;font-weight:800;margin-top:4px}
-  .card.warn{border-color:#ef4444}
-  .actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
-  @media(min-width:900px){.actions{grid-template-columns:repeat(4,minmax(0,1fr))}}
-  .btn{display:block;text-align:center;padding:10px;border-radius:10px;background:#111827;color:#fff;text-decoration:none}
-  .hr{border:none;border-top:1px solid #e5e7eb;margin:14px 0}
-  .tablewrap{overflow:auto;border:1px solid #e5e7eb;border-radius:12px;background:#fff}
-  .table{width:100%;border-collapse:collapse;font-size:13px;min-width:1100px}
-  .table th,.table td{padding:10px;border-bottom:1px solid #f1f5f9;white-space:nowrap}
-  .table th{background:#111827;color:#fff;position:sticky;top:0}
-  .right{text-align:right}
+/* ===== 공통 ===== */
+.title{margin:0 0 14px 0;font-size:20px;font-weight:800}
+
+/* ===== 테이블 ===== */
+.tablewrap{
+  overflow:auto;
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+  background:#fff;
+}
+.table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:13px;
+  min-width:900px;
+}
+.table th,.table td{
+  padding:10px;
+  border-bottom:1px solid #f1f5f9;
+  white-space:nowrap;
+}
+.table th{
+  background:#111827;
+  color:#fff;
+  position:sticky;
+  top:0;
+  z-index:1;
+}
+.right{text-align:right}
+
+/* ===== 버튼 ===== */
+.btn{
+  padding:6px 10px;
+  border-radius:8px;
+  border:none;
+  cursor:pointer;
+  font-size:12px;
+}
+.btn.danger{
+  background:#ef4444;
+  color:#fff;
+}
+.btn.danger:hover{
+  background:#dc2626;
+}
+
+/* ===== 모바일 ===== */
+@media(max-width:768px){
+  .table{font-size:12px}
+}
 </style>
 
 {% endblock %}
