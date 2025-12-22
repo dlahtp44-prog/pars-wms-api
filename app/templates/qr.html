@@ -1,62 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-
-<h2 class="title">📷 QR 스캔 (카메라)</h2>
-
-<div class="grid">
-  <div class="card">
-    <div class="label">1) 카메라 스캔</div>
-    <video id="preview" playsinline></video>
-    <div class="row">
-      <button class="btn" onclick="startScan()">스캔 시작</button>
-      <button class="btn gray" onclick="stopScan()">정지</button>
-    </div>
-    <div class="hint" id="scanHint">※ 휴대폰 크롬 권장</div>
-  </div>
-
-  <div class="card">
-    <div class="label">2) 수동 입력</div>
-    <input id="qrText" placeholder="QR 텍스트 / 품번 / LOT / 로케이션 등" />
-    <button class="btn" onclick="lookup()">재고 조회</button>
-    <div class="hint">예) ITEM=766109;LOT=E465;WH=A;LOC=B01-01-02-A</div>
-  </div>
-</div>
-
-<hr class="hr">
-
-<h3 class="subtitle">📦 조회 결과</h3>
-<div class="tablewrap">
-  <table class="table">
-    <thead>
-      <tr>
-        <th>창고</th><th>로케이션</th><th>브랜드</th><th>품번</th><th>품명</th><th>LOT</th><th>규격</th><th class="right">현재고</th>
-      </tr>
-    </thead>
-    <tbody id="invBody"></tbody>
-  </table>
-</div>
-
-<script src="/static/qr_camera.js"></script>
-
-<style>
-  .title{margin:0 0 10px 0;font-size:20px}
-  .subtitle{margin:16px 0 8px 0;font-size:16px}
-  .grid{display:grid;grid-template-columns:1fr;gap:10px}
-  @media(min-width:900px){.grid{grid-template-columns:1fr 1fr}}
-  .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:12px}
-  .label{color:#6b7280;font-size:12px;margin-bottom:8px}
-  video{width:100%;height:auto;border-radius:12px;background:#111827;aspect-ratio:16/9}
-  .row{display:flex;gap:8px;margin-top:10px}
-  .btn{flex:1;padding:10px;border-radius:10px;border:0;background:#111827;color:#fff;cursor:pointer}
-  .btn.gray{background:#6b7280}
-  input{width:100%;padding:10px;border-radius:10px;border:1px solid #e5e7eb}
-  .hint{color:#6b7280;font-size:12px;margin-top:8px}
-  .hr{border:none;border-top:1px solid #e5e7eb;margin:14px 0}
-  .tablewrap{overflow:auto;border:1px solid #e5e7eb;border-radius:12px;background:#fff}
-  .table{width:100%;border-collapse:collapse;font-size:13px;min-width:900px}
-  .table th,.table td{padding:10px;border-bottom:1px solid #f1f5f9;white-space:nowrap}
-  .table th{background:#111827;color:#fff;position:sticky;top:0}
-  .right{text-align:right}
-</style>
-
+<h2>📷 QR 스캔</h2>
+<video id="video" width="100%" autoplay></video>
+<script src="/static/qr.js"></script>
 {% endblock %}
