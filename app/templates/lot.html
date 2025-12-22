@@ -1,0 +1,19 @@
+<h2>📦 LOT / 쉐이드 관리</h2>
+<table border="1">
+<tr><th>품번</th><th>LOT</th><th>쉐이드</th><th>수량</th></tr>
+<tbody id="rows"></tbody>
+</table>
+
+<script>
+fetch('/api/lot')
+.then(r=>r.json())
+.then(d=>{
+  document.getElementById('rows').innerHTML =
+    d.map(r=>`<tr>
+      <td>${r.item_code}</td>
+      <td>${r.lot_no}</td>
+      <td>${r.shade||''}</td>
+      <td>${r.qty}</td>
+    </tr>`).join('');
+});
+</script>
