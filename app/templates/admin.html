@@ -1,38 +1,48 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h2>🛠 관리자 이력 관리</h2>
+<div class="row" style="justify-content:space-between;align-items:center;">
+  <h2 class="title">🛠 관리자</h2>
+  <a class="btn gray" href="/admin/logout">로그아웃</a>
+</div>
 
-<table border="1" style="width:100%;border-collapse:collapse;">
-  <tr>
-    <th>ID</th>
-    <th>구분</th>
-    <th>품번</th>
-    <th>LOT</th>
-    <th>수량</th>
-    <th>시간</th>
-    <th>작업</th>
-  </tr>
-  {% for r in rows %}
-  <tr>
-    <td>{{ r.id }}</td>
-    <td>{{ r.tx_type }}</td>
-    <td>{{ r.item_code }}</td>
-    <td>{{ r.lot_no }}</td>
-    <td>{{ r.qty }}</td>
-    <td>{{ r.created_at }}</td>
-    <td>
-      <button onclick="rollback({{ r.id }})">롤백</button>
-    </td>
-  </tr>
-  {% endfor %}
-</table>
+<div class="tablewrap">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>ID</th><th>구분</th><th>창고</th><th>로케이션</th><th>브랜드</th><th>품번</th><th>품명</th><th>LOT</th><th>규격</th>
+        <th class="right">수량</th><th>작업</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for r in rows %}
+      <tr>
+        <td>{{ r.id }}</td>
+        <td>{{ r.tx_type }}</td>
+        <td>{{ r.warehouse }}</td>
+        <td>{{ r.location }}</td>
+        <td>{{ r.brand }}</td>
+        <td>{{ r.item_code }}</td>
+        <td>{{ r.item_name }}</td>
+        <td>{{ r.lot_no }}</td>
+        <td>{{ r.spec }}</td>
+        <td class="right"><b>{{ r.qty }}</b></td>
+        <td>
+          <button class="smallbtn" onclick="doRollback({{r.id}})">롤백</button>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
 
 <script>
-function rollback(id){
-  if(!confirm("정말 롤백하시겠습니까?")) return;
-  fetch(`/admin/rollback/${id}`, {method:"POST"})
-    .then(()=>location.reload());
+async function doRollback(id){
+  if(!confirm("이 작업을 롤백(되돌리기)할까요?")) return;
+  const res = await fetch(`/api/history/rollback/${id}`, {method:"POST"});
+  const j = await res.json();
+  alert(j.msg || "완료");
+  location.reload();
 }
 </script>
 
