@@ -4,19 +4,11 @@ from pathlib import Path
 
 DB_PATH = Path(__file__).parent.parent / "WMS.db"
 
-
-# =========================
-# DB 연결
-# =========================
 def get_conn():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
-
-# =========================
-# DB 초기화
-# =========================
 def init_db():
     conn = get_conn()
     cur = conn.cursor()
@@ -54,14 +46,28 @@ def init_db():
     conn.commit()
     conn.close()
 
+def log_history(
+    tx_type: str,
+    warehouse: str,
+    location: str,
+    item_code: str,
+    lot_no: str,
+    qty: float,
+    remark: str = ""
+):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO history
+        (tx_type, warehouse, location, item_code, lot_no, qty, remark)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, (tx_type, warehouse, location, item_code, lot_no, qty, remark))
+    conn.commit()
+    conn.close()
 
-# =========================
-# 재고 조회
-# =========================
 def get_inventory():
     conn = get_conn()
     cur = conn.cursor()
-
     cur.execute("""
         SELECT
             warehouse,
@@ -76,72 +82,27 @@ def get_inventory():
         GROUP BY warehouse, location, item_code, lot_no
         ORDER BY item_code
     """)
-
     rows = [dict(r) for r in cur.fetchall()]
     conn.close()
     return rows
 
-
-# =========================
-# 작업 이력 조회
-# =========================
 def get_history(limit: int = 200):
     conn = get_conn()
     cur = conn.cursor()
-
     cur.execute("""
         SELECT *
         FROM history
         ORDER BY created_at DESC
         LIMIT ?
     """, (limit,))
-
     rows = [dict(r) for r in cur.fetchall()]
     conn.close()
     return rows
 
-
-# =========================
-# 작업 이력 기록 (모든 router 공용)
-# =========================
-def log_history(
-    tx_type: str,
-    warehouse: str,
-    location: str,
-    item_code: str,
-    lot_no: str,
-    qty: float,
-    remark: str = ""
-):
-    conn = get_conn()
-    cur = conn.cursor()
-
-    cur.execute("""
-        INSERT INTO history
-        (tx_type, warehouse, location, item_code, lot_no, qty, remark)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    """, (
-        tx_type,
-        warehouse,
-        location,
-        item_code,
-        lot_no,
-        qty,
-        remark
-    ))
-
-    conn.commit()
-    conn.close()
-
-
-# =========================
-# ✅ 대시보드 요약 (🔥 핵심)
-# =========================
 def dashboard_summary():
     conn = get_conn()
     cur = conn.cursor()
 
-    # 오늘 입고
     cur.execute("""
         SELECT IFNULL(SUM(qty),0)
         FROM history
@@ -150,7 +111,6 @@ def dashboard_summary():
     """)
     inbound_today = cur.fetchone()[0]
 
-    # 오늘 출고
     cur.execute("""
         SELECT IFNULL(SUM(qty),0)
         FROM history
@@ -159,20 +119,18 @@ def dashboard_summary():
     """)
     outbound_today = cur.fetchone()[0]
 
-    # 총 재고
+    cur.execute("SELECT IFNULL(SUM(qty),0) FROM inventory")
+    total_stock = cur.fetchone()[0]
+
+    cur.execute("SELECT COUNT(*) FROM inventory WHERE qty < 0")
+    negative_stock = cur.fetchone()[0]
+
     cur.execute("""
         SELECT IFNULL(SUM(qty),0)
         FROM inventory
+        WHERE location IS NULL OR location=''
     """)
-    total_stock = cur.fetchone()[0]
-
-    # 음수 재고
-    cur.execute("""
-        SELECT COUNT(*)
-        FROM inventory
-        WHERE qty < 0
-    """)
-    negative_stock = cur.fetchone()[0]
+    no_location = cur.fetchone()[0]
 
     conn.close()
 
@@ -180,5 +138,6 @@ def dashboard_summary():
         "inbound_today": inbound_today,
         "outbound_today": outbound_today,
         "total_stock": total_stock,
-        "negative_stock": negative_stock
+        "negative_stock": negative_stock,
+        "no_location": no_location
     }
