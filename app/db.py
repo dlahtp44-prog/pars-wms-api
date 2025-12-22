@@ -172,3 +172,64 @@ def dashboard_summary():
         "total_stock": total_stock,
         "negative_stock": negative_stock
     }
+def dashboard_summary():
+    conn = get_conn()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT IFNULL(SUM(qty),0)
+        FROM history
+        WHERE tx_type IN ('IN','입고')
+          AND DATE(created_at)=DATE('now','localtime')
+    """)
+    inbound_today = cur.fetchone()[0]
+
+    cur.execute("""
+        SELECT IFNULL(SUM(qty),0)
+        FROM history
+        WHERE tx_type IN ('OUT','출고')
+          AND DATE(created_at)=DATE('now','localtime')
+    """)
+    outbound_today = cur.fetchone()[0]
+
+    cur.execute("SELECT IFNULL(SUM(qty),0) FROM inventory")
+    total_stock = cur.fetchone()[0]
+
+    cur.execute("SELECT COUNT(*) FROM inventory WHERE qty < 0")
+    negative_stock = cur.fetchone()[0]
+
+    conn.close()
+
+    return {
+        "inbound_today": inbound_today,
+        "outbound_today": outbound_today,
+        "total_stock": total_stock,
+        "negative_stock": negative_stock
+    }
+
+
+def dashboard_trend(days: int = 7):
+    conn = get_conn()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT
+          DATE(created_at) as d,
+          SUM(CASE WHEN tx_type IN ('IN','입고') THEN qty ELSE 0 END) as inbound,
+          SUM(CASE WHEN tx_type IN ('OUT','출고') THEN qty ELSE 0 END) as outbound
+        FROM history
+        WHERE DATE(created_at) >= DATE('now', ?)
+        GROUP BY DATE(created_at)
+        ORDER BY d
+    """, (f"-{days} day",))
+
+    rows = cur.fetchall()
+    conn.close()
+
+    return [
+        {
+            "date": r["d"],
+            "inbound": r["inbound"],
+            "outbound": r["outbound"]
+        } for r in rows
+    ]
