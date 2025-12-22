@@ -1,26 +1,33 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h2>작업 이력</h2>
+<h2 class="title">🧾 작업이력</h2>
 
-<table border="1" cellpadding="6" style="width:100%; border-collapse:collapse;">
-  <tr style="background:#f2f2f2;">
-    <th>구분</th>
-    <th>품번</th>
-    <th>수량</th>
-    <th>위치</th>
-    <th>일시</th>
-  </tr>
+<div class="hint">※ 입고/출고만 롤백 자동 지원(이동은 출발/도착 정보가 있어야 자동 가능)</div>
 
-  {% for r in rows %}
-  <tr>
-    <td>{{ r.tx_type }}</td>
-    <td>{{ r.item_code }}</td>
-    <td>{{ r.qty }}</td>
-    <td>{{ r.location }}</td>
-    <td>{{ r.created_at }}</td>
-  </tr>
-  {% endfor %}
+<div class="tablewrap">
+<table class="table">
+  <thead>
+    <tr>
+      <th>ID</th><th>시간</th><th>유형</th><th>창고</th><th>로케이션</th><th>품번</th><th>LOT</th><th class="right">수량</th><th>비고</th><th>롤백</th>
+    </tr>
+  </thead>
+  <tbody id="histBody"></tbody>
 </table>
+</div>
+
+<script src="/static/history.js"></script>
+
+<style>
+  .title{margin:0 0 10px 0;font-size:20px}
+  .hint{color:#6b7280;font-size:12px;margin-bottom:10px}
+  .tablewrap{overflow:auto;border:1px solid #e5e7eb;border-radius:12px;background:#fff}
+  .table{width:100%;border-collapse:collapse;font-size:13px;min-width:1100px}
+  .table th,.table td{padding:10px;border-bottom:1px solid #f1f5f9;white-space:nowrap}
+  .table th{background:#111827;color:#fff;position:sticky;top:0}
+  .right{text-align:right}
+  .btn{padding:6px 10px;border-radius:8px;border:0;cursor:pointer}
+  .danger{background:#ef4444;color:#fff}
+</style>
 
 {% endblock %}
