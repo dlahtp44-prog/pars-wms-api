@@ -5,6 +5,8 @@ from starlette.middleware.sessions import SessionMiddleware
 import os
 
 from app.db import init_db
+from app.routers import inbound_manual
+app.include_router(inbound_manual.router)
 
 app = FastAPI(
     title="PARS WMS",
