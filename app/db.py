@@ -4,6 +4,7 @@ from pathlib import Path
 
 DB_PATH = Path(__file__).parent.parent / "WMS.db"
 
+
 def get_conn():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -14,6 +15,7 @@ def init_db():
     conn = get_conn()
     cur = conn.cursor()
 
+    # inventory
     cur.execute("""
     CREATE TABLE IF NOT EXISTS inventory (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -28,11 +30,7 @@ def init_db():
     )
     """)
 
-    cur.execute("""
-    CREATE UNIQUE INDEX IF NOT EXISTS ux_inventory
-    ON inventory (warehouse, location, item_code, lot_no)
-    """)
-
+    # history
     cur.execute("""
     CREATE TABLE IF NOT EXISTS history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -51,30 +49,71 @@ def init_db():
     conn.close()
 
 
-# =====================
-# 조회
-# =====================
-def get_inventory():
+# =========================
+# ✅ 재고 조회 (필터 대응)
+# =========================
+def get_inventory(
+    warehouse: str | None = None,
+    location: str | None = None,
+    q: str | None = None
+):
     conn = get_conn()
     cur = conn.cursor()
-    cur.execute("""
-        SELECT warehouse, location, brand,
-               item_code, item_name, lot_no, spec,
-               SUM(qty) as qty
+
+    sql = """
+        SELECT
+            warehouse,
+            location,
+            brand,
+            item_code,
+            item_name,
+            lot_no,
+            spec,
+            SUM(qty) as qty
         FROM inventory
+        WHERE 1=1
+    """
+    params = []
+
+    if warehouse:
+        sql += " AND warehouse = ?"
+        params.append(warehouse)
+
+    if location:
+        sql += " AND location = ?"
+        params.append(location)
+
+    if q:
+        sql += """
+        AND (
+            item_code LIKE ?
+            OR item_name LIKE ?
+            OR lot_no LIKE ?
+        )
+        """
+        kw = f"%{q}%"
+        params.extend([kw, kw, kw])
+
+    sql += """
         GROUP BY warehouse, location, item_code, lot_no
         ORDER BY item_code
-    """)
+    """
+
+    cur.execute(sql, params)
     rows = [dict(r) for r in cur.fetchall()]
     conn.close()
     return rows
 
 
-def get_history(limit=200):
+# =========================
+# 이력 조회
+# =========================
+def get_history(limit: int = 200):
     conn = get_conn()
     cur = conn.cursor()
     cur.execute("""
-        SELECT * FROM history
+        SELECT *
+        FROM history
         ORDER BY created_at DESC
         LIMIT ?
     """, (limit,))
@@ -83,17 +122,17 @@ def get_history(limit=200):
     return rows
 
 
-# =====================
-# 이력 기록 (모든 트랜잭션 공통)
-# =====================
+# =========================
+# 이력 기록 (모든 router에서 사용)
+# =========================
 def log_history(
-    tx_type,
-    warehouse,
-    location,
-    item_code,
-    lot_no,
-    qty,
-    remark=""
+    tx_type: str,
+    warehouse: str,
+    location: str,
+    item_code: str,
+    lot_no: str,
+    qty: float,
+    remark: str = ""
 ):
     conn = get_conn()
     cur = conn.cursor()
@@ -102,8 +141,13 @@ def log_history(
         (tx_type, warehouse, location, item_code, lot_no, qty, remark)
         VALUES (?, ?, ?, ?, ?, ?, ?)
     """, (
-        tx_type, warehouse, location,
-        item_code, lot_no, qty, remark
+        tx_type,
+        warehouse,
+        location,
+        item_code,
+        lot_no,
+        qty,
+        remark
     ))
     conn.commit()
     conn.close()
