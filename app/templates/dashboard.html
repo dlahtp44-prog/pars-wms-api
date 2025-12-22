@@ -1,54 +1,39 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>PARS WMS Dashboard</title>
-  <style>
-    body { font-family: Arial; background:#f3f4f6; margin:0; padding:20px; }
-    h1 { margin-bottom:20px; }
-    table { width:100%; border-collapse:collapse; background:white; }
-    th, td { padding:10px; border:1px solid #ddd; text-align:center; }
-    th { background:#e5e7eb; }
-    .summary {
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-      gap:15px;
-      margin-bottom:20px;
-    }
-    .card {
-      background:white;
-      padding:20px;
-      border-radius:12px;
-      box-shadow:0 2px 6px rgba(0,0,0,.08);
-    }
-    .card h3 { margin:0; font-size:14px; color:#6b7280; }
-    .card p { font-size:28px; margin-top:8px; }
-  </style>
+<meta charset="UTF-8">
+<title>PARS WMS Dashboard</title>
+<style>
+body { font-family:Arial; background:#f3f4f6; padding:20px; }
+.grid { display:grid; grid-template-columns:repeat(4,1fr); gap:15px; }
+.card { background:white; padding:20px; border-radius:10px; }
+.red { background:#fee2e2; color:#991b1b; }
+table { width:100%; margin-top:20px; background:white; border-collapse:collapse; }
+th,td { border:1px solid #ddd; padding:8px; text-align:center; }
+</style>
 </head>
 
 <body>
-  <h1>📊 재고 대시보드</h1>
+<h1>📊 대시보드</h1>
 
-  <div class="summary">
-    <div class="card">
-      <h3>총 재고 수량</h3>
-      <p>{{ total }}</p>
-    </div>
+<div class="grid">
+  <div class="card"><h3>오늘 입고</h3><p>{{ inbound }}</p></div>
+  <div class="card"><h3>오늘 출고</h3><p>{{ outbound }}</p></div>
+  <div class="card"><h3>총 재고</h3><p>{{ total }}</p></div>
+  <div class="card {% if negative > 0 %}red{% endif %}">
+    <h3>재고 음수</h3><p>{{ negative }}</p>
   </div>
+</div>
 
-  <table>
-    <tr>
-      <th>품번</th>
-      <th>LOT</th>
-      <th>수량</th>
-    </tr>
-    {% for r in rows %}
-    <tr>
-      <td>{{ r.item_code }}</td>
-      <td>{{ r.lot_no }}</td>
-      <td>{{ r.qty }}</td>
-    </tr>
-    {% endfor %}
-  </table>
+<table>
+<tr><th>품번</th><th>LOT</th><th>수량</th></tr>
+{% for r in rows %}
+<tr>
+<td>{{ r.item_code }}</td>
+<td>{{ r.lot_no }}</td>
+<td>{{ r.qty }}</td>
+</tr>
+{% endfor %}
+</table>
 </body>
 </html>
