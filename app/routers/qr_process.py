@@ -1,112 +1,79 @@
-from fastapi import APIRouter, HTTPException
-from app.db import log_qr_error, is_blocked_action
+from fastapi import APIRouter
+from app.db import get_conn, log_history
 import json
 
-router = APIRouter(prefix="/api/qr", tags=["QR"])
+router = APIRouter(prefix="/api", tags=["QR"])
 
-@router.post("/process")
+@router.post("/qr/process")
 def process_qr(qr_data: str):
-    try:
-        data = json.loads(qr_data)
-        action = data.get("type")
+    data = json.loads(qr_data)
 
-        if action in ("OUT", "MOVE") and is_blocked_action(action):
-            raise HTTPException(
-                status_code=403,
-                detail="QR 오류 누적으로 출고/이동이 차단되었습니다"
-            )
-
-        return {"result": "처리 성공", "data": data}
-
-    except Exception as e:
-        log_qr_error(qr_data, "CRITICAL", str(e))
-        raise HTTPException(status_code=400, detail="QR 처리 실패")
-
-
-
-        action = parts["TYPE"]
-        warehouse = parts["WH"]
-        from_loc = parts["FROM"]
-        item_code = parts["ITEM"]
-        qty = float(parts["QTY"])
-        to_loc = parts.get("TO")
-
-        if action not in ("OUT", "MOVE"):
-            raise ValueError("TYPE은 OUT 또는 MOVE만 허용")
-
-        if action == "MOVE" and not to_loc:
-            raise ValueError("MOVE에는 TO= 로케이션이 필요")
-
-    except Exception as e:
-        log_qr_error(qr_raw=qr, err_type="PARSE_ERROR", err_msg=str(e))
-        raise HTTPException(400, f"QR 형식 오류: {e}")
+    action = data.get("type")  # IN / OUT / MOVE
+    warehouse = data.get("warehouse", "")
+    location = data.get("location", "")
+    item_code = data.get("item_code", "")
+    item_name = data.get("item_name", "")
+    lot_no = data.get("lot_no", "")
+    spec = data.get("spec", "")
+    qty = float(data.get("qty", 0))
+    to_location = data.get("to_location", "")
 
     conn = get_conn()
     cur = conn.cursor()
 
-    try:
-        # FIFO LOT 조회
+    if action == "IN":
         cur.execute("""
-            SELECT id, lot_no, qty
-            FROM inventory
-            WHERE warehouse=? AND location=? AND item_code=? AND qty > 0
-            ORDER BY id ASC
-        """, (warehouse, from_loc, item_code))
+            INSERT INTO inventory (warehouse, location, item_code, item_name, lot_no, spec, qty, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(warehouse, location, item_code, lot_no)
+            DO UPDATE SET
+                item_name=excluded.item_name,
+                spec=excluded.spec,
+                qty = qty + excluded.qty,
+                updated_at=CURRENT_TIMESTAMP
+        """, (warehouse, location, item_code, item_name, lot_no, spec, qty))
+        conn.commit()
+        conn.close()
+        log_history("입고", warehouse, location, item_code, item_name, lot_no, spec, qty, "QR")
 
-        lots = cur.fetchall()
-        if not lots:
-            log_qr_error(qr_raw=qr, err_type="NO_STOCK", err_msg="재고 없음")
-            raise HTTPException(400, "재고 없음")
+    elif action == "OUT":
+        cur.execute("""
+            INSERT INTO inventory (warehouse, location, item_code, item_name, lot_no, spec, qty, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(warehouse, location, item_code, lot_no)
+            DO UPDATE SET qty = qty - excluded.qty, updated_at=CURRENT_TIMESTAMP
+        """, (warehouse, location, item_code, item_name, lot_no, spec, qty))
+        conn.commit()
+        conn.close()
+        log_history("출고", warehouse, location, item_code, item_name, lot_no, spec, qty, "QR")
 
-        remain = qty
+    elif action == "MOVE":
+        if not to_location:
+            conn.close()
+            return {"result": "FAIL", "msg": "to_location 필요"}
 
-        for lot in lots:
-            if remain <= 0:
-                break
+        # from -
+        cur.execute("""
+            INSERT INTO inventory (warehouse, location, item_code, lot_no, qty, updated_at)
+            VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(warehouse, location, item_code, lot_no)
+            DO UPDATE SET qty = qty - excluded.qty, updated_at=CURRENT_TIMESTAMP
+        """, (warehouse, location, item_code, lot_no, qty))
 
-            deduct = min(lot["qty"], remain)
-
-            # 출발지 차감
-            cur.execute("""
-                UPDATE inventory
-                SET qty = qty - ?
-                WHERE id = ?
-            """, (deduct, lot["id"]))
-
-            # 이동이면 도착지 추가
-            if action == "MOVE":
-                cur.execute("""
-                    INSERT INTO inventory (warehouse, location, item_code, lot_no, qty)
-                    VALUES (?, ?, ?, ?, ?)
-                """, (warehouse, to_loc, item_code, lot["lot_no"], deduct))
-
-            # 이력
-            log_history(
-                tx_type="출고" if action == "OUT" else "이동",
-                warehouse=warehouse,
-                location=from_loc if action == "OUT" else f"{from_loc} → {to_loc}",
-                item_code=item_code,
-                lot_no=lot["lot_no"],
-                qty=deduct,
-                remark="QR FIFO 자동"
-            )
-
-            remain -= deduct
-
-        if remain > 0:
-            conn.rollback()
-            log_qr_error(qr_raw=qr, err_type="LACK_QTY", err_msg="수량 부족")
-            raise HTTPException(400, "수량 부족")
+        # to +
+        cur.execute("""
+            INSERT INTO inventory (warehouse, location, item_code, lot_no, qty, updated_at)
+            VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(warehouse, location, item_code, lot_no)
+            DO UPDATE SET qty = qty + excluded.qty, updated_at=CURRENT_TIMESTAMP
+        """, (warehouse, to_location, item_code, lot_no, qty))
 
         conn.commit()
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        conn.rollback()
-        log_qr_error(qr_raw=qr, err_type="SERVER_ERROR", err_msg=str(e))
-        raise HTTPException(500, "서버 처리 오류")
-    finally:
         conn.close()
+        log_history("이동", warehouse, location, item_code, item_name, lot_no, spec, qty, f"QR → {to_location}")
 
-    return RedirectResponse("/worker", status_code=303)
+    else:
+        conn.close()
+        return {"result": "FAIL", "msg": "알 수 없는 type"}
+
+    return {"result": "OK"}
