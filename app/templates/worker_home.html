@@ -1,12 +1,18 @@
 {% extends "worker_base.html" %}
-{% block content %}
 
+{% block head %}
+<!-- ✅ PWA 선언은 반드시 head -->
+<link rel="manifest" href="/static/manifest.json">
+<meta name="theme-color" content="#111827">
+{% endblock %}
+
+{% block content %}
 <h3>작업 선택</h3>
 
-<a href="/inbound-page"><button>📥 입고</button></a>
-<a href="/outbound-page"><button>📤 출고</button></a>
-<a href="/move-page"><button>🔁 이동</button></a>
-<a href="/inventory-page"><button>📦 재고</button></a>
+<a href="/worker/inbound"><button>📥 입고</button></a>
+<a href="/worker/outbound"><button>📤 출고</button></a>
+<a href="/worker/move"><button>🔁 이동</button></a>
+<a href="/worker/inventory"><button>📦 재고</button></a>
 <a href="/qr-page"><button>📷 QR 스캔</button></a>
 <a href="/dashboard"><button>📊 대시보드</button></a>
 
