@@ -1,8 +1,8 @@
-# app/db.py
 import sqlite3
 from pathlib import Path
 
 DB_PATH = Path(__file__).parent.parent / "WMS.db"
+
 
 def get_conn():
     conn = sqlite3.connect(DB_PATH)
@@ -25,14 +25,9 @@ def init_db():
         item_name TEXT,
         lot_no TEXT,
         spec TEXT,
-        qty REAL DEFAULT 0
+        qty REAL DEFAULT 0,
+        UNIQUE(warehouse, location, item_code, lot_no)
     )
-    """)
-
-    # UPSERT용 UNIQUE INDEX
-    cur.execute("""
-    CREATE UNIQUE INDEX IF NOT EXISTS ux_inventory
-    ON inventory (warehouse, location, item_code, lot_no)
     """)
 
     # history
@@ -54,22 +49,17 @@ def init_db():
     conn.close()
 
 
-# =====================
+# =========================
 # 조회
-# =====================
+# =========================
 def get_inventory():
     conn = get_conn()
     cur = conn.cursor()
     cur.execute("""
         SELECT
-            warehouse,
-            location,
-            brand,
-            item_code,
-            item_name,
-            lot_no,
-            spec,
-            SUM(qty) AS qty
+            warehouse, location, brand,
+            item_code, item_name, lot_no,
+            spec, SUM(qty) as qty
         FROM inventory
         GROUP BY warehouse, location, item_code, lot_no
         ORDER BY item_code
@@ -79,7 +69,7 @@ def get_inventory():
     return rows
 
 
-def get_history(limit: int = 200):
+def get_history(limit=200):
     conn = get_conn()
     cur = conn.cursor()
     cur.execute("""
@@ -93,32 +83,16 @@ def get_history(limit: int = 200):
     return rows
 
 
-# =====================
-# 이력 기록 (모든 router 공용)
-# =====================
-def log_history(
-    tx_type: str,
-    warehouse: str,
-    location: str,
-    item_code: str,
-    lot_no: str,
-    qty: float,
-    remark: str = ""
-):
+# =========================
+# 이력 기록
+# =========================
+def log_history(tx_type, warehouse, location, item_code, lot_no, qty, remark=""):
     conn = get_conn()
     cur = conn.cursor()
     cur.execute("""
         INSERT INTO history
         (tx_type, warehouse, location, item_code, lot_no, qty, remark)
         VALUES (?, ?, ?, ?, ?, ?, ?)
-    """, (
-        tx_type,
-        warehouse,
-        location,
-        item_code,
-        lot_no,
-        qty,
-        remark
-    ))
+    """, (tx_type, warehouse, location, item_code, lot_no, qty, remark))
     conn.commit()
     conn.close()
