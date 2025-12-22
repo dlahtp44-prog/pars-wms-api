@@ -1,32 +1,46 @@
-{% extends "worker_base.html" %}
+{% extends "base.html" %}
 {% block content %}
 
-<h2>📦 재고 조회</h2>
+<h2 class="title">📦 재고 조회</h2>
 
-<table border="1" cellpadding="6" width="100%">
-  <tr>
-    <th>장소명</th>
-    <th>브랜드</th>
-    <th>품번</th>
-    <th>품명</th>
-    <th>LOT</th>
-    <th>규격</th>
-    <th>로케이션</th>
-    <th>현재고</th>
-  </tr>
+<div class="card">
+  <input placeholder="품번 / 품명 / LOT 검색" oninput="search(this.value)">
+</div>
 
-  {% for r in rows %}
-  <tr>
-    <td>{{ r.location_name }}</td>
-    <td>{{ r.brand }}</td>
-    <td>{{ r.item_code }}</td>
-    <td>{{ r.item_name }}</td>
-    <td>{{ r.lot_no }}</td>
-    <td>{{ r.spec }}</td>
-    <td>{{ r.location }}</td>
-    <td><b>{{ r.qty }}</b></td>
-  </tr>
-  {% endfor %}
+<div class="tablewrap">
+<table class="inventory">
+<thead>
+<tr>
+  <th>창고</th><th>로케이션</th><th>브랜드</th>
+  <th>품번</th><th>품명</th><th>LOT</th><th>규격</th>
+  <th class="right">수량</th>
+</tr>
+</thead>
+<tbody id="rows"></tbody>
 </table>
+</div>
+
+<script>
+async function search(q=""){
+  const res = await fetch(`/api/inventory?q=${encodeURIComponent(q)}`);
+  const rows = await res.json();
+  let html="";
+  for(const r of rows){
+    html+=`
+    <tr>
+      <td>${r.warehouse||""}</td>
+      <td>${r.location||""}</td>
+      <td>${r.brand||""}</td>
+      <td>${r.item_code||""}</td>
+      <td>${r.item_name||""}</td>
+      <td>${r.lot_no||""}</td>
+      <td>${r.spec||""}</td>
+      <td class="right"><b>${r.qty}</b></td>
+    </tr>`;
+  }
+  document.getElementById("rows").innerHTML = html;
+}
+search();
+</script>
 
 {% endblock %}
