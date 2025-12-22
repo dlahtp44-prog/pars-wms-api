@@ -52,3 +52,7 @@ function goMove(item, lot, loc){
   location.href =
     `/move-page?item_code=${item}&lot_no=${lot}&from_location=${loc}`;
 }
+navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+.then(stream => {
+  document.getElementById("video").srcObject = stream;
+});
