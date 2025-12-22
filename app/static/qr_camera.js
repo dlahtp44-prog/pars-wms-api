@@ -1,111 +1,101 @@
 let stream = null;
-let detector = null;
-let scanning = false;
+let rafId = null;
 
-function parseQR(text){
-  // "ITEM=...;WH=...;LOC=...;LOT=...;QTY=..." 형태 지원
-  const out = { raw: text };
+const video = () => document.getElementById("preview");
+const canvas = () => document.getElementById("canvas");
+const resultBox = () => document.getElementById("result");
+
+async function startCamera() {
   try {
-    // JSON 형태면 JSON
-    if(text.trim().startsWith("{")){
-      const j = JSON.parse(text);
-      return { ...out, ...j };
-    }
-  } catch(e) {}
-
-  const parts = text.split(";").map(s=>s.trim()).filter(Boolean);
-  for(const p of parts){
-    const [k,v] = p.split("=").map(s=>s.trim());
-    if(!k || v===undefined) continue;
-    out[k.toLowerCase()] = v;
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "environment" },
+      audio: false
+    });
+    video().srcObject = stream;
+    await video().play();
+    scanLoop();
+  } catch (e) {
+    alert("카메라 권한 또는 HTTPS 확인 필요: " + e);
   }
-  return out;
 }
 
-async function startScan(){
-  const hint = document.getElementById("scanHint");
-  const video = document.getElementById("preview");
-
-  if(!("BarcodeDetector" in window)){
-    hint.textContent = "❌ 이 브라우저는 실시간 QR 스캔을 지원하지 않습니다. (수동 입력 사용)";
-    return;
+function stopCamera() {
+  if (rafId) cancelAnimationFrame(rafId);
+  rafId = null;
+  if (stream) {
+    stream.getTracks().forEach(t => t.stop());
+    stream = null;
   }
-
-  detector = new BarcodeDetector({formats:["qr_code"]});
-  stream = await navigator.mediaDevices.getUserMedia({
-    video: { facingMode: "environment" },
-    audio: false
-  });
-
-  video.srcObject = stream;
-  await video.play();
-  scanning = true;
-  hint.textContent = "✅ 스캔 중... QR을 카메라에 비추세요";
-
-  scanLoop();
 }
 
-async function scanLoop(){
-  if(!scanning) return;
-  const video = document.getElementById("preview");
+function scanLoop() {
+  const v = video();
+  const c = canvas();
+  const ctx = c.getContext("2d");
 
-  try{
-    const barcodes = await detector.detect(video);
-    if(barcodes && barcodes.length > 0){
-      const text = barcodes[0].rawValue || "";
-      document.getElementById("qrText").value = text;
-      await lookup();     // 스캔되면 바로 조회
-      stopScan();         // 한번 읽으면 자동 정지
+  if (v.readyState === v.HAVE_ENOUGH_DATA) {
+    c.width = v.videoWidth;
+    c.height = v.videoHeight;
+    ctx.drawImage(v, 0, 0, c.width, c.height);
+
+    const img = ctx.getImageData(0, 0, c.width, c.height);
+    const code = jsQR(img.data, img.width, img.height);
+
+    if (code && code.data) {
+      // 한번 읽히면 중지하고 조회
+      stopCamera();
+      document.getElementById("qrText").value = code.data;
+      manualSearch();
       return;
     }
-  }catch(e){}
-
-  requestAnimationFrame(scanLoop);
-}
-
-function stopScan(){
-  scanning = false;
-  const hint = document.getElementById("scanHint");
-  hint.textContent = "정지됨";
-  const video = document.getElementById("preview");
-  video.pause();
-  if(stream){
-    for(const t of stream.getTracks()) t.stop();
   }
-  stream = null;
+
+  rafId = requestAnimationFrame(scanLoop);
 }
 
-async function lookup(){
-  const text = document.getElementById("qrText").value.trim();
-  if(!text){
-    alert("QR 값(또는 품번/LOT)을 입력하세요.");
+async function manualSearch() {
+  const q = document.getElementById("qrText").value.trim();
+  if (!q) return;
+
+  const res = await fetch(`/api/qr-search?q=${encodeURIComponent(q)}`);
+  const rows = await res.json();
+
+  if (!rows.length) {
+    resultBox().innerHTML = "<p>조회 결과 없음</p>";
     return;
   }
 
-  const q = parseQR(text);
-  // 조회 키워드 우선순위: item > ITEM > item_code > raw
-  const keyword =
-    q.item_code || q.item || q.itemcode || q["item"] || q["item_code"] ||
-    q["item"] || q["item_code"] || q.raw;
+  let html = `
+  <div class="tablewrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>창고</th><th>로케이션</th><th>브랜드</th><th>품번</th><th>품명</th><th>LOT</th><th>규격</th>
+          <th class="right">수량</th>
+          <th>바로 작업</th>
+        </tr>
+      </thead><tbody>
+  `;
 
-  const res = await fetch(`/api/inventory/search?q=${encodeURIComponent(keyword)}`);
-  const data = await res.json();
-
-  const body = document.getElementById("invBody");
-  let html = "";
-  for(const r of data.rows){
+  for (const r of rows) {
     html += `
       <tr>
-        <td>${r.warehouse ?? ""}</td>
-        <td>${r.location ?? ""}</td>
-        <td>${r.brand ?? ""}</td>
-        <td>${r.item_code ?? ""}</td>
-        <td>${r.item_name ?? ""}</td>
-        <td>${r.lot_no ?? ""}</td>
-        <td>${r.spec ?? ""}</td>
-        <td class="right">${r.qty ?? ""}</td>
+        <td>${r.warehouse||""}</td>
+        <td>${r.location||""}</td>
+        <td>${r.brand||""}</td>
+        <td>${r.item_code||""}</td>
+        <td>${r.item_name||""}</td>
+        <td>${r.lot_no||""}</td>
+        <td>${r.spec||""}</td>
+        <td class="right"><b>${r.qty||0}</b></td>
+        <td>
+          <a class="smallbtn" href="/outbound-page?warehouse=${encodeURIComponent(r.warehouse||"")}&location=${encodeURIComponent(r.location||"")}&item_code=${encodeURIComponent(r.item_code||"")}&lot_no=${encodeURIComponent(r.lot_no||"")}">출고</a>
+          <a class="smallbtn gray" href="/move-page?warehouse=${encodeURIComponent(r.warehouse||"")}&from_location=${encodeURIComponent(r.location||"")}&item_code=${encodeURIComponent(r.item_code||"")}&lot_no=${encodeURIComponent(r.lot_no||"")}">이동</a>
+        </td>
       </tr>
     `;
   }
-  body.innerHTML = html || `<tr><td colspan="8">조회 결과 없음</td></tr>`;
+
+  html += "</tbody></table></div>";
+  resultBox().innerHTML = html;
 }
