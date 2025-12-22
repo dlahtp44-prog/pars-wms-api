@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h2>엑셀 업로드</h2>
-
-<form action="/api/upload" method="post" enctype="multipart/form-data">
-  <input type="file" name="file" accept=".csv" required>
-  <button type="submit">업로드</button>
+<h2>📂 엑셀 업로드 (입고/출고)</h2>
+<form action="/api/excel/upload" method="post" enctype="multipart/form-data">
+  <input type="file" name="file">
+  <button>업로드</button>
 </form>
+
 
 <p style="margin-top:10px;">
 CSV 컬럼:<br>
