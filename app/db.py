@@ -89,3 +89,59 @@ def log_history(tx_type, warehouse, location, item_code, lot_no, qty, remark="")
     """, (tx_type, warehouse, location, item_code, lot_no, qty, remark))
     conn.commit()
     conn.close()
+# =====================
+# 대시보드용 집계 함수
+# =====================
+
+def get_dashboard_summary():
+    conn = get_conn()
+    cur = conn.cursor()
+
+    # 오늘 입고
+    cur.execute("""
+        SELECT IFNULL(SUM(qty), 0)
+        FROM history
+        WHERE tx_type='IN'
+        AND date(created_at)=date('now')
+    """)
+    inbound_today = cur.fetchone()[0]
+
+    # 오늘 출고
+    cur.execute("""
+        SELECT IFNULL(SUM(qty), 0)
+        FROM history
+        WHERE tx_type='OUT'
+        AND date(created_at)=date('now')
+    """)
+    outbound_today = cur.fetchone()[0]
+
+    # 총 재고
+    cur.execute("SELECT IFNULL(SUM(qty),0) FROM inventory")
+    total_stock = cur.fetchone()[0]
+
+    # 음수 재고
+    cur.execute("SELECT COUNT(*) FROM inventory WHERE qty < 0")
+    negative_cnt = cur.fetchone()[0]
+
+    conn.close()
+    return {
+        "inbound_today": inbound_today,
+        "outbound_today": outbound_today,
+        "total_stock": total_stock,
+        "negative_cnt": negative_cnt
+    }
+
+
+def get_lot_summary():
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT lot_no, SUM(qty) as qty
+        FROM inventory
+        GROUP BY lot_no
+        ORDER BY qty DESC
+        LIMIT 10
+    """)
+    rows = [dict(r) for r in cur.fetchall()]
+    conn.close()
+    return rows
