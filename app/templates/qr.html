@@ -1,6 +1,153 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>📷 QR 스캔</h2>
-<video id="video" width="100%" autoplay></video>
-<script src="/static/qr.js"></script>
+
+<h2 style="margin:0 0 10px 0;">📷 QR 스캔</h2>
+
+<div style="display:grid;gap:10px;max-width:900px;">
+  <video id="preview" playsinline style="width:100%;max-height:320px;background:#000;border-radius:12px;"></video>
+
+  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    <input id="qr" placeholder="QR 텍스트(수동 입력 가능)"
+      style="flex:1;min-width:220px;padding:10px;border:1px solid #e5e7eb;border-radius:10px;">
+    <button onclick="scan()" style="padding:10px 14px;border:none;border-radius:10px;background:#111827;color:#fff;">조회</button>
+    <button onclick="startCamera()" style="padding:10px 14px;border:none;border-radius:10px;background:#2563eb;color:#fff;">카메라 시작</button>
+    <button onclick="stopCamera()" style="padding:10px 14px;border:none;border-radius:10px;background:#ef4444;color:#fff;">카메라 종료</button>
+  </div>
+
+  <div id="status" style="color:#6b7280;font-size:13px;"></div>
+  <div id="result"></div>
+</div>
+
+<!-- ✅ QR 디코더(가볍고 모바일 잘됨) -->
+<script src="https://unpkg.com/@zxing/library@latest"></script>
+
+<script>
+let codeReader = null;
+let currentStream = null;
+
+function setStatus(msg){ document.getElementById("status").innerText = msg || ""; }
+
+async function startCamera(){
+  try{
+    if(!codeReader) codeReader = new ZXing.BrowserMultiFormatReader();
+
+    // 카메라 권한 + 후면카메라 우선
+    setStatus("카메라 시작중...");
+    await stopCamera();
+
+    const video = document.getElementById("preview");
+
+    // ZXing이 알아서 device 선택해줌 (모바일은 대체로 후면)
+    codeReader.decodeFromVideoDevice(null, video, (result, err) => {
+      if(result){
+        const text = result.getText();
+        document.getElementById("qr").value = text;
+        setStatus("스캔됨: " + text);
+        scan(); // 스캔 즉시 조회
+      }
+    });
+
+    setStatus("카메라 실행중(QR을 화면에 보여주세요).");
+  }catch(e){
+    console.error(e);
+    setStatus("카메라 실행 실패: " + e);
+    alert("카메라 권한을 허용해야 합니다.");
+  }
+}
+
+async function stopCamera(){
+  try{
+    if(codeReader){
+      codeReader.reset();
+    }
+  }catch(e){}
+
+  // 일부 브라우저에서 stream 직접 종료 필요
+  const video = document.getElementById("preview");
+  if(video && video.srcObject){
+    const tracks = video.srcObject.getTracks();
+    tracks.forEach(t => t.stop());
+    video.srcObject = null;
+  }
+  setStatus("카메라 종료됨");
+}
+
+async function scan(){
+  const q = document.getElementById("qr").value.trim();
+  if(!q) return;
+
+  setStatus("조회중...");
+  const res = await fetch(`/api/qr-search?q=${encodeURIComponent(q)}`);
+  if(!res.ok){
+    setStatus("조회 실패");
+    document.getElementById("result").innerHTML = "<p>조회 API 오류</p>";
+    return;
+  }
+
+  const rows = await res.json();
+  let html = "";
+
+  if(!rows || rows.length === 0){
+    html = "<p>조회 결과가 없습니다.</p>";
+  } else {
+    html += `
+    <div style="overflow:auto;border:1px solid #e5e7eb;border-radius:12px;background:#fff;">
+    <table style="width:100%;border-collapse:collapse;min-width:760px;">
+      <thead>
+        <tr style="background:#ffeb3b;">
+          <th style="padding:10px;border-bottom:1px solid #e5e7eb;">장소</th>
+          <th style="padding:10px;border-bottom:1px solid #e5e7eb;">품번</th>
+          <th style="padding:10px;border-bottom:1px solid #e5e7eb;">LOT</th>
+          <th style="padding:10px;border-bottom:1px solid #e5e7eb;">로케이션</th>
+          <th style="padding:10px;border-bottom:1px solid #e5e7eb;">수량</th>
+          <th style="padding:10px;border-bottom:1px solid #e5e7eb;">작업</th>
+        </tr>
+      </thead>
+      <tbody>
+    `;
+
+    for(const r of rows){
+      const item = encodeURIComponent(r.item_code || "");
+      const lot  = encodeURIComponent(r.lot_no || "");
+      const loc  = encodeURIComponent(r.location || "");
+
+      html += `
+      <tr>
+        <td style="padding:10px;border-bottom:1px solid #f1f5f9;">${r.location_name || ""}</td>
+        <td style="padding:10px;border-bottom:1px solid #f1f5f9;">${r.item_code || ""}</td>
+        <td style="padding:10px;border-bottom:1px solid #f1f5f9;">${r.lot_no || ""}</td>
+        <td style="padding:10px;border-bottom:1px solid #f1f5f9;">${r.location || ""}</td>
+        <td style="padding:10px;border-bottom:1px solid #f1f5f9;font-weight:800;">${r.qty ?? ""}</td>
+        <td style="padding:10px;border-bottom:1px solid #f1f5f9;">
+          <button style="padding:8px 10px;border:none;border-radius:10px;background:#111827;color:#fff;cursor:pointer;"
+            onclick="goOutbound('${item}','${lot}','${loc}')">출고</button>
+          <button style="padding:8px 10px;border:none;border-radius:10px;background:#2563eb;color:#fff;cursor:pointer;margin-left:6px;"
+            onclick="goMove('${item}','${lot}','${loc}')">이동</button>
+        </td>
+      </tr>
+      `;
+    }
+    html += "</tbody></table></div>";
+  }
+
+  document.getElementById("result").innerHTML = html;
+  setStatus("조회 완료");
+}
+
+/**
+ * ✅ 여기 URL은 네 프로젝트 구조에 맞춰 통일해야 함
+ * - 메인 페이지가 /outbound-page /move-page 라면 그대로 사용
+ * - 작업자 페이지가 /worker/outbound /worker/move 라면 아래를 그걸로 바꿔야 함
+ */
+function goOutbound(item, lot, loc){
+  location.href = `/outbound-page?item_code=${item}&lot_no=${lot}&location=${loc}`;
+}
+function goMove(item, lot, loc){
+  location.href = `/move-page?item_code=${item}&lot_no=${lot}&from_location=${loc}`;
+}
+
+// 페이지 들어오면 자동 시작(원하면 끌 수 있음)
+startCamera();
+</script>
+
 {% endblock %}
