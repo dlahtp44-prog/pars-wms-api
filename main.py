@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
+
 
 app = FastAPI(title="PARS WMS")
 
