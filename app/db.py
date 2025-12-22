@@ -14,18 +14,22 @@ def init_db():
     conn = get_conn()
     cur = conn.cursor()
 
+    # inventory
     cur.execute("""
     CREATE TABLE IF NOT EXISTS inventory (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         warehouse TEXT,
         location TEXT,
+        brand TEXT,
         item_code TEXT,
+        item_name TEXT,
         lot_no TEXT,
-        qty REAL DEFAULT 0,
-        UNIQUE(warehouse, location, item_code, lot_no)
+        spec TEXT,
+        qty REAL DEFAULT 0
     )
     """)
 
+    # history
     cur.execute("""
     CREATE TABLE IF NOT EXISTS history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -44,19 +48,29 @@ def init_db():
     conn.close()
 
 
+# =====================
+# 재고 조회
+# =====================
 def get_inventory():
     conn = get_conn()
     cur = conn.cursor()
     cur.execute("""
-        SELECT warehouse, location, item_code, lot_no, SUM(qty) as qty
+        SELECT
+            warehouse, location, brand,
+            item_code, item_name, lot_no, spec,
+            SUM(qty) AS qty
         FROM inventory
         GROUP BY warehouse, location, item_code, lot_no
+        ORDER BY item_code
     """)
     rows = [dict(r) for r in cur.fetchall()]
     conn.close()
     return rows
 
 
+# =====================
+# 이력 조회
+# =====================
 def get_history(limit: int = 200):
     conn = get_conn()
     cur = conn.cursor()
@@ -70,6 +84,9 @@ def get_history(limit: int = 200):
     return rows
 
 
+# =====================
+# 이력 기록
+# =====================
 def log_history(tx_type, warehouse, location, item_code, lot_no, qty, remark=""):
     conn = get_conn()
     cur = conn.cursor()
@@ -82,86 +99,38 @@ def log_history(tx_type, warehouse, location, item_code, lot_no, qty, remark="")
     conn.close()
 
 
-def add_inventory(warehouse, location, item_code, lot_no, qty):
-    conn = get_conn()
-    cur = conn.cursor()
-    cur.execute("""
-        INSERT INTO inventory
-        (warehouse, location, item_code, lot_no, qty)
-        VALUES (?, ?, ?, ?, ?)
-        ON CONFLICT(warehouse, location, item_code, lot_no)
-        DO UPDATE SET qty = qty + excluded.qty
-    """, (warehouse, location, item_code, lot_no, qty))
-    conn.commit()
-    conn.close()
-
-
+# =====================
+# 롤백 (관리자용)
+# =====================
 def rollback(history_id: int):
     conn = get_conn()
     cur = conn.cursor()
+
     cur.execute("SELECT * FROM history WHERE id=?", (history_id,))
     row = cur.fetchone()
     if not row:
         conn.close()
-        return False
+        raise ValueError("이력 없음")
+
+    qty = row["qty"]
+
+    if row["tx_type"] == "IN":
+        qty = -qty
+    elif row["tx_type"] == "OUT":
+        qty = qty
 
     cur.execute("""
         UPDATE inventory
-        SET qty = qty - ?
+        SET qty = qty + ?
         WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?
-    """, (row["qty"], row["warehouse"], row["location"], row["item_code"], row["lot_no"]))
+    """, (
+        qty,
+        row["warehouse"],
+        row["location"],
+        row["item_code"],
+        row["lot_no"]
+    ))
 
     cur.execute("DELETE FROM history WHERE id=?", (history_id,))
     conn.commit()
     conn.close()
-    return True
-def remove_inventory(warehouse, location, item_code, lot_no, qty):
-    conn = get_conn()
-    cur = conn.cursor()
-
-    cur.execute("""
-        SELECT qty FROM inventory
-        WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?
-    """, (warehouse, location, item_code, lot_no))
-    row = cur.fetchone()
-
-    if not row or row["qty"] < qty:
-        conn.close()
-        raise ValueError("재고 부족")
-
-    cur.execute("""
-        UPDATE inventory
-        SET qty = qty - ?
-        WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?
-    """, (qty, warehouse, location, item_code, lot_no))
-
-    conn.commit()
-    conn.close()
-
-
-def dashboard_summary():
-    conn = get_conn()
-    cur = conn.cursor()
-
-    cur.execute("""
-        SELECT IFNULL(SUM(qty),0)
-        FROM history
-        WHERE tx_type='IN' AND date(created_at)=date('now')
-    """)
-    inbound = cur.fetchone()[0]
-
-    cur.execute("""
-        SELECT IFNULL(SUM(qty),0)
-        FROM history
-        WHERE tx_type='OUT' AND date(created_at)=date('now')
-    """)
-    outbound = cur.fetchone()[0]
-
-    cur.execute("SELECT IFNULL(SUM(qty),0) FROM inventory")
-    total = cur.fetchone()[0]
-
-    cur.execute("SELECT COUNT(*) FROM inventory WHERE qty < 0")
-    negative = cur.fetchone()[0]
-
-    conn.close()
-    return inbound, outbound, total, negative
