@@ -6,10 +6,17 @@ router = APIRouter(prefix="/dashboard")
 templates = Jinja2Templates(directory="app/templates")
 
 @router.get("")
-def dashboard_page(request: Request):
+def dashboard(request: Request):
     rows = get_inventory()
-    summary = dashboard_summary()
+    inbound, outbound, total, negative = dashboard_summary()
     return templates.TemplateResponse(
         "dashboard.html",
-        {"request": request, "rows": rows, "summary": summary}
+        {
+            "request": request,
+            "rows": rows,
+            "inbound": inbound,
+            "outbound": outbound,
+            "total": total,
+            "negative": negative
+        }
     )
