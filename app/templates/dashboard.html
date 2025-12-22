@@ -1,39 +1,89 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>PARS WMS Dashboard</title>
-<style>
-body { font-family:Arial; background:#f3f4f6; padding:20px; }
-.grid { display:grid; grid-template-columns:repeat(4,1fr); gap:15px; }
-.card { background:white; padding:20px; border-radius:10px; }
-.red { background:#fee2e2; color:#991b1b; }
-table { width:100%; margin-top:20px; background:white; border-collapse:collapse; }
-th,td { border:1px solid #ddd; padding:8px; text-align:center; }
-</style>
-</head>
+{% extends "base.html" %}
+{% block content %}
 
-<body>
-<h1>📊 대시보드</h1>
+<h2 class="title">📊 대시보드</h2>
 
 <div class="grid">
-  <div class="card"><h3>오늘 입고</h3><p>{{ inbound }}</p></div>
-  <div class="card"><h3>오늘 출고</h3><p>{{ outbound }}</p></div>
-  <div class="card"><h3>총 재고</h3><p>{{ total }}</p></div>
-  <div class="card {% if negative > 0 %}red{% endif %}">
-    <h3>재고 음수</h3><p>{{ negative }}</p>
+  <div class="card">
+    <div class="label">오늘 입고</div>
+    <div class="value">{{ summary.inbound_today }}</div>
+  </div>
+  <div class="card">
+    <div class="label">오늘 출고</div>
+    <div class="value">{{ summary.outbound_today }}</div>
+  </div>
+  <div class="card">
+    <div class="label">총 재고</div>
+    <div class="value">{{ summary.total_stock }}</div>
+  </div>
+
+  <div class="card warn">
+    <div class="label">음수 재고</div>
+    <div class="value">{{ summary.negative_stock }}</div>
+  </div>
+
+  <div class="card">
+    <div class="label">위치 미지정</div>
+    <div class="value">{{ summary.no_location }}</div>
   </div>
 </div>
 
-<table>
-<tr><th>품번</th><th>LOT</th><th>수량</th></tr>
-{% for r in rows %}
-<tr>
-<td>{{ r.item_code }}</td>
-<td>{{ r.lot_no }}</td>
-<td>{{ r.qty }}</td>
-</tr>
-{% endfor %}
+<div class="actions">
+  <a class="btn" href="/inbound-page">입고</a>
+  <a class="btn" href="/outbound-page">출고</a>
+  <a class="btn" href="/move-page">이동</a>
+  <a class="btn" href="/inventory-page">재고</a>
+  <a class="btn" href="/history-page">이력</a>
+  <a class="btn" href="/qr-page">QR</a>
+  <a class="btn" href="/admin">관리자</a>
+</div>
+
+<hr class="hr">
+
+<h3 class="subtitle">📦 재고 요약(상위 80줄)</h3>
+
+<div class="tablewrap">
+<table class="table">
+  <thead>
+    <tr>
+      <th>창고</th><th>로케이션</th><th>브랜드</th><th>품번</th><th>품명</th><th>LOT</th><th>규격</th><th class="right">수량</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in rows[:80] %}
+    <tr>
+      <td>{{ r.warehouse }}</td>
+      <td>{{ r.location }}</td>
+      <td>{{ r.brand }}</td>
+      <td><a href="/item/{{ r.item_code }}">{{ r.item_code }}</a></td>
+      <td>{{ r.item_name }}</td>
+      <td>{{ r.lot_no }}</td>
+      <td>{{ r.spec }}</td>
+      <td class="right">{{ r.qty }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
 </table>
-</body>
-</html>
+</div>
+
+<style>
+  .title{margin:0 0 12px 0;font-size:20px}
+  .subtitle{margin:16px 0 8px 0;font-size:16px}
+  .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  @media(min-width:900px){.grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
+  .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:12px}
+  .card .label{color:#6b7280;font-size:12px}
+  .card .value{font-size:22px;font-weight:800;margin-top:4px}
+  .card.warn{border-color:#ef4444}
+  .actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
+  @media(min-width:900px){.actions{grid-template-columns:repeat(8,minmax(0,1fr))}}
+  .btn{display:block;text-align:center;padding:10px;border-radius:10px;background:#111827;color:#fff;text-decoration:none}
+  .hr{border:none;border-top:1px solid #e5e7eb;margin:14px 0}
+  .tablewrap{overflow:auto;border:1px solid #e5e7eb;border-radius:12px;background:#fff}
+  .table{width:100%;border-collapse:collapse;font-size:13px;min-width:900px}
+  .table th,.table td{padding:10px;border-bottom:1px solid #f1f5f9;white-space:nowrap}
+  .table th{background:#111827;color:#fff;position:sticky;top:0}
+  .right{text-align:right}
+</style>
+
+{% endblock %}
