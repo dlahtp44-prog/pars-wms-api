@@ -1,21 +1,45 @@
 {% extends "worker_base.html" %}
 {% block content %}
+
 <h3>📷 QR 스캔</h3>
 
-<video id="video" width="100%" autoplay></video>
+<div id="qr-reader" style="width:100%"></div>
+<div id="result" style="margin-top:12px;font-weight:bold;"></div>
 
 <script src="https://unpkg.com/html5-qrcode"></script>
 <script>
-new Html5Qrcode("video").start(
+const resultBox = document.getElementById("result");
+
+function onScanSuccess(decodedText) {
+  resultBox.innerText = "처리 중...";
+
+  fetch("/api/qr", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ qr: decodedText })
+  })
+  .then(res => res.json())
+  .then(d => {
+    if(d.ok){
+      resultBox.innerText = "✅ 처리 완료";
+    } else {
+      resultBox.innerText = "❌ 오류: " + d.msg;
+      resultBox.style.color = "red";
+    }
+  })
+  .catch(err => {
+    resultBox.innerText = "❌ 서버 오류";
+    resultBox.style.color = "red";
+  });
+}
+
+const html5QrCode = new Html5Qrcode("qr-reader");
+
+html5QrCode.start(
   { facingMode: "environment" },
   { fps: 10, qrbox: 250 },
-  qr => {
-    fetch("/api/qr", {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({qr})
-    }).then(()=>alert("처리 완료"))
-  }
+  onScanSuccess
 );
 </script>
+
 {% endblock %}
