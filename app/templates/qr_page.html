@@ -1,17 +1,21 @@
-{% extends "base.html" %}
+{% extends "worker_base.html" %}
 {% block content %}
+<h3>📷 QR 스캔</h3>
 
-<h2>QR 스캔 / 조회</h2>
+<video id="video" width="100%" autoplay></video>
 
-<input
-  id="qr"
-  placeholder="QR 스캔 또는 품번 입력"
-  autofocus
-  style="width:100%; padding:10px; font-size:16px;"
-  onkeydown="if(event.key==='Enter'){ scan(); }"
-/>
-
-<div id="result" style="margin-top:15px;"></div>
-
-<script src="/static/qr.js"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script>
+new Html5Qrcode("video").start(
+  { facingMode: "environment" },
+  { fps: 10, qrbox: 250 },
+  qr => {
+    fetch("/api/qr", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({qr})
+    }).then(()=>alert("처리 완료"))
+  }
+);
+</script>
 {% endblock %}
