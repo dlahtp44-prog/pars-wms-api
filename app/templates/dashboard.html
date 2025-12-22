@@ -4,48 +4,119 @@
     <meta charset="UTF-8">
     <title>PARS WMS Dashboard</title>
     <style>
-        body { font-family: Arial; background:#f3f4f6; margin:0; }
-        .container { padding:20px; }
-        .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:15px; }
+        body {
+            font-family: Arial, sans-serif;
+            background:#f3f4f6;
+            margin:0;
+        }
+        .container {
+            padding:20px;
+        }
+        h1 {
+            margin-bottom:20px;
+        }
+        .grid {
+            display:grid;
+            grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));
+            gap:15px;
+            margin-bottom:30px;
+        }
         .card {
-            background:#fff; padding:20px; border-radius:12px;
+            background:#fff;
+            padding:20px;
+            border-radius:12px;
             box-shadow:0 2px 6px rgba(0,0,0,.08);
         }
-        .card h2 { margin:0; font-size:14px; color:#6b7280; }
-        .card p { font-size:26px; margin-top:8px; }
-        .actions button {
-            width:100%; padding:14px; margin-top:10px;
-            font-size:16px; border:none; border-radius:10px;
-            background:#2563eb; color:white;
+        .card h2 {
+            margin:0;
+            font-size:14px;
+            color:#6b7280;
+        }
+        .card p {
+            font-size:26px;
+            margin-top:8px;
+            font-weight:bold;
+        }
+        table {
+            width:100%;
+            border-collapse:collapse;
+            background:#fff;
+            border-radius:12px;
+            overflow:hidden;
+            box-shadow:0 2px 6px rgba(0,0,0,.08);
+        }
+        th, td {
+            padding:10px;
+            border-bottom:1px solid #e5e7eb;
+            text-align:left;
+        }
+        th {
+            background:#f9fafb;
+        }
+        .actions {
+            margin-top:30px;
+            display:grid;
+            grid-template-columns:repeat(auto-fit, minmax(160px, 1fr));
+            gap:12px;
+        }
+        .actions a button {
+            width:100%;
+            padding:14px;
+            font-size:16px;
+            border:none;
+            border-radius:10px;
+            background:#2563eb;
+            color:white;
+            cursor:pointer;
         }
     </style>
 </head>
+
 <body>
 <div class="container">
-    <h1>PARS WMS Dashboard</h1>
+    <h1>📊 PARS WMS 대시보드</h1>
 
-    <div class="grid" id="summary"></div>
+    <!-- 요약 카드 -->
+    <div class="grid">
+        <div class="card">
+            <h2>총 재고 수량</h2>
+            <p>{{ total }}</p>
+        </div>
+        <div class="card">
+            <h2>품목 수</h2>
+            <p>{{ rows | length }}</p>
+        </div>
+    </div>
 
+    <!-- 재고 테이블 -->
+    <h2>📦 재고 현황</h2>
+    <table>
+        <tr>
+            <th>창고</th>
+            <th>위치</th>
+            <th>품번</th>
+            <th>LOT</th>
+            <th>수량</th>
+        </tr>
+        {% for r in rows %}
+        <tr>
+            <td>{{ r.warehouse }}</td>
+            <td>{{ r.location }}</td>
+            <td>{{ r.item_code }}</td>
+            <td>{{ r.lot_no }}</td>
+            <td>{{ r.qty }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <!-- 이동 버튼 -->
     <div class="actions">
-        <button onclick="location.href='/inbound'">입고 등록</button>
-        <button onclick="location.href='/outbound'">출고 등록</button>
-        <button onclick="location.href='/inventory'">재고 조회</button>
+        <a href="/worker/inbound"><button>📥 입고</button></a>
+        <a href="/worker/outbound"><button>📤 출고</button></a>
+        <a href="/worker/move"><button>🔄 이동</button></a>
+        <a href="/inventory-page"><button>📋 재고 조회</button></a>
+        <a href="/qr-page"><button>📷 QR 스캔</button></a>
     </div>
 </div>
-
-<script>
-fetch('/api/dashboard')
-.then(res => res.json())
-.then(d => {
-    const box = document.getElementById('summary');
-    box.innerHTML = `
-      <div class="card"><h2>오늘 입고</h2><p>${d.inbound_today}</p></div>
-      <div class="card"><h2>오늘 출고</h2><p>${d.outbound_today}</p></div>
-      <div class="card"><h2>총 재고</h2><p>${d.total_stock}</p></div>
-      <div class="card"><h2>위치 미지정</h2><p>${d.no_location}</p></div>
-    `;
-});
-</script>
 </body>
 </html>
-
