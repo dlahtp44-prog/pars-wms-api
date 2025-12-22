@@ -214,3 +214,54 @@ def rollback(history_id: int):
     conn.commit()
     conn.close()
     return True
+# =========================
+# 재고 증감 공통 함수 (QR / 입고 / 출고 / 이동)
+# =========================
+def add_inventory(
+    warehouse: str,
+    location: str,
+    brand: str,
+    item_code: str,
+    item_name: str,
+    lot_no: str,
+    spec: str,
+    qty: float
+):
+    conn = get_conn()
+    cur = conn.cursor()
+
+    # 동일 재고 존재 여부 확인
+    cur.execute("""
+        SELECT id FROM inventory
+        WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?
+    """, (warehouse, location, item_code, lot_no))
+
+    row = cur.fetchone()
+
+    if row:
+        # 기존 재고 → 수량 누적
+        cur.execute("""
+            UPDATE inventory
+            SET qty = qty + ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id=?
+        """, (qty, row["id"]))
+    else:
+        # 신규 재고
+        cur.execute("""
+            INSERT INTO inventory
+            (warehouse, location, brand, item_code, item_name, lot_no, spec, qty)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            warehouse,
+            location,
+            brand,
+            item_code,
+            item_name,
+            lot_no,
+            spec,
+            qty
+        ))
+
+    conn.commit()
+    conn.close()
