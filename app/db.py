@@ -171,3 +171,32 @@ def dashboard_summary():
 
     conn.close()
     return inbound, outbound, total, negative
+Starting Container
+INFO:     Waiting for application startup.
+✅ app.routers.inbound 등록
+✅ DB 초기화 완료
+✅ app.routers.qr_process 등록
+✅ app.routers.outbound 등록
+✅ app.routers.move 등록
+✅ app.routers.upload_inventory 등록
+✅ app.pages.index_page 등록
+✅ app.routers.inventory 등록
+✅ app.pages.worker_page 등록
+✅ app.routers.upload_outbound 등록
+✅ app.routers.history 등록
+✅ app.routers.location 등록
+✅ app.pages.inbound_page 등록
+INFO:     Started server process [1]
+✅ app.pages.outbound_page 등록
+❌ app.routers.qr_api 실패: cannot import name 'add_inventory' from 'app.db' (/app/app/db.py)
+✅ app.pages.move_page 등록
+✅ app.pages.inventory_page 등록
+✅ app.pages.history_page 등록
+✅ app.pages.qr_page 등록
+✅ app.pages.item_page 등록
+✅ app.pages.upload_page 등록
+✅ app.pages.dashboard_page 등록
+✅ app.pages.admin_page 등록
+✅ app.routers.items 등록
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
