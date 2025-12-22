@@ -2,12 +2,13 @@
 {% block content %}
 <h2>📊 대시보드</h2>
 
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;">
-  <div class="card">오늘 입고<br><b>{{ inbound }}</b></div>
-  <div class="card">오늘 출고<br><b>{{ outbound }}</b></div>
-  <div class="card">총 재고<br><b>{{ total }}</b></div>
-  <div class="card" style="color:red;">음수 재고<br><b>{{ negative }}</b></div>
+<div class="grid">
+  <div class="card"><div class="label">오늘 입고</div><div class="value">{{ inbound }}</div></div>
+  <div class="card"><div class="label">오늘 출고</div><div class="value">{{ outbound }}</div></div>
+  <div class="card"><div class="label">총 재고</div><div class="value">{{ total }}</div></div>
+  <div class="card warn"><div class="label">음수 재고</div><div class="value">{{ negative }}</div></div>
 </div>
+
 
 <hr>
 <h3>재고 요약</h3>
