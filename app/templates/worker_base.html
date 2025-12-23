@@ -1,15 +1,13 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="card">
-  <div class="h1">작업자 메뉴</div>
-  <div class="grid">
-    <a class="btn" href="/inbound-page">📥 입고</a>
-    <a class="btn" href="/outbound-page">📤 출고</a>
-    <a class="btn" href="/move-page">🔁 이동</a>
-    <a class="btn" href="/inventory-page">📦 재고</a>
-    <a class="btn" href="/qr-page">📷 QR</a>
-    <a class="btn" href="/dashboard">📊 대시보드</a>
-  </div>
+<div class="tabs">
+  <a class="tab" href="/worker/inbound">입고</a>
+  <a class="tab" href="/worker/outbound">출고</a>
+  <a class="tab" href="/worker/move">이동</a>
+  <a class="tab" href="/inventory-page">재고</a>
+  <a class="tab" href="/qr-page">QR</a>
 </div>
-{% block worker_content %}{% endblock %}
+<div class="card">
+  {% block worker_content %}{% endblock %}
+</div>
 {% endblock %}
