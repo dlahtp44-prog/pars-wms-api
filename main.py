@@ -75,7 +75,6 @@ safe_include("app.pages.admin_page")        # /admin
 # APIs
 # =========================
 safe_include("app.routers.inbound")          # /api/inbound
-
 safe_include("app.routers.outbound")         # /api/outbound
 safe_include("app.routers.move")             # /api/move
 safe_include("app.routers.inventory")        # /api/inventory
@@ -85,6 +84,7 @@ safe_include("app.routers.qr_api")            # /api/qr-search
 safe_include("app.routers.qr_process")        # /api/qr/process
 safe_include("app.routers.upload_inventory") # /api/upload/inventory
 safe_include("app.routers.upload_outbound")  # /api/upload/outbound
+safe_include("app.routers.inbound_manual")
 
 # =========================
 # Health Check
