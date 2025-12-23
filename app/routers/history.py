@@ -1,18 +1,15 @@
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException
 from app.db import get_history, rollback
-from app.auth import require_admin
 
 router = APIRouter(prefix="/api/history", tags=["이력"])
 
 @router.get("")
-def api_history(limit: int = 300):
-    return get_history(limit=limit)
+def history_api(limit: int = 300):
+    return get_history(limit=limit, include_rolled_back=True)
 
 @router.post("/rollback/{tx_id}")
-def api_rollback(tx_id: int, request: Request):
-    require_admin(request)
+def rollback_api(tx_id: int):
     try:
-        rollback(tx_id)
-        return {"ok": True}
+        return rollback(tx_id)
     except Exception as e:
         raise HTTPException(400, str(e))
