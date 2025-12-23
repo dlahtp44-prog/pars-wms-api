@@ -1,39 +1,23 @@
-from fastapi import APIRouter, Form
-from app.db import get_conn, log_history
+# app/routers/move.py
+from fastapi import APIRouter, HTTPException
+from app.db import subtract_inventory, add_inventory, log_history
 
 router = APIRouter(prefix="/api/move")
 
-@router.post("")
+@router.get("")
 def move(
-    warehouse: str = Form(...),
-    from_location: str = Form(...),
-    to_location: str = Form(...),
-    item_code: str = Form(...),
-    lot_no: str = Form(""),
-    qty: float = Form(...)
+    item_code: str,
+    lot_no: str,
+    from_location: str,
+    to_location: str,
+    qty: float,
+    warehouse: str = "MAIN"
 ):
-    conn = get_conn()
-    cur = conn.cursor()
+    try:
+        subtract_inventory(warehouse, from_location, item_code, lot_no, qty)
+        add_inventory(warehouse, to_location, item_code, "", lot_no, "", qty)
+    except Exception as e:
+        raise HTTPException(400, str(e))
 
-    # 출고
-    cur.execute("""
-        UPDATE inventory
-        SET qty = qty - ?
-        WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?
-    """, (qty, warehouse, from_location, item_code, lot_no))
-
-    # 입고
-    cur.execute("""
-        INSERT INTO inventory
-        (warehouse, location, item_code, lot_no, qty)
-        VALUES (?, ?, ?, ?, ?)
-        ON CONFLICT(warehouse, location, item_code, lot_no)
-        DO UPDATE SET qty = qty + excluded.qty
-    """, (warehouse, to_location, item_code, lot_no, qty))
-
-    log_history("MOVE", warehouse, from_location, item_code, lot_no, -qty, "이동 출고")
-    log_history("MOVE", warehouse, to_location, item_code, lot_no, qty, "이동 입고")
-
-    conn.commit()
-    conn.close()
+    log_history("MOVE", warehouse, from_location, item_code, lot_no, qty, f"→ {to_location}")
     return {"result": "OK"}
