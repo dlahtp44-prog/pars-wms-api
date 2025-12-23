@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <div class="h2">⬆️ CSV 업로드</div>
+
+  <div class="h3">입고 업로드</div>
+  <form method="post" action="/api/upload/inbound" enctype="multipart/form-data" class="form">
+    <input type="file" name="file" required>
+    <button class="btn primary" type="submit">입고 CSV 업로드</button>
+  </form>
+
+  <div class="hr"></div>
+
+  <div class="h3">출고 업로드</div>
+  <form method="post" action="/api/upload/outbound" enctype="multipart/form-data" class="form">
+    <input type="file" name="file" required>
+    <button class="btn primary" type="submit">출고 CSV 업로드</button>
+  </form>
+
+  <div class="hr"></div>
+
+  <div class="muted">
+    CSV 헤더 예시(영문/한글 자동 매핑):<br>
+    warehouse(창고), location(로케이션), brand(브랜드), item_code(품번), item_name(품명), lot_no(LOT), spec(규격), qty(수량)
+  </div>
+</div>
+{% endblock %}
