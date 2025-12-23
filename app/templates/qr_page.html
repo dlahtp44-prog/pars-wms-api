@@ -1,34 +1,65 @@
 {% extends "worker_base.html" %}
 {% block worker_content %}
-<div class="h2">📷 QR 스캔</div>
 
-<div class="muted">
-  ※ 카메라는 <b>HTTPS</b>에서만 동작합니다. (Railway 배포 주소는 보통 HTTPS OK)
-</div>
+<h2>📷 QR 스캔</h2>
 
-<div class="form">
-  <input id="manual_qr" placeholder="수동 입력 (예: item_code=AAA&lot_no=1&location=A01&qty=1)" />
-  <div class="row">
-    <select id="action">
-      <option value="IN">입고</option>
-      <option value="OUT">출고</option>
-      <option value="MOVE">이동</option>
-    </select>
-    <button class="btn primary" type="button" onclick="manualSearch()">직접 처리</button>
-  </div>
-</div>
+<div id="reader" style="width:100%;max-width:360px;"></div>
+<p id="msg"></p>
 
-<div class="hr"></div>
+<select id="action">
+  <option value="IN">입고</option>
+  <option value="OUT">출고</option>
+  <option value="MOVE">이동</option>
+</select>
 
-<div id="reader" class="qrbox"></div>
-
-<div class="row">
-  <button class="btn primary" type="button" onclick="startScan()">카메라 시작</button>
-  <button class="btn" type="button" onclick="stopScan()">중지</button>
-</div>
-
-<div id="msg" class="muted"></div>
+<button onclick="startScan()">카메라 시작</button>
+<button onclick="stopScan()">중지</button>
 
 <script src="https://unpkg.com/html5-qrcode"></script>
-<script src="/static/qr_camera.js"></script>
+<script>
+let scanner = null;
+
+async function startScan(){
+  if(scanner) return;
+
+  scanner = new Html5Qrcode("reader");
+
+  const cameras = await Html5Qrcode.getCameras();
+  const back = cameras.find(c =>
+    c.label.toLowerCase().includes("back")
+    || c.label.toLowerCase().includes("rear")
+  ) || cameras[0];
+
+  await scanner.start(
+    back.id,
+    { fps: 10, qrbox: 250 },
+    async (text)=>{
+      stopScan();
+      await fetch("/api/qr/process",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify(parse(text))
+      });
+      document.getElementById("msg").innerText="✅ 처리 완료";
+    }
+  );
+}
+
+function stopScan(){
+  if(!scanner) return;
+  scanner.stop().then(()=>{
+    scanner.clear();
+    scanner = null;
+  });
+}
+
+function parse(text){
+  const p = new URLSearchParams(text);
+  const o = {};
+  for(const [k,v] of p.entries()) o[k]=v;
+  o.action = document.getElementById("action").value;
+  return o;
+}
+</script>
+
 {% endblock %}
