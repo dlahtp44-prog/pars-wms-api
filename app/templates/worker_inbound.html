@@ -1,19 +1,20 @@
 {% extends "worker_base.html" %}
-{% block content %}
+{% block worker_content %}
+<div class="h2">📥 입고 (수기)</div>
 
-<h2>📥 입고 처리</h2>
-
-<form method="post" action="/api/inbound">
-  <input name="warehouse" placeholder="창고 (예: 서이천)" required>
-  <input name="location" placeholder="로케이션 (D01-01)" required>
+<form class="form" method="post" action="/api/inbound/manual">
+  <input name="warehouse" placeholder="창고" value="MAIN">
+  <input name="location" placeholder="로케이션" required>
   <input name="brand" placeholder="브랜드">
   <input name="item_code" placeholder="품번" required>
-  <input name="item_name" placeholder="품명" required>
+  <input name="item_name" placeholder="품명">
   <input name="lot_no" placeholder="LOT">
   <input name="spec" placeholder="규격">
-  <input name="qty" type="number" step="0.01" placeholder="수량" required>
-
-  <button type="submit">입고 처리</button>
+  <input name="qty" placeholder="수량" type="number" step="0.001" required>
+  <input type="hidden" name="next_url" value="/inventory-page">
+  <button class="btn primary" type="submit">입고 처리</button>
 </form>
 
+<div class="hr"></div>
+<div class="muted">CSV 업로드는 <a href="/upload">업로드 페이지</a>에서 가능합니다.</div>
 {% endblock %}
