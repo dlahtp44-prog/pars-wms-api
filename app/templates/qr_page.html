@@ -1,45 +1,76 @@
 {% extends "worker_base.html" %}
-{% block content %}
+{% block worker_content %}
+<div class="card">
+  <div class="h2">📷 QR 스캔</div>
 
-<h3>📷 QR 스캔</h3>
+  <p class="muted">QR 내용은 “쿼리스트링” 형태를 권장합니다. 예)</p>
+  <code class="code">item_code=728750&lot_no=H5415&location=D01-01&qty=10&action=IN</code>
 
-<div id="qr-reader" style="width:100%"></div>
-<div id="result" style="margin-top:12px;font-weight:bold;"></div>
+  <div id="reader" style="width:100%;"></div>
+  <div class="row">
+    <select id="action">
+      <option value="IN">입고(IN)</option>
+      <option value="OUT">출고(OUT)</option>
+      <option value="MOVE">이동(MOVE)</option>
+    </select>
+    <button class="btn" onclick="startScan()">스캔 시작</button>
+    <button class="btn" onclick="stopScan()">중지</button>
+  </div>
+
+  <div id="result" class="muted"></div>
+</div>
 
 <script src="https://unpkg.com/html5-qrcode"></script>
 <script>
-const resultBox = document.getElementById("result");
+let qr;
 
-function onScanSuccess(decodedText) {
-  resultBox.innerText = "처리 중...";
-
-  fetch("/api/qr", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ qr: decodedText })
-  })
-  .then(res => res.json())
-  .then(d => {
-    if(d.ok){
-      resultBox.innerText = "✅ 처리 완료";
-    } else {
-      resultBox.innerText = "❌ 오류: " + d.msg;
-      resultBox.style.color = "red";
-    }
-  })
-  .catch(err => {
-    resultBox.innerText = "❌ 서버 오류";
-    resultBox.style.color = "red";
-  });
+function parseQS(text){
+  // QR이 "a=b&c=d" 형태면 파싱
+  const params = new URLSearchParams(text.trim());
+  const o = {};
+  for(const [k,v] of params.entries()) o[k]=v;
+  return o;
 }
 
-const html5QrCode = new Html5Qrcode("qr-reader");
+async function handleQR(text){
+  const data = parseQS(text);
+  const action = (data.action || document.getElementById('action').value).toUpperCase();
+  const body = {
+    action,
+    warehouse: data.warehouse || "MAIN",
+    location: data.location || "",
+    from_location: data.from_location || "",
+    to_location: data.to_location || "",
+    brand: data.brand || "",
+    item_code: data.item_code || "",
+    item_name: data.item_name || "",
+    lot_no: data.lot_no || "",
+    spec: data.spec || "",
+    qty: parseFloat(data.qty || "0")
+  };
 
-html5QrCode.start(
-  { facingMode: "environment" },
-  { fps: 10, qrbox: 250 },
-  onScanSuccess
-);
+  const res = await fetch('/api/qr/process', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(body)
+  });
+  const d = await res.json();
+  document.getElementById('result').innerText = res.ok ? ("✅ 처리완료: " + text) : ("❌ " + (d.detail || JSON.stringify(d)));
+}
+
+function startScan(){
+  if(qr) return;
+  qr = new Html5Qrcode("reader");
+  qr.start(
+    { facingMode: "environment" },
+    { fps: 10, qrbox: 250 },
+    (decodedText) => { stopScan(); handleQR(decodedText); },
+    () => {}
+  );
+}
+function stopScan(){
+  if(!qr) return;
+  qr.stop().then(()=>{ qr.clear(); qr=null; }).catch(()=>{});
+}
 </script>
-
 {% endblock %}
