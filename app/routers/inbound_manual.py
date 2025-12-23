@@ -1,37 +1,61 @@
-from fastapi import APIRouter
-from pydantic import BaseModel
-from app.db import add_inventory, log_history
+# app/routers/inbound_manual.py
+from fastapi import APIRouter, Query
+from app.db import get_conn, log_history
 
-router = APIRouter(prefix="/api/inbound/manual", tags=["수동입고"])
+router = APIRouter(
+    prefix="/api/inbound",
+    tags=["Inbound"]
+)
 
-class ManualInbound(BaseModel):
-    warehouse: str
-    location: str
-    item_code: str
-    lot_no: str
-    qty: float
+@router.get("/manual")
+def inbound_manual(
+    item_code: str = Query(...),
+    item_name: str = Query(""),
+    spec: str = Query(""),
+    lot_no: str = Query(""),
+    location: str = Query(""),
+    warehouse: str = Query("DEFAULT"),
+    qty: float = Query(...)
+):
+    conn = get_conn()
+    cur = conn.cursor()
 
-@router.post("")
-def inbound_manual(data: ManualInbound):
-    if data.qty <= 0:
-        return {"ok": False, "msg": "수량은 0보다 커야 합니다"}
+    # 재고 반영 (UPSERT)
+    cur.execute("""
+        INSERT INTO inventory
+        (warehouse, location, item_code, item_name, lot_no, spec, qty)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(warehouse, location, item_code, lot_no)
+        DO UPDATE SET
+            qty = qty + excluded.qty
+    """, (
+        warehouse,
+        location,
+        item_code,
+        item_name,
+        lot_no,
+        spec,
+        qty
+    ))
 
-    add_inventory(
-        warehouse=data.warehouse,
-        location=data.location,
-        item_code=data.item_code,
-        lot_no=data.lot_no,
-        qty=data.qty
-    )
-
+    # 이력 기록
     log_history(
         tx_type="IN",
-        warehouse=data.warehouse,
-        location=data.location,
-        item_code=data.item_code,
-        lot_no=data.lot_no,
-        qty=data.qty,
+        warehouse=warehouse,
+        location=location,
+        item_code=item_code,
+        lot_no=lot_no,
+        qty=qty,
         remark="수동 입고"
     )
 
-    return {"ok": True}
+    conn.commit()
+    conn.close()
+
+    return {
+        "result": "OK",
+        "msg": "수동 입고 완료",
+        "item_code": item_code,
+        "lot_no": lot_no,
+        "qty": qty
+    }
