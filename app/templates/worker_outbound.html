@@ -1,26 +1,17 @@
 {% extends "worker_base.html" %}
-{% block content %}
+{% block worker_content %}
+<div class="h2">📤 출고 (수기)</div>
 
-<h2>📤 출고 처리 (FIFO)</h2>
-
-<form method="post" action="/api/outbound">
-
-  <label>창고명</label>
-  <input name="warehouse" required placeholder="서이천창고">
-
-  <label>로케이션</label>
-  <input name="location" required placeholder="D01-01">
-
-  <label>품번</label>
-  <input name="item_code" required placeholder="728750">
-
-  <label>출고 수량</label>
-  <input name="qty" type="number" required>
-
-  <button type="submit" style="background:#ff5252;color:#fff;">
-    FIFO 출고
-  </button>
-
+<form class="form" method="post" action="/api/outbound/manual">
+  <input name="warehouse" placeholder="창고" value="MAIN">
+  <input name="location" placeholder="로케이션" required>
+  <input name="item_code" placeholder="품번" required>
+  <input name="lot_no" placeholder="LOT">
+  <input name="qty" placeholder="수량" type="number" step="0.001" required>
+  <input type="hidden" name="next_url" value="/inventory-page">
+  <button class="btn primary" type="submit">출고 처리</button>
 </form>
 
+<div class="hr"></div>
+<div class="muted">※ 재고가 부족하면 에러가 납니다(정상).</div>
 {% endblock %}
