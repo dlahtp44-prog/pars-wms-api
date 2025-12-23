@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="card">
-  <div class="h1">PARS WMS</div>
-  <p class="muted">입고/출고/이동/재고/이력/QR/대시보드</p>
+  <div class="h2">시작</div>
   <div class="grid">
-    <a class="btn" href="/worker">작업자 시작</a>
+    <a class="btn" href="/worker">작업자 화면</a>
+    <a class="btn" href="/inventory-page">재고 조회</a>
+    <a class="btn" href="/qr-page">QR 스캔</a>
     <a class="btn" href="/dashboard">대시보드</a>
-    <a class="btn" href="/admin">관리자</a>
   </div>
 </div>
 {% endblock %}
