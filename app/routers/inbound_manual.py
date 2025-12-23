@@ -42,7 +42,7 @@ def inbound_manual(
         item_code=item_code,
         lot_no=lot_no,
         qty=qty,
-        remark="수동 입고 (GET)"
+        remark="QR/수동 GET 입고"
     )
 
     conn.commit()
@@ -50,7 +50,7 @@ def inbound_manual(
 
     return {
         "ok": True,
-        "msg": "수동 입고 완료",
+        "msg": "입고 완료",
         "item_code": item_code,
         "lot_no": lot_no,
         "qty": qty
