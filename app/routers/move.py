@@ -1,33 +1,21 @@
 from fastapi import APIRouter, HTTPException
-from app.db import subtract_inventory, add_inventory, log_history
+from pydantic import BaseModel
+from app.db import move_inventory
 
 router = APIRouter(prefix="/api/move", tags=["이동"])
 
-@router.post("")
-def move(
-    warehouse: str,
-    from_location: str,
-    to_location: str,
-    item_code: str,
-    lot_no: str,
+class MoveReq(BaseModel):
+    warehouse: str = "MAIN"
+    item_code: str
+    lot_no: str
     qty: float
-):
-    try:
-        subtract_inventory(warehouse, from_location, item_code, lot_no, qty)
-        add_inventory(
-            warehouse, to_location, "",
-            item_code, "", lot_no, "", qty
-        )
-        log_history(
-            "MOVE",
-            warehouse,
-            f"{from_location}->{to_location}",
-            item_code,
-            lot_no,
-            qty,
-            "이동"
-        )
-    except ValueError as e:
-        raise HTTPException(400, str(e))
+    from_location: str
+    to_location: str
 
-    return {"result": "OK", "msg": "이동 완료"}
+@router.post("")
+def move(req: MoveReq):
+    try:
+        move_inventory(req.warehouse, req.item_code, req.lot_no, req.qty, req.from_location, req.to_location, remark="MOVE")
+        return {"ok": True}
+    except Exception as e:
+        raise HTTPException(400, str(e))
