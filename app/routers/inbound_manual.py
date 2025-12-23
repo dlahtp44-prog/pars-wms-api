@@ -1,7 +1,9 @@
-from fastapi import APIRouter
-from app.db import add_inventory
+# app/routers/inbound_manual.py
 
-router = APIRouter(prefix="/api/inbound", tags=["입고"])
+from fastapi import APIRouter, Query, HTTPException
+from app.db import add_inventory, log_history
+
+router = APIRouter(
     prefix="/api/inbound",
     tags=["Inbound Manual"]
 )
@@ -13,67 +15,48 @@ def inbound_manual(
     spec: str = Query(""),
     lot_no: str = Query(""),
     location: str = Query(...),
-    location_name: str = Query(""),
-    qty: float = Query(...),
-    warehouse: str = Query("MAIN")
+    qty: float = Query(..., gt=0),
+    warehouse: str = Query("MAIN"),
+    brand: str = Query("")
 ):
     """
-    수동/QR 입고 처리 (querystring 방식)
+    ✅ 수동 / QR 입고 처리 (QueryString 방식)
+    예:
+    /api/inbound/manual?item_code=728750&lot_no=H5415&location=D01-01&qty=10
     """
 
-    conn = get_conn()
-    cur = conn.cursor()
-@router.post("/manual")
-def inbound_manual(
-    warehouse: str,
-    location: str,
-    brand: str = "",
-    item_code: str = "",
-    item_name: str = "",
-    lot_no: str = "",
-    spec: str = "",
-    qty: float = 0
-):
-    add_inventory(
-        warehouse, location, brand,
-        item_code, item_name, lot_no, spec, qty
-    )
-    return {"result": "OK", "msg": "입고 완료"}
-    # 1️⃣ inventory UPSERT (재고 증가)
-    cur.execute("""
-        INSERT INTO inventory
-        (warehouse, location, brand, item_code, item_name, lot_no, spec, qty)
-        VALUES (?, ?, '', ?, ?, ?, ?, ?)
-        ON CONFLICT(warehouse, location, item_code, lot_no)
-        DO UPDATE SET
-            qty = qty + excluded.qty
-    """, (
-        warehouse,
-        location,
-        item_code,
-        item_name,
-        lot_no,
-        spec,
-        qty
-    ))
+    try:
+        # 1️⃣ 재고 증가
+        add_inventory(
+            warehouse=warehouse,
+            location=location,
+            brand=brand,
+            item_code=item_code,
+            item_name=item_name,
+            lot_no=lot_no,
+            spec=spec,
+            qty=qty
+        )
 
-    # 2️⃣ 이력 기록
-    log_history(
-        tx_type="IN",
-        warehouse=warehouse,
-        location=location,
-        item_code=item_code,
-        lot_no=lot_no,
-        qty=qty,
-        remark="수동/QR 입고"
-    )
+        # 2️⃣ 이력 기록
+        log_history(
+            tx_type="IN",
+            warehouse=warehouse,
+            location=location,
+            item_code=item_code,
+            lot_no=lot_no,
+            qty=qty,
+            remark="수동/QR 입고"
+        )
 
-    conn.commit()
-    conn.close()
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
     return {
         "result": "OK",
         "msg": "입고 처리 완료",
+        "warehouse": warehouse,
+        "location": location,
         "item_code": item_code,
         "lot_no": lot_no,
         "qty": qty
