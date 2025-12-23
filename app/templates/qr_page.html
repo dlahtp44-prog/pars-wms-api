@@ -1,38 +1,8 @@
-{% extends "worker_base.html" %}
-{% block worker_content %}
-
-<div class="card">
-  <div class="h2">📷 QR 스캔</div>
-
-  <!-- 수동 입력 -->
-  <div class="form">
-    <input id="manual_qr" placeholder="QR 내용 직접 입력 (item_code=...)" />
-    <button class="btn" onclick="manualSearch()">직접 조회</button>
-  </div>
-
-  <div class="hr"></div>
-
-  <!-- 카메라 -->
-  <div id="reader" style="width:100%; max-width:360px;"></div>
-
-  <div class="row">
-    <select id="action">
-      <option value="IN">입고</option>
-      <option value="OUT">출고</option>
-      <option value="MOVE">이동</option>
-    </select>
-    <button class="btn primary" onclick="startScan()">카메라 시작</button>
-    <button class="btn" onclick="stopScan()">중지</button>
-  </div>
-
-  <div id="msg" class="muted"></div>
-</div>
-
 <script src="https://unpkg.com/html5-qrcode"></script>
 <script>
 let qrScanner = null;
 
-/* QR 문자열 → 객체 변환 */
+/* QR 문자열 → 객체 */
 function parseQR(text){
   const params = new URLSearchParams(text);
   const o = {};
@@ -40,7 +10,7 @@ function parseQR(text){
   return o;
 }
 
-/* 실제 처리 */
+/* 처리 */
 async function processQR(text){
   try{
     const data = parseQR(text);
@@ -74,25 +44,41 @@ async function processQR(text){
 }
 
 /* 카메라 시작 */
-function startScan(){
+async function startScan(){
   if(qrScanner) return;
 
+  document.getElementById("msg").innerText = "📷 카메라 준비 중…";
+
   qrScanner = new Html5Qrcode("reader");
-  qrScanner.start(
-    { facingMode: "environment" },
-    { fps: 10, qrbox: 250 },
-    (decodedText) => {
-      stopScan();
-      processQR(decodedText);
-    },
-    (err) => {}
-  ).catch(err=>{
+
+  try{
+    const cameras = await Html5Qrcode.getCameras();
+    if(!cameras || cameras.length === 0){
+      throw "카메라 없음";
+    }
+
+    const backCam =
+      cameras.find(c => c.label.toLowerCase().includes("back")) || cameras[0];
+
+    await qrScanner.start(
+      backCam.id,
+      { fps: 10, qrbox: 250 },
+      (text)=>{
+        stopScan();
+        processQR(text);
+      },
+      ()=>{}
+    );
+
+    document.getElementById("msg").innerText = "📷 스캔 중…";
+  }catch(e){
     document.getElementById("msg").innerText =
-      "❌ 카메라 접근 실패 (권한 확인)";
-  });
+      "❌ 카메라 접근 실패 (권한/브라우저 확인)";
+    qrScanner = null;
+  }
 }
 
-/* 카메라 중지 */
+/* 중지 */
 function stopScan(){
   if(!qrScanner) return;
   qrScanner.stop().then(()=>{
@@ -111,5 +97,3 @@ function manualSearch(){
   processQR(v);
 }
 </script>
-
-{% endblock %}
