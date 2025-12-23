@@ -1,15 +1,12 @@
-{% extends "base.html" %}
-{% block content %}
-
-<h2 class="title">🧑‍🏭 작업자 메뉴</h2>
-
-<div class="actions">
-  <a class="btn" href="/inbound-page">📥 입고</a>
-  <a class="btn" href="/outbound-page">📤 출고</a>
-  <a class="btn" href="/move-page">🔁 이동</a>
+{% extends "worker_base.html" %}
+{% block worker_content %}
+<div class="h2">작업 선택</div>
+<div class="grid">
+  <a class="btn" href="/worker/inbound">📥 입고</a>
+  <a class="btn" href="/worker/outbound">📤 출고</a>
+  <a class="btn" href="/worker/move">🔁 이동</a>
   <a class="btn" href="/inventory-page">📦 재고</a>
   <a class="btn" href="/qr-page">📷 QR</a>
-  <a class="btn gray" href="/dashboard">📊 대시보드</a>
+  <a class="btn" href="/upload">⬆️ 업로드</a>
 </div>
-
 {% endblock %}
