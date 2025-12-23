@@ -2,26 +2,32 @@ from fastapi import APIRouter, Request, Form
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from app.db import get_history, admin_password_ok
-from app.auth import require_admin, is_admin
 
 router = APIRouter(prefix="/admin")
 templates = Jinja2Templates(directory="app/templates")
 
-@router.get("")
-def admin_home(request: Request):
-    if not is_admin(request):
-        return templates.TemplateResponse("admin_login.html", {"request": request, "error": ""})
-    rows = get_history(limit=300)
-    return templates.TemplateResponse("admin.html", {"request": request, "rows": rows})
+def is_admin(request: Request) -> bool:
+    return bool(request.session.get("is_admin"))
+
+@router.get("/login")
+def admin_login(request: Request):
+    return templates.TemplateResponse("admin_login.html", {"request": request, "err": ""})
 
 @router.post("/login")
-def admin_login(request: Request, password: str = Form(...)):
+def admin_login_post(request: Request, password: str = Form("")):
     if admin_password_ok(password):
         request.session["is_admin"] = True
-        return RedirectResponse(url="/admin", status_code=303)
-    return templates.TemplateResponse("admin_login.html", {"request": request, "error": "비밀번호가 틀렸습니다."})
+        return RedirectResponse("/admin", status_code=303)
+    return templates.TemplateResponse("admin_login.html", {"request": request, "err": "비밀번호가 틀렸습니다."})
 
 @router.get("/logout")
 def admin_logout(request: Request):
     request.session.clear()
-    return RedirectResponse(url="/admin", status_code=303)
+    return RedirectResponse("/", status_code=303)
+
+@router.get("")
+def admin_home(request: Request):
+    if not is_admin(request):
+        return RedirectResponse("/admin/login", status_code=303)
+    rows = get_history(limit=800, include_rolled_back=True)
+    return templates.TemplateResponse("admin.html", {"request": request, "rows": rows})
