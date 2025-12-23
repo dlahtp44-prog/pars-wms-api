@@ -1,76 +1,15 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8">
-  <title>PARS WMS · 작업자</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <!-- ✅ PWA -->
-  <link rel="manifest" href="/static/manifest.json">
-  <meta name="theme-color" content="#111827">
-
-  <style>
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont;
-      background: #f3f4f6;
-    }
-
-    header {
-      background: #111827;
-      color: #fff;
-      padding: 14px;
-      font-size: 18px;
-      text-align: center;
-      font-weight: bold;
-    }
-
-    nav {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 6px;
-      padding: 8px;
-      background: #e5e7eb;
-    }
-
-    nav a {
-      display: block;
-      background: #ffffff;
-      border-radius: 10px;
-      padding: 12px 4px;
-      text-align: center;
-      font-size: 14px;
-      text-decoration: none;
-      color: #111827;
-      font-weight: 600;
-      box-shadow: 0 1px 2px rgba(0,0,0,.1);
-    }
-
-    nav a:active {
-      background: #dbeafe;
-    }
-
-    main {
-      padding: 12px;
-    }
-  </style>
-</head>
-
-<body>
-
-<header>PARS WMS · 작업자</header>
-
-<nav>
-  <a href="/worker/inbound">📥 입고</a>
-  <a href="/worker/outbound">📤 출고</a>
-  <a href="/worker/move">🔁 이동</a>
-  <a href="/worker/inventory">📦 재고</a>
-  <a href="/qr-page">📷 QR</a>
-</nav>
-
-<main>
-  {% block content %}{% endblock %}
-</main>
-
-</body>
-</html>
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <div class="h1">작업자 메뉴</div>
+  <div class="grid">
+    <a class="btn" href="/inbound-page">📥 입고</a>
+    <a class="btn" href="/outbound-page">📤 출고</a>
+    <a class="btn" href="/move-page">🔁 이동</a>
+    <a class="btn" href="/inventory-page">📦 재고</a>
+    <a class="btn" href="/qr-page">📷 QR</a>
+    <a class="btn" href="/dashboard">📊 대시보드</a>
+  </div>
+</div>
+{% block worker_content %}{% endblock %}
+{% endblock %}
