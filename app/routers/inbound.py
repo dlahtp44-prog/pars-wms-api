@@ -1,20 +1,23 @@
-from fastapi import APIRouter
-from pydantic import BaseModel
+from fastapi import APIRouter, Form, HTTPException
+from fastapi.responses import RedirectResponse
 from app.db import add_inventory
 
 router = APIRouter(prefix="/api/inbound", tags=["입고"])
 
-class InboundReq(BaseModel):
-    warehouse: str = "MAIN"
-    location: str
-    brand: str = ""
-    item_code: str
-    item_name: str = ""
-    lot_no: str
-    spec: str = ""
-    qty: float
-
-@router.post("")
-def inbound(req: InboundReq):
-    add_inventory(req.warehouse, req.location, req.brand, req.item_code, req.item_name, req.lot_no, req.spec, req.qty, remark="INBOUND")
-    return {"ok": True}
+@router.post("/manual")
+def inbound_manual(
+    warehouse: str = Form("MAIN"),
+    location: str = Form(""),
+    brand: str = Form(""),
+    item_code: str = Form(...),
+    item_name: str = Form(""),
+    lot_no: str = Form(""),
+    spec: str = Form(""),
+    qty: float = Form(...),
+    next_url: str = Form("/inventory-page")
+):
+    try:
+        add_inventory(warehouse, location, brand, item_code, item_name, lot_no, spec, qty, remark="수기 입고")
+        return RedirectResponse(next_url, status_code=303)
+    except Exception as e:
+        raise HTTPException(400, str(e))
