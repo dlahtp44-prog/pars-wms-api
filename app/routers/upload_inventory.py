@@ -1,33 +1,27 @@
-from fastapi import APIRouter, UploadFile, File
+# app/routers/upload_inventory.py
+from fastapi import APIRouter, UploadFile, File, HTTPException
 import csv, io
-from app.db import get_conn, log_history
+from app.db import add_inventory
 
-router = APIRouter(prefix="/api/inbound")
+router = APIRouter(prefix="/api/upload", tags=["업로드"])
 
-@router.post("/upload")
+@router.post("/inventory")
 def upload_inventory(file: UploadFile = File(...)):
-    content = file.file.read().decode("utf-8-sig")
-    reader = csv.DictReader(io.StringIO(content))
-
-    conn = get_conn()
-    cur = conn.cursor()
-
-    for r in reader:
-        qty = float(r["수량"])
-        cur.execute("""
-            INSERT INTO inventory
-            (warehouse, location, item_code, item_name, lot_no, spec, qty)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(warehouse, location, item_code, lot_no)
-            DO UPDATE SET qty = qty + excluded.qty
-        """, (
-            r["창고"], r["로케이션"], r["품번"],
-            r["품명"], r["LOT"], r["규격"], qty
-        ))
-
-        log_history("IN", r["창고"], r["로케이션"],
-                    r["품번"], r["LOT"], qty, "엑셀 입고")
-
-    conn.commit()
-    conn.close()
-    return {"result": "OK"}
+    try:
+        content = file.file.read().decode("utf-8-sig")
+        reader = csv.DictReader(io.StringIO(content))
+        for r in reader:
+            warehouse = r.get("warehouse") or r.get("창고") or "MAIN"
+            location  = r.get("location")  or r.get("로케이션") or ""
+            brand     = r.get("brand")     or r.get("브랜드") or ""
+            item_code = r.get("item_code") or r.get("품번") or ""
+            item_name = r.get("item_name") or r.get("품명") or ""
+            lot_no    = r.get("lot_no")    or r.get("LOT") or r.get("LOT NO") or ""
+            spec      = r.get("spec")      or r.get("규격") or ""
+            qty       = float(r.get("qty") or r.get("수량") or 0)
+            if not (location and item_code and lot_no):
+                continue
+            add_inventory(warehouse, location, brand, item_code, item_name, lot_no, spec, qty, remark="CSV IN")
+        return {"ok": True}
+    except Exception as e:
+        raise HTTPException(400, str(e))
