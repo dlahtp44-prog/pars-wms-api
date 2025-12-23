@@ -75,7 +75,7 @@ safe_include("app.pages.admin_page")        # /admin
 # APIs
 # =========================
 safe_include("app.routers.inbound")          # /api/inbound
-safe_include("app.routers.inbound_manual")  # /api/inbound/manual ⭐
+
 safe_include("app.routers.outbound")         # /api/outbound
 safe_include("app.routers.move")             # /api/move
 safe_include("app.routers.inventory")        # /api/inventory
