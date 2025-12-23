@@ -1,4 +1,3 @@
-# app/pages/move_page.py
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 
@@ -7,7 +6,4 @@ templates = Jinja2Templates(directory="app/templates")
 
 @router.get("")
 def move_page(request: Request):
-    return templates.TemplateResponse(
-        "move.html",
-        {"request": request}
-    )
+    return templates.TemplateResponse("worker_move.html", {"request": request})
