@@ -1,25 +1,41 @@
 from fastapi import APIRouter
+from fastapi.responses import StreamingResponse
 import qrcode
-from fastapi.responses import FileResponse
+import io
 
-router = APIRouter(prefix="/api/qr", tags=["QR Generate"])
+router = APIRouter(prefix="/api/qr", tags=["QR 생성"])
 
-@router.get("/item")
-def qr_item(item_code: str, lot_no: str, location: str, qty: float):
+@router.get("/product")
+def product_qr(
+    item_code: str,
+    lot_no: str,
+    item_name: str = "",
+    spec: str = "",
+    brand: str = ""
+):
     data = (
         f"item_code={item_code}"
         f"&lot_no={lot_no}"
-        f"&location={location}"
-        f"&qty={qty}"
+        f"&item_name={item_name}"
+        f"&spec={spec}"
+        f"&brand={brand}"
     )
+
     img = qrcode.make(data)
-    path = "/tmp/item_qr.png"
-    img.save(path)
-    return FileResponse(path, filename="item_qr.png")
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    buf.seek(0)
+
+    return StreamingResponse(buf, media_type="image/png")
+
 
 @router.get("/location")
-def qr_location(location: str):
-    img = qrcode.make(f"location={location}")
-    path = "/tmp/location_qr.png"
-    img.save(path)
-    return FileResponse(path, filename="location_qr.png")
+def location_qr(location: str, warehouse: str = "MAIN"):
+    data = f"location={location}&warehouse={warehouse}"
+
+    img = qrcode.make(data)
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    buf.seek(0)
+
+    return StreamingResponse(buf, media_type="image/png")
