@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <div class="h2">🧾 작업 이력</div>
+
+  <div class="tablewrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>ID</th><th>구분</th><th>창고</th><th>위치</th><th>품번</th><th>LOT</th>
+          <th class="right">수량</th><th>비고</th><th>시간</th><th>롤백</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td>{{ r.id }}</td>
+          <td>{{ r.tx_type }}</td>
+          <td>{{ r.warehouse }}</td>
+          <td>{{ r.location }}</td>
+          <td>{{ r.item_code }}</td>
+          <td>{{ r.lot_no }}</td>
+          <td class="right"><b>{{ r.qty }}</b></td>
+          <td>{{ r.remark }}</td>
+          <td>{{ r.created_at }}</td>
+          <td>
+            {% if r.rolled_back == 0 %}
+            <button class="btn" onclick="fetch('/api/history/rollback/{{r.id}}',{method:'POST'}).then(()=>location.reload())">롤백</button>
+            {% else %}
+            <span class="muted">완료</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
