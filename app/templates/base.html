@@ -1,29 +1,36 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>{{ title or "PARS WMS" }}</title>
-  <link rel="stylesheet" href="/static/app.css" />
-  <link rel="manifest" href="/static/manifest.json">
-  <meta name="theme-color" content="#111827">
-  <script>
-    if ('serviceWorker' in navigator) navigator.serviceWorker.register('/static/sw.js');
-  </script>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>PARS WMS</title>
+  <link rel="stylesheet" href="/static/app.css"/>
+  <link rel="manifest" href="/static/manifest.json"/>
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="/">PARS WMS</a>
-    <nav class="topnav">
+    <div class="topbar__title">PARS WMS</div>
+    <nav class="topbar__nav">
+      <a href="/">메인</a>
       <a href="/worker">작업자</a>
       <a href="/inventory-page">재고</a>
+      <a href="/history-page">이력</a>
+      <a href="/qr-page">QR</a>
       <a href="/dashboard">대시보드</a>
+      <a href="/upload">업로드</a>
       <a href="/admin">관리자</a>
     </nav>
   </header>
 
-  <main class="wrap">
+  <main class="container">
     {% block content %}{% endblock %}
   </main>
+
+  <script>
+    // PWA 설치 시도(선택)
+    if ('serviceWorker' in navigator) {
+      // 서비스워커는 지금은 생략(원하면 추가해줄게)
+    }
+  </script>
 </body>
 </html>
