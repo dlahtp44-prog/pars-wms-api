@@ -1,19 +1,36 @@
-<h2>🔄 재고 이동</h2>
-
-<input id="item" placeholder="품목"><br><br>
-<input id="qty" type="number" placeholder="수량"><br><br>
-<input id="from" placeholder="출발 위치"><br><br>
-<input id="to" placeholder="도착 위치"><br><br>
-
-<button onclick="submit()">이동 처리</button>
-<br><br>
-<a href="/worker">← 작업자 화면</a>
+{% extends "worker_base.html" %}
+{% block worker_content %}
+<div class="card">
+  <div class="h2">🔁 이동</div>
+  <div class="form">
+    <input id="warehouse" placeholder="창고" value="MAIN">
+    <input id="item_code" placeholder="품번">
+    <input id="lot_no" placeholder="LOT">
+    <input id="qty" placeholder="수량" inputmode="decimal">
+    <input id="from_location" placeholder="FROM 로케이션">
+    <input id="to_location" placeholder="TO 로케이션">
+    <button class="btn primary" onclick="submitMove()">이동 처리</button>
+    <div id="msg" class="muted"></div>
+  </div>
+</div>
 
 <script>
-async function submit(){
-  const url =
-    `/move?item=${item.value}&qty=${qty.value}&from_loc=${from.value}&to_loc=${to.value}`;
-  const res = await fetch(url, { method: "POST" });
-  alert(await res.text());
+async function submitMove(){
+  const body = {
+    warehouse: document.getElementById('warehouse').value || 'MAIN',
+    item_code: document.getElementById('item_code').value.trim(),
+    lot_no: document.getElementById('lot_no').value.trim(),
+    qty: parseFloat(document.getElementById('qty').value || '0'),
+    from_location: document.getElementById('from_location').value.trim(),
+    to_location: document.getElementById('to_location').value.trim(),
+  };
+  const res = await fetch('/api/move', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(body)
+  });
+  const d = await res.json();
+  document.getElementById('msg').innerText = res.ok ? '✅ 이동 완료' : ('❌ ' + (d.detail || JSON.stringify(d)));
 }
 </script>
+{% endblock %}
