@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
+from app.db import get_history
 
 router = APIRouter(prefix="/history-page")
 templates = Jinja2Templates(directory="app/templates")
 
 @router.get("")
 def history_page(request: Request):
-    return templates.TemplateResponse("history.html", {"request": request})
+    rows = get_history(limit=500, include_rolled_back=True)
+    return templates.TemplateResponse("history_page.html", {"request": request, "rows": rows})
