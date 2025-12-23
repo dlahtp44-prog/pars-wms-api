@@ -1,36 +1,37 @@
 from fastapi import APIRouter
-from fastapi.responses import FileResponse
+from fastapi.responses import StreamingResponse
 import pandas as pd
-from app.db import get_conn
+import io
+from app.db import get_inventory, get_history
 
-router = APIRouter(prefix="/api/export", tags=["Excel"])
+router = APIRouter(prefix="/api/export", tags=["엑셀"])
 
 @router.get("/inventory")
 def export_inventory():
-    conn = get_conn()
-    df = pd.read_sql("""
-        SELECT warehouse, location, item_code, item_name,
-               spec, lot_no, qty, updated_at
-        FROM inventory
-        ORDER BY location, item_code
-    """, conn)
-    conn.close()
+    rows = get_inventory()
+    df = pd.DataFrame(rows)
 
-    path = "/tmp/현재고_현황.xlsx"
-    df.to_excel(path, index=False)
-    return FileResponse(path, filename="현재고_현황.xlsx")
+    buf = io.BytesIO()
+    df.to_excel(buf, index=False)
+    buf.seek(0)
+
+    return StreamingResponse(
+        buf,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": "attachment; filename=inventory.xlsx"}
+    )
 
 @router.get("/history")
 def export_history():
-    conn = get_conn()
-    df = pd.read_sql("""
-        SELECT created_at, tx_type, warehouse,
-               location, item_code, lot_no, qty, remark
-        FROM history
-        ORDER BY created_at DESC
-    """, conn)
-    conn.close()
+    rows = get_history(5000)
+    df = pd.DataFrame(rows)
 
-    path = "/tmp/재고_이력.xlsx"
-    df.to_excel(path, index=False)
-    return FileResponse(path, filename="재고_이력.xlsx")
+    buf = io.BytesIO()
+    df.to_excel(buf, index=False)
+    buf.seek(0)
+
+    return StreamingResponse(
+        buf,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": "attachment; filename=history.xlsx"}
+    )
