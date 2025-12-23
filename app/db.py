@@ -261,6 +261,36 @@ def dashboard_summary():
     conn.close()
     return inbound, outbound, total, negative
 
+# =========================
+# 재고 차감 (출고 공통)
+# =========================
+def subtract_inventory(warehouse, location, item_code, lot_no, qty):
+    conn = get_conn()
+    cur = conn.cursor()
+
+    # 현재 수량 확인
+    cur.execute("""
+        SELECT qty FROM inventory
+        WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?
+    """, (warehouse, location, item_code, lot_no))
+
+    row = cur.fetchone()
+    if not row or row["qty"] < qty:
+        conn.close()
+        raise ValueError("재고 부족")
+
+    cur.execute("""
+        UPDATE inventory
+        SET qty = qty - ?, updated_at=CURRENT_TIMESTAMP
+        WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?
+    """, (qty, warehouse, location, item_code, lot_no))
+
+    conn.commit()
+    conn.close()
+
+    log_history("OUT", warehouse, location, item_code, lot_no, -qty, "출고")
+
+
 
 # =========================
 # 관리자 비밀번호
