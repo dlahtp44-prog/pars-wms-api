@@ -1,40 +1,33 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from app.db import add_inventory, move_inventory, log_history
+from app.db import add_inventory, subtract_inventory, move_inventory
 
-router = APIRouter(prefix="/api/qr", tags=["QR 처리"])
+router = APIRouter(prefix="/api/qr", tags=["QR Process"])
 
-class QRPayload(BaseModel):
-    # type: IN / OUT / MOVE
-    type: str
-    warehouse: str = ""
-    location: str = ""
-    from_location: str = ""
-    to_location: str = ""
+class QRProcess(BaseModel):
+    action: str  # IN/OUT/MOVE
+    warehouse: str = "MAIN"
+    location: str = ""         # IN/OUT
+    from_location: str = ""    # MOVE
+    to_location: str = ""      # MOVE
     brand: str = ""
     item_code: str
     item_name: str = ""
-    lot_no: str = ""
+    lot_no: str
     spec: str = ""
-    qty: float = 0
+    qty: float
 
 @router.post("/process")
-def process_qr(p: QRPayload):
-    t = (p.type or "").upper()
-    qty = float(p.qty or 0)
-
-    if t == "IN":
-        add_inventory(p.warehouse, p.location, p.brand, p.item_code, p.item_name, p.lot_no, p.spec, abs(qty))
-        log_history("IN", p.warehouse, p.location, p.item_code, p.item_name, p.brand, p.lot_no, p.spec, abs(qty), "QR")
-        return {"ok": True, "msg": "입고 처리 완료"}
-
-    if t == "OUT":
-        add_inventory(p.warehouse, p.location, p.brand, p.item_code, p.item_name, p.lot_no, p.spec, -abs(qty))
-        log_history("OUT", p.warehouse, p.location, p.item_code, p.item_name, p.brand, p.lot_no, p.spec, abs(qty), "QR")
-        return {"ok": True, "msg": "출고 처리 완료"}
-
-    if t == "MOVE":
-        move_inventory(p.warehouse, p.item_code, p.item_name, p.brand, p.lot_no, p.spec, abs(qty), p.from_location, p.to_location)
-        return {"ok": True, "msg": "이동 처리 완료"}
-
-    return {"ok": False, "msg": "알 수 없는 type"}
+def qr_process(body: QRProcess):
+    try:
+        if body.action == "IN":
+            add_inventory(body.warehouse, body.location, body.brand, body.item_code, body.item_name, body.lot_no, body.spec, body.qty, remark="QR IN")
+        elif body.action == "OUT":
+            subtract_inventory(body.warehouse, body.location, body.item_code, body.lot_no, body.qty, remark="QR OUT")
+        elif body.action == "MOVE":
+            move_inventory(body.warehouse, body.item_code, body.lot_no, body.qty, body.from_location, body.to_location, remark="QR MOVE")
+        else:
+            raise ValueError("action must be IN/OUT/MOVE")
+        return {"ok": True}
+    except Exception as e:
+        raise HTTPException(400, str(e))
