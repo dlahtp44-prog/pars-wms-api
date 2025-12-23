@@ -1,151 +1,29 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>PARS WMS</title>
-
-  <!-- PWA -->
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ title or "PARS WMS" }}</title>
+  <link rel="stylesheet" href="/static/app.css" />
   <link rel="manifest" href="/static/manifest.json">
-  <meta name="theme-color" content="#111827"/>
-
-  <style>
-    /* ===== Reset ===== */
-    * { box-sizing:border-box; }
-    body {
-      margin:0;
-      font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial;
-      background:#f3f4f6;
-      color:#111827;
-    }
-    a { text-decoration:none; color:inherit; }
-
-    /* ===== Layout ===== */
-    header {
-      background:#111827;
-      color:#fff;
-      padding:14px 16px;
-      font-weight:800;
-      font-size:16px;
-    }
-    .wrap {
-      max-width:1200px;
-      margin:0 auto;
-      padding:14px;
-    }
-
-    /* ===== Typography ===== */
-    .title { font-size:20px; margin:0 0 12px 0; }
-    .subtitle { font-size:15px; margin:10px 0; color:#374151; }
-
-    /* ===== Card / Grid ===== */
-    .grid {
-      display:grid;
-      grid-template-columns:repeat(2,minmax(0,1fr));
-      gap:10px;
-    }
-    @media(min-width:900px){
-      .grid { grid-template-columns:repeat(4,minmax(0,1fr)); }
-    }
-    .card {
-      background:#fff;
-      border:1px solid #e5e7eb;
-      border-radius:14px;
-      padding:14px;
-    }
-    .card.warn { border-color:#ef4444; }
-    .label { font-size:12px; color:#6b7280; }
-    .value { font-size:22px; font-weight:800; margin-top:4px; }
-
-    /* ===== Buttons ===== */
-    .actions {
-      display:grid;
-      grid-template-columns:repeat(2,minmax(0,1fr));
-      gap:10px;
-      margin-top:12px;
-    }
-    @media(min-width:900px){
-      .actions { grid-template-columns:repeat(4,minmax(0,1fr)); }
-    }
-    .btn {
-      padding:12px;
-      border-radius:12px;
-      background:#111827;
-      color:#fff;
-      text-align:center;
-      border:none;
-      font-size:14px;
-      cursor:pointer;
-    }
-    .btn.gray { background:#6b7280; }
-    .btn.warn { background:#ef4444; }
-
-    /* ===== Inputs ===== */
-    input, select {
-      width:100%;
-      padding:12px;
-      border-radius:12px;
-      border:1px solid #e5e7eb;
-      margin-bottom:8px;
-      font-size:14px;
-    }
-
-    /* ===== Table (공통 핵심) ===== */
-    .tablewrap {
-      margin-top:12px;
-      overflow:auto;
-      background:#fff;
-      border:1px solid #e5e7eb;
-      border-radius:14px;
-    }
-    table.inventory {
-      width:100%;
-      border-collapse:collapse;
-      min-width:1100px;
-      font-size:13px;
-    }
-    table.inventory th,
-    table.inventory td {
-      padding:10px;
-      border-bottom:1px solid #f1f5f9;
-      white-space:nowrap;
-    }
-    table.inventory th {
-      background:#111827;
-      color:#fff;
-      position:sticky;
-      top:0;
-      z-index:2;
-    }
-    .right { text-align:right; }
-
-    /* ===== Misc ===== */
-    video {
-      width:100%;
-      border-radius:14px;
-      background:#000;
-      margin-top:10px;
-    }
-    .hint {
-      font-size:12px;
-      color:#6b7280;
-      margin-top:6px;
-    }
-  </style>
+  <meta name="theme-color" content="#111827">
+  <script>
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('/static/sw.js');
+  </script>
 </head>
 <body>
+  <header class="topbar">
+    <a class="brand" href="/">PARS WMS</a>
+    <nav class="topnav">
+      <a href="/worker">작업자</a>
+      <a href="/inventory-page">재고</a>
+      <a href="/dashboard">대시보드</a>
+      <a href="/admin">관리자</a>
+    </nav>
+  </header>
 
-<header>PARS WMS</header>
-
-<div class="wrap">
-  {% block content %}{% endblock %}
-</div>
-
-<script>
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("/static/sw.js");
-}
-</script>
-
+  <main class="wrap">
+    {% block content %}{% endblock %}
+  </main>
 </body>
 </html>
