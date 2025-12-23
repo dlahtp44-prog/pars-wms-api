@@ -1,54 +1,12 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8">
-  <title>PARS WMS</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f3f4f6;
-      margin: 0;
-      padding: 20px;
-    }
-    h1 { margin-bottom: 20px; }
-    .menu button {
-      display: block;
-      width: 100%;
-      padding: 14px;
-      margin-bottom: 12px;
-      font-size: 16px;
-      border: none;
-      border-radius: 10px;
-      background: #2563eb;
-      color: white;
-      cursor: pointer;
-    }
-  </style>
-</head>
-
-<body>
-  <h1>📦 PARS WMS 메인</h1>
-
-  <div class="menu">
-    <a href="/dashboard">
-      <button>📊 대시보드</button>
-    </a>
-
-    <a href="/worker">
-      <button>👷 작업자 화면</button>
-    </a>
-
-    <a href="/inventory-page">
-      <button>📋 재고 조회</button>
-    </a>
-
-    <a href="/history-page">
-      <button>🕒 작업 이력</button>
-    </a>
-
-    <a href="/qr-page">
-      <button>📷 QR 스캔</button>
-    </a>
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <div class="h1">PARS WMS</div>
+  <p class="muted">입고/출고/이동/재고/이력/QR/대시보드</p>
+  <div class="grid">
+    <a class="btn" href="/worker">작업자 시작</a>
+    <a class="btn" href="/dashboard">대시보드</a>
+    <a class="btn" href="/admin">관리자</a>
   </div>
-</body>
-</html>
+</div>
+{% endblock %}
