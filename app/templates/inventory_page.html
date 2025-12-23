@@ -1,51 +1,15 @@
 {% extends "base.html" %}
 {% block content %}
+<div class="card">
+  <div class="h2">📦 재고 조회</div>
 
-<h2>📦 재고 조회</h2>
+  <form class="row" method="get" action="/inventory-page">
+    <input name="q" value="{{ q }}" placeholder="품번/품명/LOT/브랜드/규격 검색">
+    <input name="warehouse" value="{{ warehouse }}" placeholder="창고(선택)">
+    <input name="location" value="{{ location }}" placeholder="로케이션(선택)">
+    <button class="btn primary" type="submit">검색</button>
+  </form>
 
-<form method="get" style="margin-bottom:15px;">
-  <input name="location" placeholder="로케이션"
-         value="{{ location }}" style="width:150px;">
-  <input name="item_code" placeholder="품번"
-         value="{{ item_code }}" style="width:150px;">
-  <button type="submit">검색</button>
-</form>
-
-<table border="1" cellpadding="6"
-       style="width:100%; border-collapse:collapse;">
-  <tr style="background:#ffe600;">
-    <th>장소명</th>
-    <th>브랜드</th>
-    <th>품번</th>
-    <th>품명</th>
-    <th>LOT NO</th>
-    <th>규격</th>
-    <th>로케이션</th>
-    <th>현재고</th>
-  </tr>
-
-  {% for r in rows %}
-  <tr>
-    <td>{{ r.location_name }}</td>
-    <td>{{ r.brand }}</td>
-    <td>
-      <a href="/item/{{ r.item_code }}">
-        {{ r.item_code }}
-      </a>
-    </td>
-    <td>{{ r.item_name }}</td>
-    <td>{{ r.lot_no }}</td>
-    <td>{{ r.spec }}</td>
-    <td>{{ r.location }}</td>
-    <td style="font-weight:bold; color:red;">
-      {{ r.qty }}
-    </td>
-  </tr>
-  {% endfor %}
-</table>
-
-{% if not rows %}
-<p style="margin-top:15px;">조회 결과가 없습니다.</p>
-{% endif %}
-
+  {% include "_inventory_table.html" %}
+</div>
 {% endblock %}
