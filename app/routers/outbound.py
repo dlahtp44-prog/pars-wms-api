@@ -1,36 +1,21 @@
-from fastapi import APIRouter, Form, HTTPException
-from app.db import get_conn, log_history
+# app/routers/outbound.py
+from fastapi import APIRouter, HTTPException
+from app.db import subtract_inventory, log_history
 
 router = APIRouter(prefix="/api/outbound")
 
-@router.post("")
-def outbound(
-    warehouse: str = Form(...),
-    location: str = Form(...),
-    item_code: str = Form(...),
-    lot_no: str = Form(""),
-    qty: float = Form(...)
+@router.get("/manual")
+def outbound_manual(
+    item_code: str,
+    lot_no: str,
+    location: str,
+    qty: float,
+    warehouse: str = "MAIN"
 ):
-    conn = get_conn()
-    cur = conn.cursor()
+    try:
+        subtract_inventory(warehouse, location, item_code, lot_no, qty)
+    except Exception as e:
+        raise HTTPException(400, str(e))
 
-    cur.execute("""
-        SELECT qty FROM inventory
-        WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?
-    """, (warehouse, location, item_code, lot_no))
-
-    row = cur.fetchone()
-    if not row or row["qty"] < qty:
-        raise HTTPException(400, "재고 부족")
-
-    cur.execute("""
-        UPDATE inventory
-        SET qty = qty - ?
-        WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?
-    """, (qty, warehouse, location, item_code, lot_no))
-
-    log_history("OUT", warehouse, location, item_code, lot_no, -qty, "출고")
-
-    conn.commit()
-    conn.close()
+    log_history("OUT", warehouse, location, item_code, lot_no, qty, "수동출고")
     return {"result": "OK"}
