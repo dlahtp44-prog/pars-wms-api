@@ -1,9 +1,9 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 from app.db import get_inventory
 
-router = APIRouter(prefix="/api", tags=["QR"])
+router = APIRouter(prefix="/api/qr-search", tags=["QR"])
 
-@router.get("/qr-search")
-def qr_search(q: str):
-    # 품번/품명/LOT/브랜드로 재고 검색
+@router.get("")
+def qr_search(q: str = Query(...)):
+    # q로 재고 검색 (품번/LOT/로케이션 등)
     return get_inventory(q=q)
