@@ -1,76 +1,115 @@
 {% extends "worker_base.html" %}
 {% block worker_content %}
+
 <div class="card">
   <div class="h2">📷 QR 스캔</div>
 
-  <p class="muted">QR 내용은 “쿼리스트링” 형태를 권장합니다. 예)</p>
-  <code class="code">item_code=728750&lot_no=H5415&location=D01-01&qty=10&action=IN</code>
+  <!-- 수동 입력 -->
+  <div class="form">
+    <input id="manual_qr" placeholder="QR 내용 직접 입력 (item_code=...)" />
+    <button class="btn" onclick="manualSearch()">직접 조회</button>
+  </div>
 
-  <div id="reader" style="width:100%;"></div>
+  <div class="hr"></div>
+
+  <!-- 카메라 -->
+  <div id="reader" style="width:100%; max-width:360px;"></div>
+
   <div class="row">
     <select id="action">
-      <option value="IN">입고(IN)</option>
-      <option value="OUT">출고(OUT)</option>
-      <option value="MOVE">이동(MOVE)</option>
+      <option value="IN">입고</option>
+      <option value="OUT">출고</option>
+      <option value="MOVE">이동</option>
     </select>
-    <button class="btn" onclick="startScan()">스캔 시작</button>
+    <button class="btn primary" onclick="startScan()">카메라 시작</button>
     <button class="btn" onclick="stopScan()">중지</button>
   </div>
 
-  <div id="result" class="muted"></div>
+  <div id="msg" class="muted"></div>
 </div>
 
 <script src="https://unpkg.com/html5-qrcode"></script>
 <script>
-let qr;
+let qrScanner = null;
 
-function parseQS(text){
-  // QR이 "a=b&c=d" 형태면 파싱
-  const params = new URLSearchParams(text.trim());
+/* QR 문자열 → 객체 변환 */
+function parseQR(text){
+  const params = new URLSearchParams(text);
   const o = {};
-  for(const [k,v] of params.entries()) o[k]=v;
+  for(const [k,v] of params.entries()) o[k] = v;
   return o;
 }
 
-async function handleQR(text){
-  const data = parseQS(text);
-  const action = (data.action || document.getElementById('action').value).toUpperCase();
-  const body = {
-    action,
-    warehouse: data.warehouse || "MAIN",
-    location: data.location || "",
-    from_location: data.from_location || "",
-    to_location: data.to_location || "",
-    brand: data.brand || "",
-    item_code: data.item_code || "",
-    item_name: data.item_name || "",
-    lot_no: data.lot_no || "",
-    spec: data.spec || "",
-    qty: parseFloat(data.qty || "0")
-  };
+/* 실제 처리 */
+async function processQR(text){
+  try{
+    const data = parseQR(text);
+    const action = document.getElementById("action").value;
 
-  const res = await fetch('/api/qr/process', {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify(body)
-  });
-  const d = await res.json();
-  document.getElementById('result').innerText = res.ok ? ("✅ 처리완료: " + text) : ("❌ " + (d.detail || JSON.stringify(d)));
+    const body = {
+      action,
+      warehouse: data.warehouse || "MAIN",
+      location: data.location || "",
+      from_location: data.from_location || "",
+      to_location: data.to_location || "",
+      item_code: data.item_code,
+      item_name: data.item_name || "",
+      lot_no: data.lot_no,
+      spec: data.spec || "",
+      qty: Number(data.qty || 0)
+    };
+
+    const res = await fetch("/api/qr/process", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify(body)
+    });
+
+    const d = await res.json();
+    document.getElementById("msg").innerText =
+      res.ok ? "✅ 처리 완료" : "❌ " + (d.detail || JSON.stringify(d));
+  }catch(e){
+    document.getElementById("msg").innerText = "❌ QR 파싱 실패";
+  }
 }
 
+/* 카메라 시작 */
 function startScan(){
-  if(qr) return;
-  qr = new Html5Qrcode("reader");
-  qr.start(
+  if(qrScanner) return;
+
+  qrScanner = new Html5Qrcode("reader");
+  qrScanner.start(
     { facingMode: "environment" },
     { fps: 10, qrbox: 250 },
-    (decodedText) => { stopScan(); handleQR(decodedText); },
-    () => {}
-  );
+    (decodedText) => {
+      stopScan();
+      processQR(decodedText);
+    },
+    (err) => {}
+  ).catch(err=>{
+    document.getElementById("msg").innerText =
+      "❌ 카메라 접근 실패 (권한 확인)";
+  });
 }
+
+/* 카메라 중지 */
 function stopScan(){
-  if(!qr) return;
-  qr.stop().then(()=>{ qr.clear(); qr=null; }).catch(()=>{});
+  if(!qrScanner) return;
+  qrScanner.stop().then(()=>{
+    qrScanner.clear();
+    qrScanner = null;
+  });
+}
+
+/* 수동 입력 */
+function manualSearch(){
+  const v = document.getElementById("manual_qr").value.trim();
+  if(!v){
+    alert("QR 내용을 입력하세요");
+    return;
+  }
+  processQR(v);
 }
 </script>
+
 {% endblock %}
