@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 
-router = APIRouter()
+router = APIRouter(prefix="/upload")
 templates = Jinja2Templates(directory="app/templates")
 
-@router.get("/upload-page")
+@router.get("")
 def upload_page(request: Request):
-    return templates.TemplateResponse("upload.html", {"request": request})
+    return templates.TemplateResponse("upload_page.html", {"request": request})
