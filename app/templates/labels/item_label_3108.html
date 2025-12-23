@@ -3,49 +3,30 @@
 <head>
 <meta charset="utf-8">
 <style>
-@page {
-  size: 50mm 30mm;
-  margin: 0;
-}
+@page { size: 50mm 30mm; margin: 0; }
 body {
-  width: 50mm;
-  height: 30mm;
-  margin: 0;
-  font-family: Arial, sans-serif;
+  width:50mm; height:30mm; margin:0;
+  font-family: Arial;
 }
-.box {
-  display: flex;
-  height: 100%;
-}
-.qr {
-  width: 18mm;
-}
-.qr img {
-  width: 18mm;
-  height: 18mm;
-}
+.box { display:flex; }
+.qr img { width:18mm; height:18mm; }
 .info {
-  font-size: 7px;
-  line-height: 1.2;
-  margin-left: 2mm;
+  font-size:7px;
+  margin-left:2mm;
+  line-height:1.25;
 }
-.code {
-  font-size: 9px;
-  font-weight: bold;
-}
+.code { font-size:9px; font-weight:bold; }
 </style>
 </head>
 <body>
 <div class="box">
-  <div class="qr">
-    <img src="{{ qr_url }}">
-  </div>
+  <div class="qr"><img src="{{ qr_url }}"></div>
   <div class="info">
     <div class="code">{{ item_code }}</div>
-    <div>LOT {{ lot_no }}</div>
+    <div>{{ item_name }}</div>
+    <div>{{ brand }}</div>
     <div>{{ spec }}</div>
-    <div>QTY {{ qty }}</div>
-    <div>{{ location }}</div>
+    <div>LOT {{ lot_no }}</div>
   </div>
 </div>
 </body>
