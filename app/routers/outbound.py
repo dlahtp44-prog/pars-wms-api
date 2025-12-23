@@ -1,21 +1,19 @@
-# app/routers/outbound.py
 from fastapi import APIRouter, HTTPException
-from app.db import subtract_inventory, log_history
+from app.db import subtract_inventory
 
-router = APIRouter(prefix="/api/outbound")
+router = APIRouter(prefix="/api/outbound", tags=["출고"])
 
-@router.get("/manual")
-def outbound_manual(
+@router.post("")
+def outbound(
+    warehouse: str,
+    location: str,
     item_code: str,
     lot_no: str,
-    location: str,
-    qty: float,
-    warehouse: str = "MAIN"
+    qty: float
 ):
     try:
         subtract_inventory(warehouse, location, item_code, lot_no, qty)
-    except Exception as e:
+    except ValueError as e:
         raise HTTPException(400, str(e))
 
-    log_history("OUT", warehouse, location, item_code, lot_no, qty, "수동출고")
-    return {"result": "OK"}
+    return {"result": "OK", "msg": "출고 완료"}
