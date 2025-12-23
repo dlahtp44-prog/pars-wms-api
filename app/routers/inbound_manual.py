@@ -1,63 +1,38 @@
-# app/routers/inbound_manual.py
+from fastapi import APIRouter, Query
+from pydantic import BaseModel
+from app.db import add_inventory
 
-from fastapi import APIRouter, Query, HTTPException
-from app.db import add_inventory, log_history
+router = APIRouter(prefix="/api/inbound", tags=["입고"])
 
-router = APIRouter(
-    prefix="/api/inbound",
-    tags=["Inbound Manual"]
-)
+class InboundBody(BaseModel):
+    warehouse: str = "MAIN"
+    location: str
+    brand: str = ""
+    item_code: str
+    item_name: str = ""
+    lot_no: str
+    spec: str = ""
+    qty: float
 
 @router.get("/manual")
-def inbound_manual(
+def inbound_manual_get(
     item_code: str = Query(...),
     item_name: str = Query(""),
     spec: str = Query(""),
-    lot_no: str = Query(""),
+    lot_no: str = Query(...),
     location: str = Query(...),
-    qty: float = Query(..., gt=0),
+    qty: float = Query(...),
     warehouse: str = Query("MAIN"),
-    brand: str = Query("")
+    brand: str = Query(""),
 ):
-    """
-    ✅ 수동 / QR 입고 처리 (QueryString 방식)
-    예:
-    /api/inbound/manual?item_code=728750&lot_no=H5415&location=D01-01&qty=10
-    """
+    add_inventory(warehouse, location, brand, item_code, item_name, lot_no, spec, qty, remark="QR/GET 입고")
+    return {"result": "OK", "msg": "입고 완료(GET)", "item_code": item_code, "lot_no": lot_no, "qty": qty}
 
-    try:
-        # 1️⃣ 재고 증가
-        add_inventory(
-            warehouse=warehouse,
-            location=location,
-            brand=brand,
-            item_code=item_code,
-            item_name=item_name,
-            lot_no=lot_no,
-            spec=spec,
-            qty=qty
-        )
-
-        # 2️⃣ 이력 기록
-        log_history(
-            tx_type="IN",
-            warehouse=warehouse,
-            location=location,
-            item_code=item_code,
-            lot_no=lot_no,
-            qty=qty,
-            remark="수동/QR 입고"
-        )
-
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-    return {
-        "result": "OK",
-        "msg": "입고 처리 완료",
-        "warehouse": warehouse,
-        "location": location,
-        "item_code": item_code,
-        "lot_no": lot_no,
-        "qty": qty
-    }
+@router.post("/manual")
+def inbound_manual_post(body: InboundBody):
+    add_inventory(
+        body.warehouse, body.location, body.brand,
+        body.item_code, body.item_name, body.lot_no, body.spec, body.qty,
+        remark="수동/POST 입고"
+    )
+    return {"result": "OK", "msg": "입고 완료(POST)"}
