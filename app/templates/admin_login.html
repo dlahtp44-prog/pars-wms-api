@@ -1,13 +1,12 @@
 {% extends "base.html" %}
 {% block content %}
-<h2 class="title">🔐 관리자 로그인</h2>
-
 <div class="card">
-  {% if error %}<p style="color:#ef4444;"><b>{{ error }}</b></p>{% endif %}
-  <form method="post" action="/admin/login">
-    <input name="password" type="password" placeholder="관리자 비밀번호" required />
-    <button class="btn" type="submit">로그인</button>
+  <div class="h1">🔐 관리자 로그인</div>
+  <form class="form" method="post" action="/admin/login">
+    <input name="password" type="password" placeholder="관리자 비밀번호" required>
+    <button class="btn primary" type="submit">로그인</button>
+    <div class="muted" style="color:#ef4444">{{ error }}</div>
   </form>
-  <p class="hint">Railway Variables에 <b>ADMIN_PASSWORD</b> 설정 권장</p>
+  <p class="muted">Railway Variables에 ADMIN_PASSWORD 설정 권장</p>
 </div>
 {% endblock %}
