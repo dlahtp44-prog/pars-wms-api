@@ -1,23 +1,42 @@
 {% extends "base.html" %}
 {% block content %}
+<div class="card">
+  <div class="h1">📊 대시보드</div>
 
-<h2 class="title">📊 대시보드</h2>
+  <div class="grid4">
+    <div class="kpi">
+      <div class="k">오늘 입고</div>
+      <div class="v">{{ "%.0f"|format(s.inbound_today) }}</div>
+    </div>
+    <div class="kpi">
+      <div class="k">오늘 출고</div>
+      <div class="v">{{ "%.0f"|format(s.outbound_today) }}</div>
+    </div>
+    <div class="kpi">
+      <div class="k">총 재고</div>
+      <div class="v">{{ "%.0f"|format(s.total_stock) }}</div>
+    </div>
+    <div class="kpi {% if s.negative_rows>0 %}danger{% endif %}">
+      <div class="k">음수 재고 행</div>
+      <div class="v">{{ s.negative_rows }}</div>
+    </div>
+  </div>
 
-<div class="grid">
-  <div class="card"><div class="label">오늘 입고</div><div class="value">{{ s.inbound_today }}</div></div>
-  <div class="card"><div class="label">오늘 출고</div><div class="value">{{ s.outbound_today }}</div></div>
-  <div class="card"><div class="label">총 재고</div><div class="value">{{ s.total_stock }}</div></div>
-  <div class="card {% if s.negative_count>0 %}warn{% endif %}">
-    <div class="label">음수 재고</div>
-    <div class="value">{{ s.negative_count }}</div>
+  <div class="hr"></div>
+
+  <div class="h2">Top 10 품번 재고</div>
+  <div class="bars">
+    {% set maxv = (s.top_items[0].qty if s.top_items|length>0 else 1) %}
+    {% for it in s.top_items %}
+      {% set w = (it.qty / maxv * 100) if maxv>0 else 0 %}
+      <div class="barrow">
+        <div class="label">{{ it.item_code }}</div>
+        <div class="bar">
+          <div class="fill" style="width:{{ w }}%"></div>
+        </div>
+        <div class="num">{{ "%.0f"|format(it.qty) }}</div>
+      </div>
+    {% endfor %}
   </div>
 </div>
-
-<div class="actions">
-  <a class="btn" href="/inbound-page">입고</a>
-  <a class="btn" href="/outbound-page">출고</a>
-  <a class="btn" href="/move-page">이동</a>
-  <a class="btn gray" href="/inventory-page">재고</a>
-</div>
-
 {% endblock %}
