@@ -1,65 +1,45 @@
-{% extends "worker_base.html" %}
-{% block worker_content %}
-
-<h2>📷 QR 스캔</h2>
-
-<div id="reader" style="width:100%;max-width:360px;"></div>
-<p id="msg"></p>
-
-<select id="action">
-  <option value="IN">입고</option>
-  <option value="OUT">출고</option>
-  <option value="MOVE">이동</option>
-</select>
-
-<button onclick="startScan()">카메라 시작</button>
-<button onclick="stopScan()">중지</button>
-
-<script src="https://unpkg.com/html5-qrcode"></script>
 <script>
-let scanner = null;
+async function processQR(text){
+  const params = new URLSearchParams(text);
+  const type = params.get("type");
 
-async function startScan(){
-  if(scanner) return;
+  if(type === "LOCATION"){
+    const loc = params.get("location");
+    const res = await fetch(`/api/location/inventory?location=${loc}`);
+    const data = await res.json();
+    renderLocationInventory(data);
+    return;
+  }
 
-  scanner = new Html5Qrcode("reader");
+  if(type === "ITEM"){
+    alert("제품 QR입니다. 입고/출고/이동 화면에서 사용하세요.");
+    return;
+  }
 
-  const cameras = await Html5Qrcode.getCameras();
-  const back = cameras.find(c =>
-    c.label.toLowerCase().includes("back")
-    || c.label.toLowerCase().includes("rear")
-  ) || cameras[0];
-
-  await scanner.start(
-    back.id,
-    { fps: 10, qrbox: 250 },
-    async (text)=>{
-      stopScan();
-      await fetch("/api/qr/process",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify(parse(text))
-      });
-      document.getElementById("msg").innerText="✅ 처리 완료";
-    }
-  );
+  alert("알 수 없는 QR");
 }
 
-function stopScan(){
-  if(!scanner) return;
-  scanner.stop().then(()=>{
-    scanner.clear();
-    scanner = null;
-  });
-}
+function renderLocationInventory(data){
+  let html = `<h3>📍 ${data.location} 재고</h3>`;
+  html += `<table class="table">
+    <tr>
+      <th>품번</th><th>품명</th><th>브랜드</th>
+      <th>규격</th><th>LOT</th><th>수량</th>
+    </tr>`;
 
-function parse(text){
-  const p = new URLSearchParams(text);
-  const o = {};
-  for(const [k,v] of p.entries()) o[k]=v;
-  o.action = document.getElementById("action").value;
-  return o;
+  for(const r of data.items){
+    html += `
+    <tr>
+      <td>${r.item_code}</td>
+      <td>${r.item_name}</td>
+      <td>${r.brand}</td>
+      <td>${r.spec}</td>
+      <td>${r.lot_no}</td>
+      <td class="right">${r.qty}</td>
+    </tr>`;
+  }
+
+  html += "</table>";
+  document.getElementById("result").innerHTML = html;
 }
 </script>
-
-{% endblock %}
