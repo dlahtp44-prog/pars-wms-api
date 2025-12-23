@@ -1,19 +1,20 @@
-# app/routers/inbound.py
 from fastapi import APIRouter
-from app.db import add_inventory, log_history
+from pydantic import BaseModel
+from app.db import add_inventory
 
-router = APIRouter(prefix="/api/inbound")
+router = APIRouter(prefix="/api/inbound", tags=["입고"])
 
-@router.get("/manual")
-def inbound_manual(
-    item_code: str,
-    item_name: str = "",
-    spec: str = "",
-    lot_no: str = "",
-    location: str = "",
-    qty: float = 0,
+class InboundReq(BaseModel):
     warehouse: str = "MAIN"
-):
-    add_inventory(warehouse, location, item_code, item_name, lot_no, spec, qty)
-    log_history("IN", warehouse, location, item_code, lot_no, qty, "수동입고")
-    return {"result": "OK"}
+    location: str
+    brand: str = ""
+    item_code: str
+    item_name: str = ""
+    lot_no: str
+    spec: str = ""
+    qty: float
+
+@router.post("")
+def inbound(req: InboundReq):
+    add_inventory(req.warehouse, req.location, req.brand, req.item_code, req.item_name, req.lot_no, req.spec, req.qty, remark="INBOUND")
+    return {"ok": True}
