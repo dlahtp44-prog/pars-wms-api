@@ -1,19 +1,19 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="card">
-  <div class="row between">
-    <div>
-      <div class="h1">🛠 관리자</div>
-      <div class="muted">이력 롤백(실수 복구)</div>
-    </div>
+  <div class="row" style="justify-content:space-between;align-items:center;">
+    <div class="h2">🛠 관리자 (롤백)</div>
     <a class="btn" href="/admin/logout">로그아웃</a>
   </div>
+
+  <div class="muted">※ 롤백은 실수 복구용입니다. (IN/OUT/MOVE 모두 지원)</div>
 
   <div class="tablewrap">
     <table class="table">
       <thead>
         <tr>
-          <th>ID</th><th>구분</th><th>창고</th><th>로케이션</th><th>품번</th><th>LOT</th><th class="right">수량</th><th>시간</th><th></th>
+          <th>ID</th><th>구분</th><th>창고</th><th>위치</th><th>품번</th><th>LOT</th>
+          <th class="right">수량</th><th>비고</th><th>시간</th><th>롤백</th>
         </tr>
       </thead>
       <tbody>
@@ -25,26 +25,20 @@
           <td>{{ r.location }}</td>
           <td>{{ r.item_code }}</td>
           <td>{{ r.lot_no }}</td>
-          <td class="right">{{ r.qty }}</td>
+          <td class="right"><b>{{ r.qty }}</b></td>
+          <td>{{ r.remark }}</td>
           <td>{{ r.created_at }}</td>
           <td>
-            <button class="btn danger" onclick="doRollback({{r.id}})">롤백</button>
+            {% if r.rolled_back == 0 %}
+            <button class="btn" onclick="fetch('/api/history/rollback/{{r.id}}',{method:'POST'}).then(()=>location.reload())">롤백</button>
+            {% else %}
+            <span class="muted">완료</span>
+            {% endif %}
           </td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
-  <div id="msg" class="muted"></div>
 </div>
-
-<script>
-async function doRollback(id){
-  if(!confirm('정말 롤백할까요?')) return;
-  const res = await fetch('/api/history/rollback/' + id, {method:'POST'});
-  const d = await res.json();
-  document.getElementById('msg').innerText = res.ok ? '✅ 롤백 완료' : ('❌ ' + (d.detail || JSON.stringify(d)));
-  if(res.ok) location.reload();
-}
-</script>
 {% endblock %}
