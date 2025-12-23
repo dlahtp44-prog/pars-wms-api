@@ -1,8 +1,7 @@
-# app/routers/inbound_manual.py
-from fastapi import APIRouter, Query
-from app.db import get_conn, log_history
+from fastapi import APIRouter
+from app.db import add_inventory
 
-router = APIRouter(
+router = APIRouter(prefix="/api/inbound", tags=["입고"])
     prefix="/api/inbound",
     tags=["Inbound Manual"]
 )
@@ -24,7 +23,22 @@ def inbound_manual(
 
     conn = get_conn()
     cur = conn.cursor()
-
+@router.post("/manual")
+def inbound_manual(
+    warehouse: str,
+    location: str,
+    brand: str = "",
+    item_code: str = "",
+    item_name: str = "",
+    lot_no: str = "",
+    spec: str = "",
+    qty: float = 0
+):
+    add_inventory(
+        warehouse, location, brand,
+        item_code, item_name, lot_no, spec, qty
+    )
+    return {"result": "OK", "msg": "입고 완료"}
     # 1️⃣ inventory UPSERT (재고 증가)
     cur.execute("""
         INSERT INTO inventory
