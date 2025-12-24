@@ -27,10 +27,9 @@ def init_db():
     conn.commit()
     conn.close()
 
-# --- 관리자 및 대시보드 ---
+# --- 필수 누락 함수 추가 ---
 def admin_password_ok(pw: str) -> bool:
-    """로그에서 실패했던 관리자 비번 확인 함수"""
-    return pw == "admin123"
+    return pw == "admin123"  # 원하는 관리자 비밀번호로 수정 가능
 
 def dashboard_summary():
     conn = get_conn()
@@ -41,21 +40,7 @@ def dashboard_summary():
     conn.close()
     return {"inbound_today": inb, "outbound_today": abs(outb), "total_stock": total}
 
-# --- 조회 및 QR 로직 ---
-def get_inventory(q=None):
-    conn = get_conn()
-    cur = conn.cursor()
-    sql = "SELECT * FROM inventory WHERE qty != 0"
-    params = []
-    if q:
-        sql += " AND (item_code LIKE ? OR item_name LIKE ? OR location LIKE ?)"
-        kw = f"%{q}%"
-        params = [kw, kw, kw]
-    cur.execute(sql, params)
-    rows = [dict(r) for r in cur.fetchall()]
-    conn.close()
-    return rows
-
+# --- QR 및 물류 로직 ---
 def get_location_items(location: str):
     conn = get_conn()
     cur = conn.cursor()
@@ -64,57 +49,21 @@ def get_location_items(location: str):
     conn.close()
     return rows
 
-def get_history(limit=500):
+def move_inventory(warehouse, from_loc, to_loc, item_code, lot_no, qty, remark="이동"):
     conn = get_conn()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM history ORDER BY created_at DESC LIMIT ?", (limit,))
-    rows = [dict(r) for r in cur.fetchall()]
-    conn.close()
-    return rows
-
-# --- 물류 처리 (입고/출고/이동) ---
-def add_inventory(warehouse, location, brand, item_code, item_name, lot_no, spec, qty, remark=""):
-    conn = get_conn()
-    cur = conn.cursor()
-    cur.execute("""
-    INSERT INTO inventory VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    ON CONFLICT(warehouse, location, item_code, lot_no)
-    DO UPDATE SET qty = qty + excluded.qty, item_name = excluded.item_name
-    """, (warehouse, location, brand, item_code, item_name, lot_no, spec, qty))
-    cur.execute("INSERT INTO history (tx_type, warehouse, location, item_code, lot_no, qty, remark, created_at) VALUES ('IN', ?, ?, ?, ?, ?, ?, ?)",
-                (warehouse, location, item_code, lot_no, qty, remark, datetime.now().isoformat()))
-    conn.commit()
-    conn.close()
-
-def subtract_inventory(warehouse, location, item_code, lot_no, qty, remark=""):
-    conn = get_conn()
-    cur = conn.cursor()
-    cur.execute("UPDATE inventory SET qty = qty - ? WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?", (qty, warehouse, location, item_code, lot_no))
-    cur.execute("INSERT INTO history (tx_type, warehouse, location, item_code, lot_no, qty, remark, created_at) VALUES ('OUT', ?, ?, ?, ?, ?, ?, ?)",
-                (warehouse, location, item_code, lot_no, -qty, remark, datetime.now().isoformat()))
-    conn.commit()
-    conn.close()
-
-def move_inventory(warehouse, from_loc, to_loc, item_code, lot_no, qty, remark="QR이동"):
-    conn = get_conn()
-    cur = conn.cursor()
-    cur.execute("UPDATE inventory SET qty = qty - ? WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?", (qty, warehouse, from_loc, item_code, lot_no))
+    # 출발지 차감
+    cur.execute("UPDATE inventory SET qty = qty - ? WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?", 
+                (qty, warehouse, from_loc, item_code, lot_no))
+    # 도착지 가산
     cur.execute("""
     INSERT INTO inventory (warehouse, location, item_code, lot_no, qty) VALUES (?, ?, ?, ?, ?)
     ON CONFLICT(warehouse, location, item_code, lot_no) DO UPDATE SET qty = qty + excluded.qty
     """, (warehouse, to_loc, item_code, lot_no, qty))
-    cur.execute("INSERT INTO history (tx_type, warehouse, location, from_location, to_location, item_code, lot_no, qty, remark, created_at) VALUES ('MOVE', ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (warehouse, from_loc, from_loc, to_loc, item_code, lot_no, qty, remark, datetime.now().isoformat()))
-    conn.commit()
-    conn.close()
-
-def rollback(tx_id: int):
-    conn = get_conn()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM history WHERE id=?", (tx_id,))
-    h = cur.fetchone()
-    if h:
-        # 역연산 로직 수행 (생략 - 필요 시 추가 가능)
-        cur.execute("DELETE FROM history WHERE id=?", (tx_id,))
+    # 상세 이력 기록
+    cur.execute("""
+    INSERT INTO history (tx_type, warehouse, location, from_location, to_location, item_code, lot_no, qty, remark, created_at)
+    VALUES ('MOVE', ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (warehouse, from_loc, from_loc, to_loc, item_code, lot_no, qty, remark, datetime.now().isoformat()))
     conn.commit()
     conn.close()
