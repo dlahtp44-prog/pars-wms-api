@@ -84,14 +84,18 @@ def subtract_inventory(warehouse, location, item_code, lot_no, qty, remark=""):
     conn.commit()
     conn.close()
 
-def move_inventory(warehouse, from_loc, to_loc, item_code, lot_no, qty, remark="QR이동"):
+def move_inventory(warehouse, from_loc, to_loc, item_code, lot_no, qty, remark="이동"):
     conn = get_conn()
     cur = conn.cursor()
-    cur.execute("UPDATE inventory SET qty = qty - ? WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?", (qty, warehouse, from_loc, item_code, lot_no))
+    # 출발지 차감
+    cur.execute("UPDATE inventory SET qty = qty - ? WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?", 
+                (qty, warehouse, from_loc, item_code, lot_no))
+    # 목적지 가산
     cur.execute("""
     INSERT INTO inventory (warehouse, location, item_code, lot_no, qty) VALUES (?, ?, ?, ?, ?)
     ON CONFLICT(warehouse, location, item_code, lot_no) DO UPDATE SET qty = qty + excluded.qty
     """, (warehouse, to_loc, item_code, lot_no, qty))
+    # 이동 기록 (from/to 기록 필수)
     cur.execute("""
     INSERT INTO history (tx_type, warehouse, location, from_location, to_location, item_code, lot_no, qty, remark, created_at)
     VALUES ('MOVE', ?, ?, ?, ?, ?, ?, ?, ?, ?)
