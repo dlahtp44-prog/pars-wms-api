@@ -1,8 +1,6 @@
 from fastapi import Request, HTTPException
 
-def is_admin(request: Request) -> bool:
-    return bool(request.session.get("is_admin"))
-
 def require_admin(request: Request):
-    if not is_admin(request):
-        raise HTTPException(status_code=401, detail="admin required")
+    if request.session.get("is_admin") is True:
+        return True
+    raise HTTPException(status_code=401, detail="관리자 로그인 필요")
