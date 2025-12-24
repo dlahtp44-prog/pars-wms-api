@@ -1,13 +1,51 @@
-<style>
-@page { size:50mm 30mm; margin:0 }
-body { font-size:9px }
-</style>
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>제품 라벨(HEQ-3108)</title>
+  <style>
+    @page { size: 50mm 30mm; margin: 0; }
+    body { margin:0; font-family: Arial, sans-serif; }
+    .wrap { width:50mm; height:30mm; padding:2mm; box-sizing:border-box; display:flex; gap:2mm; }
+    .qr { width:18mm; height:18mm; }
+    .txt { flex:1; font-size:8.5px; line-height:1.2; }
+    .b { font-weight:800; font-size:9.5px; }
+    button { margin:10px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div id="qrcode" class="qr"></div>
+    <div class="txt">
+      <div class="b">{{ item_code }}</div>
+      <div>LOT: {{ lot_no }}</div>
+      <div>{{ item_name }}</div>
+      <div>{{ spec }}</div>
+      <div>{{ brand }}</div>
+    </div>
+  </div>
 
-<div>
-  <b>{{ item_code }}</b><br>
-  {{ item_name }}<br>
-  LOT: {{ lot_no }}<br>
-  {{ spec }}<br>
-  {{ brand }}
-</div>
-<img src="{{ qr_url }}">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script>
+    // 제품 QR 내용(최소 필드)
+    const qs = new URLSearchParams({
+      item_code: "{{ item_code }}",
+      lot_no: "{{ lot_no }}",
+      item_name: "{{ item_name }}",
+      spec: "{{ spec }}",
+      brand: "{{ brand }}"
+    }).toString();
+
+    new QRCode(document.getElementById("qrcode"), {
+      text: qs,
+      width: 120,
+      height: 120,
+      correctLevel: QRCode.CorrectLevel.M
+    });
+
+    // 자동 인쇄 원하면 주석 해제
+    // setTimeout(()=>window.print(), 300);
+  </script>
+</body>
+</html>
