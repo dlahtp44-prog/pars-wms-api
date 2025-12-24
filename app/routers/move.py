@@ -1,20 +1,22 @@
-from fastapi import APIRouter, Form
-from fastapi.responses import RedirectResponse, JSONResponse
-from app.db import move_inventory
+from fastapi import APIRouter, Form, HTTPException
+from fastapi.responses import RedirectResponse
+from app.db import move_inventory, log_history
 
 router = APIRouter(prefix="/api/move", tags=["이동"])
 
 @router.post("/manual")
 def move_manual(
     warehouse: str = Form("MAIN"),
-    item_code: str = Form(...),
-    lot_no: str = Form(...),
     from_location: str = Form(...),
     to_location: str = Form(...),
-    qty: float = Form(0)
+    item_code: str = Form(...),
+    lot_no: str = Form(...),
+    qty: float = Form(...),
 ):
     try:
-        move_inventory(warehouse, item_code, lot_no, from_location, to_location, float(qty), remark="수동 이동", block_negative=True)
-        return RedirectResponse(url="/inventory-page", status_code=303)
-    except Exception as e:
-        return JSONResponse({"ok": False, "detail": str(e)}, status_code=400)
+        move_inventory(warehouse, from_location, to_location, item_code, lot_no, qty, block_negative=True)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+    log_history("MOVE", warehouse, f"{from_location}→{to_location}", item_code, lot_no, qty, "수동 이동")
+    return RedirectResponse(url="/inventory-page", status_code=303)
