@@ -1,25 +1,26 @@
-<table class="table table-hover align-middle">
-    <thead class="table-light">
-        <tr>
-            <th>창고</th>
-            <th>로케이션</th>
-            <th>품번</th>
-            <th>품명</th>
-            <th>LOT</th>
-            <th class="text-primary">규격</th> <th>수량</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for row in rows %}
-        <tr>
-            <td>{{ row.warehouse }}</td>
-            <td><span class="badge bg-secondary">{{ row.location }}</span></td>
-            <td>{{ row.item_code }}</td>
-            <td>{{ row.item_name }}</td>
-            <td>{{ row.lot_no }}</td>
-            <td class="text-muted">{{ row.spec or '' }}</td>
-            <td class="fw-bold">{{ "{:,.0f}".format(row.qty) }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>창고</th>
+                <th>로케이션</th>
+                <th>품번</th>
+                <th>품명</th>
+                <th>LOT</th>
+                <th class="text-info">규격</th> <th>수량</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+            <tr>
+                <td>{{ row.warehouse }}</td>
+                <td><span class="badge bg-secondary">{{ row.location }}</span></td>
+                <td>{{ row.item_code }}</td>
+                <td>{{ row.item_name }}</td>
+                <td>{{ row.lot_no }}</td>
+                <td>{{ row.spec or '-' }}</td> <td class="fw-bold text-primary">{{ "{:,.3f}".format(row.qty)|replace(".000", "") }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
