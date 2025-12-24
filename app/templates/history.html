@@ -1,36 +1,49 @@
-{% extends "base.html" %}
-{% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h4>📜 작업 이력 조회</h4>
-    <a href="/api/export/history" class="btn btn-success">📊 이력 엑셀 다운로드</a>
-</div>
-<h2 class="title">🧾 작업이력</h2>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>작업 이력</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>body { background-color: #f8f9fa; } .container { margin-top: 30px; }</style>
+</head>
+<body>
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4 p-3 bg-white shadow-sm rounded">
+            <h4 class="m-0 text-primary">📜 최근 작업 이력</h4>
+            <a href="/api/export/history" class="btn btn-success fw-bold">📊 작업이력 엑셀 다운로드</a>
+        </div>
 
-<div class="hint">※ 입고/출고만 롤백 자동 지원(이동은 출발/도착 정보가 있어야 자동 가능)</div>
-
-<div class="tablewrap">
-<table class="table">
-  <thead>
-    <tr>
-      <th>ID</th><th>시간</th><th>유형</th><th>창고</th><th>로케이션</th><th>품번</th><th>LOT</th><th class="right">수량</th><th>비고</th><th>롤백</th>
-    </tr>
-  </thead>
-  <tbody id="histBody"></tbody>
-</table>
-</div>
-
-<script src="/static/history.js"></script>
-
-<style>
-  .title{margin:0 0 10px 0;font-size:20px}
-  .hint{color:#6b7280;font-size:12px;margin-bottom:10px}
-  .tablewrap{overflow:auto;border:1px solid #e5e7eb;border-radius:12px;background:#fff}
-  .table{width:100%;border-collapse:collapse;font-size:13px;min-width:1100px}
-  .table th,.table td{padding:10px;border-bottom:1px solid #f1f5f9;white-space:nowrap}
-  .table th{background:#111827;color:#fff;position:sticky;top:0}
-  .right{text-align:right}
-  .btn{padding:6px 10px;border-radius:8px;border:0;cursor:pointer}
-  .danger{background:#ef4444;color:#fff}
-</style>
-
-{% endblock %}
+        <div class="table-responsive bg-white shadow-sm p-3 rounded">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>구분</th><th>위치/경로</th><th>품번</th><th>LOT</th><th>수량</th><th>시간</th><th>비고</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for h in history %}
+                    <tr>
+                        <td>
+                            <span class="badge {{ 'bg-primary' if h.tx_type=='IN' else 'bg-danger' if h.tx_type=='OUT' else 'bg-secondary' }}">
+                                {{ '입고' if h.tx_type=='IN' else '출고' if h.tx_type=='OUT' else '이동' }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if h.tx_type == 'MOVE' %}
+                                <small class="text-muted">{{ h.from_location }}</small> → <strong>{{ h.to_location }}</strong>
+                            {% else %}
+                                {{ h.location }}
+                            {% endif %}
+                        </td>
+                        <td><strong>{{ h.item_code }}</strong></td>
+                        <td>{{ h.lot_no }}</td>
+                        <td>{{ h.qty }}</td>
+                        <td class="small">{{ h.created_at[:16].replace('T', ' ') }}</td>
+                        <td><small>{{ h.remark or '' }}</small></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
