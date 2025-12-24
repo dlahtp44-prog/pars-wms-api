@@ -1,14 +1,32 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta name="viewport" content="width=device-width">
-  <script src="https://unpkg.com/html5-qrcode"></script>
-  <script src="/static/qr_camera.js"></script>
-</head>
-<body>
-<h2>📷 QR 스캔</h2>
-<div id="reader" style="width:100%;max-width:360px"></div>
-<button onclick="startScan()">카메라 시작</button>
-<div id="result"></div>
-</body>
-</html>
+{% extends "worker_base.html" %}
+{% block worker_content %}
+
+<div class="card">
+  <div class="h2">📷 QR 스캔</div>
+
+  <div class="form">
+    <input id="manual_qr" placeholder="QR 내용 직접 입력 (item_code=...&lot_no=...)" />
+    <button class="btn" onclick="manualSearch()">직접 처리</button>
+  </div>
+
+  <div class="hr"></div>
+
+  <div id="reader" style="width:100%; max-width:360px;"></div>
+
+  <div class="row">
+    <select id="action">
+      <option value="IN">입고</option>
+      <option value="OUT">출고</option>
+      <option value="MOVE">이동</option>
+    </select>
+    <button class="btn primary" onclick="startScan()">카메라 시작</button>
+    <button class="btn" onclick="stopScan()">중지</button>
+  </div>
+
+  <div id="msg" class="muted"></div>
+</div>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script src="/static/qr_camera.js"></script>
+
+{% endblock %}
