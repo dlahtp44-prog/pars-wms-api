@@ -3,38 +3,37 @@ from fastapi.responses import StreamingResponse
 import csv, io
 from app.db import get_inventory, get_history
 
-router = APIRouter(prefix="/api/export", tags=["export"])
+router = APIRouter(prefix="/api/export")
 
-@router.get("/inventory.csv")
-def export_inventory_csv():
-    rows = get_inventory(limit=200000)
-
-    f = io.StringIO()
-    w = csv.writer(f)
-    w.writerow(["warehouse","location","brand","item_code","item_name","lot_no","spec","qty","updated_at"])
+def csv_response(filename: str, headers: list, rows: list):
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(headers)
     for r in rows:
-        w.writerow([r["warehouse"], r["location"], r["brand"], r["item_code"], r["item_name"], r["lot_no"], r["spec"], r["qty"], r["updated_at"]])
-
-    f.seek(0)
+        writer.writerow([r.get(h, "") for h in headers])
+    buf.seek(0)
     return StreamingResponse(
-        iter([f.getvalue()]),
-        media_type="text/csv; charset=utf-8",
-        headers={"Content-Disposition": "attachment; filename=inventory.csv"}
+        buf,
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": f"attachment; filename={filename}"
+        }
     )
 
-@router.get("/history.csv")
-def export_history_csv():
-    rows = get_history(limit=200000)
+@router.get("/inventory")
+def export_inventory():
+    rows = get_inventory()
+    headers = [
+        "warehouse","location","brand",
+        "item_code","item_name","lot_no","spec","qty"
+    ]
+    return csv_response("inventory.csv", headers, rows)
 
-    f = io.StringIO()
-    w = csv.writer(f)
-    w.writerow(["id","tx_type","warehouse","location","item_code","item_name","lot_no","spec","qty","remark","meta","created_at"])
-    for r in rows:
-        w.writerow([r["id"], r["tx_type"], r["warehouse"], r["location"], r["item_code"], r["item_name"], r["lot_no"], r["spec"], r["qty"], r["remark"], r["meta"], r["created_at"]])
-
-    f.seek(0)
-    return StreamingResponse(
-        iter([f.getvalue()]),
-        media_type="text/csv; charset=utf-8",
-        headers={"Content-Disposition": "attachment; filename=history.csv"}
-    )
+@router.get("/history")
+def export_history():
+    rows = get_history()
+    headers = [
+        "id","tx_type","warehouse","location",
+        "item_code","lot_no","qty","remark","created_at"
+    ]
+    return csv_response("history.csv", headers, rows)
