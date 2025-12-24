@@ -1,42 +1,9 @@
-<!doctype html>
-<html lang="ko">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>HEQ-3108 제품 라벨</title>
-<style>
-  @page { size: 70mm 40mm; margin: 0; }  /* 필요 시 50x30으로 바꿔도 됨 */
-  body { margin:0; }
-  .wrap { width:70mm; height:40mm; padding:2mm; box-sizing:border-box; font-family: Arial; }
-  .row { display:flex; gap:2mm; }
-  .qr { width:22mm; height:22mm; }
-  .txt { flex:1; font-size:10px; line-height:1.2; }
-  .code { font-weight:800; font-size:12px; }
-  .lot { font-weight:700; }
-</style>
-</head>
-<body>
-<div class="wrap">
-  <div class="row">
-    <div id="qrcode" class="qr"></div>
-    <div class="txt">
-      <div class="code">{{ item_code }}</div>
-      <div class="lot">LOT: {{ lot_no }}</div>
-      <div>{{ item_name }}</div>
-      <div>{{ spec }}</div>
-      <div>{{ brand }}</div>
-    </div>
-  </div>
+<!DOCTYPE html>
+<html>
+<body onload="window.print()">
+<div style="width:38mm;height:25mm;font-size:8px">
+  <div><b>{{ qr }}</b></div>
+  <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data={{ qr }}">
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-<script>
-  new QRCode(document.getElementById("qrcode"), {
-    text: "{{ qr_text }}",
-    width: 120,
-    height: 120
-  });
-  window.onload = () => window.print();
-</script>
 </body>
 </html>
