@@ -1,34 +1,18 @@
 {% extends "worker_base.html" %}
 {% block worker_content %}
-
 <div class="card">
-  <div class="h2">📷 QR 스캔</div>
+  <div class="h2">📷 QR 스캔 (로케이션 먼저 → 제품 선택 → 목적지)</div>
 
-  <div class="form">
-    <input id="manual_qr" placeholder="직접 입력: item_code=...&lot_no=... 또는 location=D01-01" />
-    <button class="btn" onclick="manualSearch()">직접 처리</button>
-  </div>
-
-  <div class="hr"></div>
-
-  <div id="reader" class="reader"></div>
-
+  <div id="reader" style="width:100%; max-width:360px;"></div>
   <div class="row">
-    <select id="action">
-      <option value="IN">입고</option>
-      <option value="OUT">출고</option>
-      <option value="MOVE">이동</option>
-      <option value="LOC">로케이션 보기</option>
-    </select>
-
-    <button class="btn primary" onclick="startScan()">후면 카메라 시작</button>
+    <button class="btn primary" onclick="startScan()">카메라 시작</button>
     <button class="btn" onclick="stopScan()">중지</button>
   </div>
 
   <div id="msg" class="muted"></div>
+  <div id="result" style="margin-top:12px;"></div>
 </div>
 
 <script src="https://unpkg.com/html5-qrcode"></script>
 <script src="/static/qr_camera.js"></script>
-
 {% endblock %}
