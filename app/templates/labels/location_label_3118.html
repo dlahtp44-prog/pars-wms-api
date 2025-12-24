@@ -1,7 +1,44 @@
-<style>
-@page { size:70mm 40mm; margin:0 }
-body { font-size:14px;text-align:center }
-</style>
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>로케이션 라벨(HEQ-3118)</title>
+  <style>
+    @page { size: 70mm 40mm; margin: 0; }
+    body { margin:0; font-family: Arial, sans-serif; }
+    .wrap { width:70mm; height:40mm; padding:3mm; box-sizing:border-box; display:flex; align-items:center; gap:4mm; }
+    .qr { width:28mm; height:28mm; }
+    .loc { font-size:18px; font-weight:900; }
+    .sub { font-size:10px; color:#555; margin-top:4px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div id="qrcode" class="qr"></div>
+    <div>
+      <div class="loc">{{ location }}</div>
+      <div class="sub">warehouse: {{ warehouse }}</div>
+      <div class="sub">스캔하면 해당 위치 재고 표시</div>
+    </div>
+  </div>
 
-<h2>{{ location }}</h2>
-<img src="{{ qr_url }}">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script>
+    // 로케이션 QR은 "location=...&warehouse=..."
+    const qs = new URLSearchParams({
+      warehouse: "{{ warehouse }}",
+      location: "{{ location }}"
+    }).toString();
+
+    new QRCode(document.getElementById("qrcode"), {
+      text: qs,
+      width: 180,
+      height: 180,
+      correctLevel: QRCode.CorrectLevel.M
+    });
+
+    // setTimeout(()=>window.print(), 300);
+  </script>
+</body>
+</html>
