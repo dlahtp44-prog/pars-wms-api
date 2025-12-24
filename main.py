@@ -1,126 +1,90 @@
-import sqlite3
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from starlette.middleware.sessions import SessionMiddleware
+import os
+import importlib
 
-def get_db_connection():
-    conn = sqlite3.connect('warehouse.db')
-    conn.row_factory = sqlite3.Row
-    return conn
+# db.py와 admin.py 임포트
+from app.db import init_db
+from app.routers import admin
 
-def init_db():
-    conn = get_db_connection()
-    # 1. 메인 재고 테이블 (6개 필수 항목 포함)
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS inventory (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            warehouse TEXT, location TEXT, item_code TEXT,
-            item_name TEXT, lot_no TEXT, spec TEXT,
-            qty REAL, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
-    # 2. 통합 작업 로그 (입고, 출고, 이동, 롤백 모두 기록)
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS audit_logs (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            tx_type TEXT, warehouse TEXT, location TEXT,
-            item_code TEXT, item_name TEXT, lot_no TEXT,
-            spec TEXT, qty REAL, from_location TEXT, to_location TEXT, 
-            remark TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
-    conn.commit()
-    conn.close()
+app = FastAPI(title="PARS WMS", version="1.0.0")
 
-# --- [페이지/API 필수 함수들 복구] ---
+# 서버 시작 시 DB 초기화 (6개 항목 및 롤백 테이블 생성)
+@app.on_event("startup")
+def startup():
+    init_db()
+    print("✅ 데이터베이스 및 테이블 초기화 완료")
 
-def get_inventory():
-    conn = get_db_connection()
-    items = conn.execute("SELECT * FROM inventory WHERE qty > 0 ORDER BY updated_at DESC").fetchall()
-    conn.close()
-    return [dict(i) for i in items]
+# 정적 파일 마운트 (CSS, JS, Images)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+STATIC_DIR = os.path.join(BASE_DIR, "app", "static")
+if os.path.isdir(STATIC_DIR):
+    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+    print("✅ static 마운트 완료:", STATIC_DIR)
 
-def get_history():
-    conn = get_db_connection()
-    logs = conn.execute("SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT 100").fetchall()
-    conn.close()
-    return [dict(l) for l in logs]
+# CORS 설정
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-def dashboard_summary():
-    conn = get_db_connection()
-    total_qty = conn.execute("SELECT SUM(qty) FROM inventory").fetchone()[0] or 0
-    total_items = conn.execute("SELECT COUNT(DISTINCT item_code) FROM inventory").fetchone()[0] or 0
-    today_in = conn.execute("SELECT SUM(qty) FROM audit_logs WHERE tx_type='IN' AND date(created_at)=date('now')").fetchone()[0] or 0
-    today_out = conn.execute("SELECT SUM(qty) FROM audit_logs WHERE tx_type='OUT' AND date(created_at)=date('now')").fetchone()[0] or 0
-    conn.close()
-    return {"total_qty": total_qty, "total_items": total_items, "today_in": today_in, "today_out": today_out}
+# 세션 설정 (itsdangerous 라이브러리 필요)
+SECRET_KEY = os.getenv("SECRET_KEY", "pars-wms-secret-key-1224")
+app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
 
-def get_location_items(location):
-    conn = get_db_connection()
-    items = conn.execute("SELECT * FROM inventory WHERE location=? AND qty > 0", (location,)).fetchall()
-    conn.close()
-    return [dict(i) for i in items]
+# 루터 자동 등록 함수 (오류 추적 기능 강화)
+def safe_include(path: str):
+    try:
+        # 동적 임포트
+        module = importlib.import_module(path)
+        if hasattr(module, "router"):
+            app.include_router(module.router)
+            print(f"✅ {path} 등록 성공")
+        else:
+            print(f"⚠️ {path} 실패: 'router' 객체를 찾을 수 없음")
+    except Exception as e:
+        print(f"❌ {path} 에러 발생: {e}")
 
-# --- [입/출고/이동 로직] ---
+# --- [1. Pages 등록] ---
+print("\n--- 페이지 로딩 중 ---")
+safe_include("app.pages.index_page")
+safe_include("app.pages.worker_page")
+safe_include("app.pages.inbound_page")
+safe_include("app.pages.outbound_page")
+safe_include("app.pages.inventory_page")
+safe_include("app.pages.history_page")
+safe_include("app.pages.qr_page")
+safe_include("app.pages.dashboard_page")
+safe_include("app.pages.admin_page")
+safe_include("app.pages.location_view_page")
+safe_include("app.pages.label_page")
+safe_include("app.pages.upload_page")
 
-def add_inventory(warehouse, location, item_code, item_name, lot_no, spec, qty, remark):
-    conn = get_db_connection()
-    # 기존 재고 확인
-    curr = conn.execute("SELECT id, qty FROM inventory WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?",
-                       (warehouse, location, item_code, lot_no)).fetchone()
-    if curr:
-        conn.execute("UPDATE inventory SET qty = qty + ?, updated_at=DATETIME('now') WHERE id = ?", (qty, curr['id']))
-    else:
-        conn.execute("INSERT INTO inventory (warehouse, location, item_code, item_name, lot_no, spec, qty) VALUES (?,?,?,?,?,?,?)",
-                    (warehouse, location, item_code, item_name, lot_no, spec, qty))
-    
-    # 로그 기록
-    conn.execute("INSERT INTO audit_logs (tx_type, warehouse, location, item_code, item_name, lot_no, spec, qty, remark) VALUES (?,?,?,?,?,?,?,?,?)",
-                ("IN", warehouse, location, item_code, item_name, lot_no, spec, qty, remark))
-    conn.commit()
-    conn.close()
+# --- [2. APIs 등록] ---
+print("\n--- API 로딩 중 ---")
+safe_include("app.routers.inbound")
+safe_include("app.routers.outbound")
+safe_include("app.routers.move")
+safe_include("app.routers.inventory")
+safe_include("app.routers.history")
+safe_include("app.routers.qr_api")
+safe_include("app.routers.export_excel")
 
-def subtract_inventory(warehouse, location, item_code, lot_no, qty, remark):
-    conn = get_db_connection()
-    item = conn.execute("SELECT * FROM inventory WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?",
-                       (warehouse, location, item_code, lot_no)).fetchone()
-    if not item or item['qty'] < qty:
-        conn.close()
-        return False
-    
-    conn.execute("UPDATE inventory SET qty = qty - ?, updated_at=DATETIME('now') WHERE id = ?", (qty, item['id']))
-    conn.execute("INSERT INTO audit_logs (tx_type, warehouse, location, item_code, item_name, lot_no, spec, qty, remark) VALUES (?,?,?,?,?,?,?,?,?)",
-                ("OUT", warehouse, location, item_code, item['item_name'], lot_no, item['spec'], qty, remark))
-    conn.commit()
-    conn.close()
-    return True
+# 관리자 전용 루터 별도 등록
+try:
+    app.include_router(admin.router)
+    print("✅ app.routers.admin 등록 성공")
+except Exception as e:
+    print(f"❌ app.routers.admin 실패: {e}")
 
-def move_inventory(item_code, lot_no, from_loc, to_loc, qty, remark):
-    conn = get_db_connection()
-    # 원본 창고/규격 정보 가져오기
-    item = conn.execute("SELECT * FROM inventory WHERE location=? AND item_code=? AND lot_no=?", 
-                       (from_loc, item_code, lot_no)).fetchone()
-    if not item or item['qty'] < qty:
-        conn.close() return False
-    
-    # 보낼 곳에 추가 (add_inventory 로직 활용)
-    add_inventory(item['warehouse'], to_loc, item_code, item['item_name'], lot_no, item['spec'], qty, f"이동 출처: {from_loc}")
-    # 원본에서 차감
-    conn.execute("UPDATE inventory SET qty = qty - ? WHERE id = ?", (qty, item['id']))
-    # 이동 로그 기록
-    conn.execute("INSERT INTO audit_logs (tx_type, warehouse, from_location, to_location, item_code, item_name, lot_no, spec, qty, remark) VALUES (?,?,?,?,?,?,?,?,?,?)",
-                ("MOVE", item['warehouse'], from_loc, to_loc, item_code, item['item_name'], lot_no, item['spec'], qty, remark))
-    conn.commit()
-    conn.close()
-    return True
+@app.get("/ping")
+def ping():
+    return {"status": "WMS Server Running", "version": "1.0.0"}
 
-# --- [관리자 롤백] ---
-def process_rollback(log_id):
-    conn = get_db_connection()
-    log = conn.execute("SELECT * FROM audit_logs WHERE id=?", (log_id,)).fetchone()
-    if not log: return False
-    
-    adj_qty = -log['qty'] if log['tx_type'] == 'IN' else log['qty']
-    conn.execute("UPDATE inventory SET qty = qty + ? WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?",
-                (adj_qty, log['warehouse'], log['location'], log['item_code'], log['lot_no']))
-    conn.execute("DELETE FROM audit_logs WHERE id=?", (log_id,))
-    conn.commit()
-    conn.close()
-    return True
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=8080, reload=True)
