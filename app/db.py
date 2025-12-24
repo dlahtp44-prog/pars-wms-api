@@ -27,7 +27,7 @@ def init_db():
     conn.commit()
     conn.close()
 
-# --- 보안 및 통계 ---
+# --- 관리자 및 보안 ---
 def admin_password_ok(password: str):
     return password == "admin1234"
 
@@ -41,16 +41,8 @@ def dashboard_summary():
     conn.close()
     return {"inbound_today": inb, "outbound_today": abs(outb), "total_stock": total, "negative_stock": neg}
 
-def get_recent_inventory_summary():
-    """대시보드 하단 '최근 재고요약'에 표시될 데이터"""
-    conn = get_conn()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM inventory WHERE qty > 0 ORDER BY rowid DESC LIMIT 10")
-    rows = [dict(r) for r in cur.fetchall()]
-    conn.close()
-    return rows
+# --- 핵심 재고 로직 (라우터 호환용 함수명 유지) ---
 
-# --- 핵심 재고 로직 ---
 def log_history(tx_type, warehouse, location, item_code, lot_no, qty, remark, to_location=None, from_location=None):
     conn = get_conn()
     cur = conn.cursor()
@@ -60,6 +52,28 @@ def log_history(tx_type, warehouse, location, item_code, lot_no, qty, remark, to
     """, (tx_type, warehouse, location, to_location, from_location, item_code, lot_no, qty, remark, datetime.now().isoformat()))
     conn.commit()
     conn.close()
+
+def add_inventory(warehouse, location, brand, item_code, item_name, lot_no, spec, qty, remark=""):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+    INSERT INTO inventory (warehouse, location, brand, item_code, item_name, lot_no, spec, qty) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(warehouse, location, item_code, lot_no)
+    DO UPDATE SET qty = qty + excluded.qty, item_name = excluded.item_name
+    """, (warehouse, location, brand, item_code, item_name, lot_no, spec, qty))
+    conn.commit()
+    conn.close()
+    log_history('IN', warehouse, location, item_code, lot_no, qty, remark)
+
+def subtract_inventory(warehouse, location, item_code, lot_no, qty, remark=""):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("UPDATE inventory SET qty = qty - ? WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?", 
+                (qty, warehouse, location, item_code, lot_no))
+    conn.commit()
+    conn.close()
+    log_history('OUT', warehouse, location, item_code, lot_no, -qty, remark)
 
 def move_inventory(warehouse, from_loc, to_loc, item_code, lot_no, qty, remark="이동"):
     conn = get_conn()
@@ -73,10 +87,52 @@ def move_inventory(warehouse, from_loc, to_loc, item_code, lot_no, qty, remark="
     conn.close()
     log_history('MOVE', warehouse, from_loc, item_code, lot_no, qty, remark, to_location=to_loc, from_location=from_loc)
 
+# --- 조회 로직 (라우터 호환용) ---
+
+def get_inventory(q=None):
+    conn = get_conn()
+    cur = conn.cursor()
+    sql = "SELECT * FROM inventory WHERE qty != 0"
+    params = []
+    if q:
+        sql += " AND (item_code LIKE ? OR item_name LIKE ? OR location LIKE ?)"
+        kw = f"%{q}%"
+        params = [kw, kw, kw]
+    cur.execute(sql, params)
+    rows = [dict(r) for r in cur.fetchall()]
+    conn.close()
+    return rows
+
+def get_history(limit=500):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM history ORDER BY created_at DESC LIMIT ?", (limit,))
+    rows = [dict(r) for r in cur.fetchall()]
+    conn.close()
+    return rows
+
 def get_location_items(location: str):
     conn = get_conn()
     cur = conn.cursor()
     cur.execute("SELECT * FROM inventory WHERE location=? AND qty > 0", (location,))
+    rows = [dict(r) for r in cur.fetchall()]
+    conn.close()
+    return rows
+
+def get_recent_inventory_summary():
+    """대시보드 하단용"""
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM inventory WHERE qty > 0 ORDER BY rowid DESC LIMIT 10")
+    rows = [dict(r) for r in cur.fetchall()]
+    conn.close()
+    return rows
+
+def get_all_data(table: str):
+    """엑셀 다운로드용"""
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute(f"SELECT * FROM {table} ORDER BY rowid DESC")
     rows = [dict(r) for r in cur.fetchall()]
     conn.close()
     return rows
@@ -98,12 +154,3 @@ def rollback_inventory(tx_id: int):
     conn.commit()
     conn.close()
     return True
-
-# --- 엑셀용 데이터 추출 ---
-def get_all_data(table: str):
-    conn = get_conn()
-    cur = conn.cursor()
-    cur.execute(f"SELECT * FROM {table} ORDER BY rowid DESC")
-    rows = [dict(r) for r in cur.fetchall()]
-    conn.close()
-    return rows
