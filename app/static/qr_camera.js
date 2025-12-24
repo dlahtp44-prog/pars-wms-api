@@ -1,99 +1,110 @@
 let qrScanner = null;
 
+/* QR 파싱 */
 function parseQR(text){
-  // 1) URL 전체가 들어오는 경우 ? 뒤만 파싱
-  try{
-    if(text.includes("?")) text = text.split("?")[1];
-  }catch(e){}
+  // URL이든 querystring이든 모두 처리
+  if(text.startsWith("http")){
+    const u = new URL(text);
+    if(u.pathname.startsWith("/loc/")){
+      return { type:"LOC", location: u.pathname.split("/").pop() };
+    }
+    const p = {};
+    u.searchParams.forEach((v,k)=>p[k]=v);
+    return p;
+  }
 
   const params = new URLSearchParams(text);
   const o = {};
-  for(const [k,v] of params.entries()) o[k] = v;
+  for(const [k,v] of params.entries()) o[k]=v;
   return o;
 }
 
+/* QR 스캔 처리 */
 async function processQR(text){
-  const action = document.getElementById("action").value;
   const data = parseQR(text);
+  const msg = document.getElementById("msg");
 
-  // 로케이션 QR: location만 있으면 바로 해당 로케이션 페이지로
-  if(action === "LOC" || (data.location && !data.item_code)){
-    const wh = data.warehouse || "MAIN";
+  /* 1️⃣ 로케이션 QR */
+  if(data.type === "LOC" || data.location){
     const loc = data.location;
-    location.href = `/location?warehouse=${encodeURIComponent(wh)}&location=${encodeURIComponent(loc)}`;
+
+    // 아직 이동 시작 전 → 출발 로케이션
+    if(!sessionStorage.getItem("move_from")){
+      sessionStorage.setItem("move_from", loc);
+      msg.innerText = `📍 출발 위치 설정: ${loc}\n이동할 제품을 선택하세요`;
+      window.location.href = `/loc/${loc}`;
+      return;
+    }
+
+    // 이동 대상 제품이 선택된 상태 → 도착 로케이션
+    const moveItem = JSON.parse(sessionStorage.getItem("move_item") || "null");
+    if(moveItem){
+      await doMove(loc);
+      return;
+    }
+
+    msg.innerText = "❌ 이동할 제품이 선택되지 않았습니다";
     return;
   }
 
-  // 제품 QR + 작업
+  msg.innerText = "❌ 인식 불가 QR";
+}
+
+/* 실제 이동 처리 */
+async function doMove(toLocation){
+  const from = sessionStorage.getItem("move_from");
+  const item = JSON.parse(sessionStorage.getItem("move_item"));
+  const msg = document.getElementById("msg");
+
   const body = {
-    action,
-    warehouse: data.warehouse || "MAIN",
-    location: data.location || "",
-    from_location: data.from_location || "",
-    to_location: data.to_location || "",
-    brand: data.brand || "",
-    item_code: data.item_code || "",
-    item_name: data.item_name || "",
-    lot_no: data.lot_no || "",
-    spec: data.spec || "",
-    qty: Number(data.qty || 0)
+    warehouse: "MAIN",
+    from_location: from,
+    to_location: toLocation,
+    item_code: item.item_code,
+    lot_no: item.lot_no,
+    qty: item.qty
   };
 
-  const res = await fetch("/api/qr/process", {
+  const res = await fetch("/api/move", {
     method: "POST",
     headers: {"Content-Type":"application/json"},
     body: JSON.stringify(body)
   });
 
-  let d = {};
-  try{ d = await res.json(); }catch(e){}
+  const d = await res.json();
 
-  document.getElementById("msg").innerText =
-    res.ok ? "✅ 처리 완료 → 재고/이력에 반영됨" : "❌ " + (d.detail || JSON.stringify(d));
+  if(res.ok){
+    msg.innerText = `✅ 이동 완료\n${from} → ${toLocation}`;
+    sessionStorage.clear();
+  }else{
+    msg.innerText = "❌ 이동 실패: " + (d.detail || "");
+  }
 }
 
+/* 카메라 시작 (후면 우선 – 이미 확인됨) */
 async function startScan(){
   if(qrScanner) return;
-  document.getElementById("msg").innerText = "📷 카메라 준비 중…";
-
   qrScanner = new Html5Qrcode("reader");
 
   try{
-    // 후면 카메라 우선 선택
-    const cameras = await Html5Qrcode.getCameras();
-    if(!cameras || cameras.length === 0) throw new Error("카메라 없음");
-
-    let backCam = cameras.find(c => (c.label || "").toLowerCase().includes("back"));
-    if(!backCam) backCam = cameras[cameras.length - 1]; // 보통 마지막이 후면인 경우 많음
+    const cams = await Html5Qrcode.getCameras();
+    const back =
+      cams.find(c => c.label.toLowerCase().includes("back")) ||
+      cams[cams.length - 1];
 
     await qrScanner.start(
-      { deviceId: { exact: backCam.id } },
+      { deviceId: { exact: back.id } },
       { fps: 10, qrbox: 250 },
-      (decodedText) => {
-        stopScan();
-        processQR(decodedText);
-      },
-      () => {}
+      (text)=>{ stopScan(); processQR(text); },
+      ()=>{}
     );
-
-    document.getElementById("msg").innerText = "📷 스캔 중… (후면 우선)";
   }catch(e){
-    // deviceId exact 실패 시 facingMode fallback
-    try{
-      await qrScanner.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: 250 },
-        (decodedText) => {
-          stopScan();
-          processQR(decodedText);
-        },
-        () => {}
-      );
-      document.getElementById("msg").innerText = "📷 스캔 중… (environment)";
-    }catch(e2){
-      document.getElementById("msg").innerText = "❌ 카메라 접근 실패: 권한/HTTPS/브라우저 확인";
-      qrScanner = null;
-    }
+    await qrScanner.start(
+      { facingMode:"environment" },
+      { fps:10, qrbox:250 },
+      (text)=>{ stopScan(); processQR(text); },
+      ()=>{}
+    );
   }
 }
 
@@ -102,14 +113,5 @@ function stopScan(){
   qrScanner.stop().then(()=>{
     qrScanner.clear();
     qrScanner = null;
-  }).catch(()=>{ qrScanner = null; });
-}
-
-function manualSearch(){
-  const v = document.getElementById("manual_qr").value.trim();
-  if(!v){
-    alert("QR 내용을 입력하세요");
-    return;
-  }
-  processQR(v);
+  });
 }
