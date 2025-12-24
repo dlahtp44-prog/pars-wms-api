@@ -8,7 +8,7 @@ async function onScanSuccess(decodedText) {
         const items = await res.json();
         if (items.length > 0) {
             moveInfo.from = decodedText;
-            displayItemSelection(items); // 목록 표시 함수 (UI)
+            renderItemSelectionList(items); // 화면에 리스트 그리기
             moveStep = 2;
             document.getElementById('qr-status').innerText = "이동할 품목을 선택하세요.";
         } else {
@@ -16,21 +16,30 @@ async function onScanSuccess(decodedText) {
         }
     } else if (moveStep === 3) {
         // [3단계] 도착지 QR 스캔
-        const qty = document.getElementById('moveQty').value;
-        const res = await fetch('/api/move/manual', {
+        const qtyInput = document.getElementById('moveQty').value;
+        const res = await fetch('/api/qr/move', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
-                warehouse: "기본창고", from_location: moveInfo.from, to_location: decodedText,
-                item_code: moveInfo.item, lot_no: moveInfo.lot, qty: parseFloat(qty)
+                from_location: moveInfo.from,
+                to_location: decodedText,
+                item_code: moveInfo.item,
+                lot_no: moveInfo.lot,
+                qty: parseFloat(qtyInput)
             })
         });
-        if(res.ok) { alert("이동 완료!"); location.reload(); }
+        if(res.ok) {
+            alert("이동이 성공적으로 완료되었습니다.");
+            location.reload();
+        }
     }
 }
 
-function selectItem(code, lot, qty) {
-    moveInfo.item = code; moveInfo.lot = lot; moveInfo.maxQty = qty;
+// 품목 선택 시 호출되는 함수
+function selectItemForMove(code, lot, qty) {
+    moveInfo.item = code;
+    moveInfo.lot = lot;
+    moveInfo.maxQty = qty;
     moveStep = 3;
-    document.getElementById('qr-status').innerText = "마지막으로 도착지 QR을 스캔하세요.";
+    document.getElementById('qr-status').innerText = "도착지 QR을 스캔해 주세요.";
 }
