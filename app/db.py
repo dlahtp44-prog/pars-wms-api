@@ -27,6 +27,29 @@ def init_db():
     conn.commit()
     conn.close()
 
+# --- 공통 로그 함수 ---
+def log_history(tx_type, warehouse, location, item_code, lot_no, qty, remark, to_location=None, from_location=None):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+    INSERT INTO history (tx_type, warehouse, location, to_location, from_location, item_code, lot_no, qty, remark, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (tx_type, warehouse, location, to_location, from_location, item_code, lot_no, qty, remark, datetime.now().isoformat()))
+    conn.commit()
+    conn.close()
+
+# --- 대시보드 요약 ---
+def dashboard_summary():
+    conn = get_conn()
+    cur = conn.cursor()
+    total = cur.execute("SELECT IFNULL(SUM(qty),0) FROM inventory").fetchone()[0]
+    inb = cur.execute("SELECT IFNULL(SUM(qty),0) FROM history WHERE tx_type='IN' AND date(created_at)=date('now','localtime')").fetchone()[0]
+    outb = cur.execute("SELECT IFNULL(SUM(qty),0) FROM history WHERE tx_type='OUT' AND date(created_at)=date('now','localtime')").fetchone()[0]
+    neg = cur.execute("SELECT COUNT(*) FROM inventory WHERE qty < 0").fetchone()[0]
+    conn.close()
+    return {"inbound_today": inb, "outbound_today": abs(outb), "total_stock": total, "negative_stock": neg}
+
+# --- 조회 함수들 ---
 def get_inventory(q=None):
     conn = get_conn()
     cur = conn.cursor()
@@ -57,6 +80,7 @@ def get_location_items(location: str):
     conn.close()
     return rows
 
+# --- 처리 함수들 ---
 def add_inventory(warehouse, location, brand, item_code, item_name, lot_no, spec, qty, remark=""):
     conn = get_conn()
     cur = conn.cursor()
@@ -65,40 +89,45 @@ def add_inventory(warehouse, location, brand, item_code, item_name, lot_no, spec
     ON CONFLICT(warehouse, location, item_code, lot_no)
     DO UPDATE SET qty = qty + excluded.qty, item_name = excluded.item_name
     """, (warehouse, location, brand, item_code, item_name, lot_no, spec, qty))
-    cur.execute("""
-    INSERT INTO history (tx_type, warehouse, location, item_code, lot_no, qty, remark, created_at)
-    VALUES ('IN', ?, ?, ?, ?, ?, ?, ?)
-    """, (warehouse, location, item_code, lot_no, qty, remark, datetime.now().isoformat()))
     conn.commit()
     conn.close()
+    log_history('IN', warehouse, location, item_code, lot_no, qty, remark)
 
 def subtract_inventory(warehouse, location, item_code, lot_no, qty, remark=""):
     conn = get_conn()
     cur = conn.cursor()
     cur.execute("UPDATE inventory SET qty = qty - ? WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?",
                 (qty, warehouse, location, item_code, lot_no))
-    cur.execute("""
-    INSERT INTO history (tx_type, warehouse, location, item_code, lot_no, qty, remark, created_at)
-    VALUES ('OUT', ?, ?, ?, ?, ?, ?, ?)
-    """, (warehouse, location, item_code, lot_no, -qty, remark, datetime.now().isoformat()))
     conn.commit()
     conn.close()
+    log_history('OUT', warehouse, location, item_code, lot_no, -qty, remark)
 
 def move_inventory(warehouse, from_loc, to_loc, item_code, lot_no, qty, remark="이동"):
     conn = get_conn()
     cur = conn.cursor()
-    # 출발지 차감
-    cur.execute("UPDATE inventory SET qty = qty - ? WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?", 
-                (qty, warehouse, from_loc, item_code, lot_no))
-    # 목적지 가산
+    cur.execute("UPDATE inventory SET qty = qty - ? WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?", (qty, warehouse, from_loc, item_code, lot_no))
     cur.execute("""
     INSERT INTO inventory (warehouse, location, item_code, lot_no, qty) VALUES (?, ?, ?, ?, ?)
     ON CONFLICT(warehouse, location, item_code, lot_no) DO UPDATE SET qty = qty + excluded.qty
     """, (warehouse, to_loc, item_code, lot_no, qty))
-    # 이동 기록 (from/to 기록 필수)
-    cur.execute("""
-    INSERT INTO history (tx_type, warehouse, location, from_location, to_location, item_code, lot_no, qty, remark, created_at)
-    VALUES ('MOVE', ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, (warehouse, from_loc, from_loc, to_loc, item_code, lot_no, qty, remark, datetime.now().isoformat()))
+    conn.commit()
+    conn.close()
+    log_history('MOVE', warehouse, from_loc, item_code, lot_no, qty, remark, to_location=to_loc, from_location=from_loc)
+
+def rollback(tx_id: int):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM history WHERE id=?", (tx_id,))
+    h = cur.fetchone()
+    if h:
+        # 역연산 로직 (IN -> 감산, OUT -> 가산, MOVE -> 역이동)
+        if h["tx_type"] == "IN":
+            cur.execute("UPDATE inventory SET qty = qty - ? WHERE location=? AND item_code=? AND lot_no=?", (h["qty"], h["location"], h["item_code"], h["lot_no"]))
+        elif h["tx_type"] == "OUT":
+            cur.execute("UPDATE inventory SET qty = qty + ? WHERE location=? AND item_code=? AND lot_no=?", (abs(h["qty"]), h["location"], h["item_code"], h["lot_no"]))
+        elif h["tx_type"] == "MOVE":
+            cur.execute("UPDATE inventory SET qty = qty + ? WHERE location=? AND item_code=? AND lot_no=?", (h["qty"], h["from_location"], h["item_code"], h["lot_no"]))
+            cur.execute("UPDATE inventory SET qty = qty - ? WHERE location=? AND item_code=? AND lot_no=?", (h["qty"], h["to_location"], h["item_code"], h["lot_no"]))
+        cur.execute("DELETE FROM history WHERE id=?", (tx_id,))
     conn.commit()
     conn.close()
