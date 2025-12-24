@@ -16,8 +16,8 @@
     </nav>
 
     <div class="container mt-4">
-        <div class="card shadow-sm">
-            <div class="card-header bg-white border-bottom-0">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3">
                 <h5 class="card-title mb-0 text-primary fw-bold">📝 수기 입고 등록</h5>
             </div>
             <div class="card-body">
@@ -50,7 +50,7 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label text-info fw-bold">규격 (Spec)</label>
-                            <input type="text" class="form-control" id="spec" placeholder="예: 500g, 10T 등">
+                            <input type="text" class="form-control border-info-subtle" id="spec" placeholder="예: 600*1200">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-semibold">수량 (Qty)</label>
@@ -64,7 +64,7 @@
                     </div>
 
                     <div class="d-grid gap-2 mt-4">
-                        <button type="submit" class="btn btn-primary btn-lg fw-bold">입고 처리 실행</button>
+                        <button type="submit" class="btn btn-primary btn-lg fw-bold shadow-sm">🚀 입고 처리 실행</button>
                     </div>
                 </form>
             </div>
@@ -76,39 +76,49 @@
         document.getElementById('inboundForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            // 서버로 전송할 데이터 구조 통합 (spec 필드 필수 포함)
+            // 1. 데이터 수집 및 가공 (422 에러 방지를 위한 타입 변환)
             const data = {
-                warehouse: document.getElementById('warehouse').value,
-                location: document.getElementById('location').value,
-                item_code: document.getElementById('item_code').value,
-                item_name: document.getElementById('item_name').value,
-                lot_no: document.getElementById('lot_no').value,
-                spec: document.getElementById('spec').value || "", // 공백일 경우 빈 문자열로 전송하여 422 에러 방지
-                qty: parseFloat(document.getElementById('qty').value),
-                remark: document.getElementById('remark').value
+                warehouse: document.getElementById('warehouse').value || "A",
+                location: document.getElementById('location').value.trim(),
+                item_code: document.getElementById('item_code').value.trim(),
+                item_name: document.getElementById('item_name').value.trim(),
+                lot_no: document.getElementById('lot_no').value.trim(),
+                spec: document.getElementById('spec').value.trim() || "-", // 필수: 값이 없으면 "-" 기본값 전송
+                qty: parseFloat(document.getElementById('qty').value) || 0, // 필수: 반드시 숫자 타입
+                remark: document.getElementById('remark').value.trim() || "수기 입고"
             };
 
+            // 2. 간단한 클라이언트 측 유효성 검사
+            if (!data.item_code || !data.location || data.qty <= 0) {
+                Swal.fire('입력 누락', '품번, 로케이션, 수량은 필수입니다.', 'warning');
+                return;
+            }
+
             try {
+                // 3. 서버 전송
                 const response = await fetch('/api/inbound/manual', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json' 
+                    },
                     body: JSON.stringify(data)
                 });
 
                 if (response.ok) {
-                    Swal.fire({
+                    await Swal.fire({
                         icon: 'success',
-                        title: '입고 완료',
+                        title: '입고 성공',
                         text: '재고가 정상적으로 반영되었습니다.',
                         timer: 1500,
                         showConfirmButton: false
-                    }).then(() => {
-                        window.location.reload(); // 등록 후 화면 초기화
                     });
+                    window.location.reload(); // 성공 시 폼 초기화
                 } else {
                     const err = await response.json();
-                    // 상세 에러 메시지가 있을 경우 출력
-                    Swal.fire('등록 실패', `오류 내용: ${err.detail || '입력 데이터를 확인해주세요.'}`, 'error');
+                    console.error("서버 에러 상세:", err);
+                    // 서버의 상세 에러(detail) 메시지를 보여줌
+                    Swal.fire('등록 실패', `오류: ${err.detail || '데이터 형식이 맞지 않습니다.'}`, 'error');
                 }
             } catch (error) {
                 console.error('Network Error:', error);
