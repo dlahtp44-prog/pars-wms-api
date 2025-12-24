@@ -1,24 +1,7 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
 <style>
-@page { size: 70mm 40mm; margin: 0; }
-body {
-  width:70mm; height:40mm;
-  text-align:center;
-  font-family: Arial;
-}
-.qr img { width:28mm; height:28mm; }
-.loc {
-  font-size:22px;
-  font-weight:bold;
-  margin-top:2mm;
-}
+@page { size:70mm 40mm; margin:0 }
+body { font-size:14px;text-align:center }
 </style>
-</head>
-<body>
-<div class="qr"><img src="{{ qr_url }}"></div>
-<div class="loc">{{ location }}</div>
-</body>
-</html>
+
+<h2>{{ location }}</h2>
+<img src="{{ qr_url }}">
