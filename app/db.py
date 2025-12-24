@@ -27,20 +27,35 @@ def init_db():
     conn.commit()
     conn.close()
 
-# --- 관리자 및 대시보드 필수 함수 ---
-def admin_password_ok(pw: str):
-    return pw == "admin123"
+# --- 1. 라우터 충돌 방지용 로그 함수 (log_history) ---
+def log_history(tx_type, warehouse, location, item_code, lot_no, qty, remark, to_location=None, from_location=None):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+    INSERT INTO history (tx_type, warehouse, location, to_location, from_location, item_code, lot_no, qty, remark, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (tx_type, warehouse, location, to_location, from_location, item_code, lot_no, qty, remark, datetime.now().isoformat()))
+    conn.commit()
+    conn.close()
 
+# --- 2. 대시보드 충돌 방지용 함수 (negative_stock 포함) ---
 def dashboard_summary():
     conn = get_conn()
     cur = conn.cursor()
     total = cur.execute("SELECT IFNULL(SUM(qty),0) FROM inventory").fetchone()[0]
     inb = cur.execute("SELECT IFNULL(SUM(qty),0) FROM history WHERE tx_type='IN' AND date(created_at)=date('now','localtime')").fetchone()[0]
     outb = cur.execute("SELECT IFNULL(SUM(qty),0) FROM history WHERE tx_type='OUT' AND date(created_at)=date('now','localtime')").fetchone()[0]
+    # 템플릿 에러 방지를 위해 반드시 추가
+    neg = cur.execute("SELECT COUNT(*) FROM inventory WHERE qty < 0").fetchone()[0]
     conn.close()
-    return {"inbound_today": inb, "outbound_today": abs(outb), "total_stock": total}
+    return {
+        "inbound_today": inb, 
+        "outbound_today": abs(outb), 
+        "total_stock": total,
+        "negative_stock": neg  # 이 값이 있어야 dashboard.html이 열립니다.
+    }
 
-# --- 조회 관련 필수 함수 ---
+# --- 3. 기본 조회/처리 함수 유지 ---
 def get_inventory(q=None):
     conn = get_conn()
     cur = conn.cursor()
@@ -55,23 +70,6 @@ def get_inventory(q=None):
     conn.close()
     return rows
 
-def get_history(limit=500):
-    conn = get_conn()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM history ORDER BY created_at DESC LIMIT ?", (limit,))
-    rows = [dict(r) for r in cur.fetchall()]
-    conn.close()
-    return rows
-
-def get_location_items(location: str):
-    conn = get_conn()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM inventory WHERE location=? AND qty > 0", (location,))
-    rows = [dict(r) for r in cur.fetchall()]
-    conn.close()
-    return rows
-
-# --- 처리 관련 필수 함수 ---
 def add_inventory(warehouse, location, brand, item_code, item_name, lot_no, spec, qty, remark=""):
     conn = get_conn()
     cur = conn.cursor()
@@ -80,29 +78,25 @@ def add_inventory(warehouse, location, brand, item_code, item_name, lot_no, spec
     ON CONFLICT(warehouse, location, item_code, lot_no)
     DO UPDATE SET qty = qty + excluded.qty, item_name = excluded.item_name
     """, (warehouse, location, brand, item_code, item_name, lot_no, spec, qty))
-    cur.execute("INSERT INTO history (tx_type, warehouse, location, item_code, lot_no, qty, remark, created_at) VALUES ('IN', ?, ?, ?, ?, ?, ?, ?)",
-                (warehouse, location, item_code, lot_no, qty, remark, datetime.now().isoformat()))
     conn.commit()
     conn.close()
+    log_history('IN', warehouse, location, item_code, lot_no, qty, remark)
 
 def subtract_inventory(warehouse, location, item_code, lot_no, qty, remark=""):
     conn = get_conn()
     cur = conn.cursor()
     cur.execute("UPDATE inventory SET qty = qty - ? WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?", (qty, warehouse, location, item_code, lot_no))
-    cur.execute("INSERT INTO history (tx_type, warehouse, location, item_code, lot_no, qty, remark, created_at) VALUES ('OUT', ?, ?, ?, ?, ?, ?, ?)",
-                (warehouse, location, item_code, lot_no, -qty, remark, datetime.now().isoformat()))
     conn.commit()
     conn.close()
+    log_history('OUT', warehouse, location, item_code, lot_no, -qty, remark)
 
-def move_inventory(warehouse, from_loc, to_loc, item_code, lot_no, qty, remark="이동"):
+def get_history(limit=500):
     conn = get_conn()
     cur = conn.cursor()
-    cur.execute("UPDATE inventory SET qty = qty - ? WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?", (qty, warehouse, from_loc, item_code, lot_no))
-    cur.execute("""
-    INSERT INTO inventory (warehouse, location, item_code, lot_no, qty) VALUES (?, ?, ?, ?, ?)
-    ON CONFLICT(warehouse, location, item_code, lot_no) DO UPDATE SET qty = qty + excluded.qty
-    """, (warehouse, to_loc, item_code, lot_no, qty))
-    cur.execute("INSERT INTO history (tx_type, warehouse, location, from_location, to_location, item_code, lot_no, qty, remark, created_at) VALUES ('MOVE', ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (warehouse, from_loc, from_loc, to_loc, item_code, lot_no, qty, remark, datetime.now().isoformat()))
-    conn.commit()
+    cur.execute("SELECT * FROM history ORDER BY created_at DESC LIMIT ?", (limit,))
+    rows = [dict(r) for r in cur.fetchall()]
     conn.close()
+    return rows
+
+def admin_password_ok(pw: str):
+    return pw == "admin123"
