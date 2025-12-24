@@ -1,26 +1,25 @@
 <script>
     document.getElementById('uploadForm').onsubmit = async (e) => {
         e.preventDefault();
-        const fileInput = document.getElementById('excelFile');
         const formData = new FormData();
-        formData.append('file', fileInput.files[0]);
+        formData.append('file', document.getElementById('excelFile').files[0]);
 
         try {
-            // 주소 수정: /api/excel/upload (X) -> /api/inbound/upload (O)
+            // 주소 수정: 로그에서 에러 났던 /api/excel/upload를 /api/inbound/upload로 변경
             const res = await fetch('/api/inbound/upload', { 
                 method: 'POST', 
                 body: formData 
             });
+            
             const result = await res.json();
-
             if (res.ok) {
                 alert('✅ ' + result.message);
-                window.location.href = '/inventory-page'; // 성공 시 재고 페이지로 이동
+                window.location.href = '/inventory-page'; 
             } else {
-                alert('❌ 업로드 실패: ' + (result.detail || '오류 발생'));
+                alert('❌ 오류: ' + result.detail);
             }
         } catch (err) {
-            alert('❌ 서버 연결 실패. 네트워크 상태를 확인하세요.');
+            alert('❌ 서버 연결에 실패했습니다.');
         }
     };
 </script>
