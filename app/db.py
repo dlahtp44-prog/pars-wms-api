@@ -6,10 +6,10 @@ def get_db():
     return conn
 
 def init_db():
-    """데이터베이스 초기화 및 필수 테이블 생성"""
+    """앱 시작 시 모든 테이블 초기화"""
     conn = get_db()
     cursor = conn.cursor()
-    # 재고 테이블
+    # 재고 테이블 (location, item_code, lot_no, spec 기준 중복 합산)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS inventory (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -41,14 +41,14 @@ def init_db():
     ''')
     conn.commit()
     conn.close()
-    print("✅ DB 초기화 완료")
+    print("✅ 데이터베이스 및 테이블 초기화 완료")
 
-# --- 관리자 관련 ---
+# --- 관리자 인증 로직 (에러 발생 지점) ---
 def admin_password_ok(password: str) -> bool:
     """관리자 비밀번호 검증 (기본값: 1234)"""
     return password == "1234"
 
-# --- 재고 로직 ---
+# --- 재고 관련 핵심 로직 ---
 def add_inventory(warehouse, location, item_code, item_name, lot_no, spec, qty, remark=""):
     conn = get_db()
     cursor = conn.cursor()
@@ -76,11 +76,11 @@ def subtract_inventory(location, item_code, lot_no, spec, qty, remark=""):
                        (location, item_code, lot_no, spec))
         row = cursor.fetchone()
         if not row or row['qty'] < qty:
-            raise Exception("재고 부족")
+            raise Exception("출고 가능한 재고가 부족합니다.")
         
         cursor.execute("UPDATE inventory SET qty = qty - ? WHERE location=? AND item_code=? AND lot_no=? AND spec=?",
                        (qty, location, item_code, lot_no, spec))
-        cursor.execute("DELETE FROM inventory WHERE qty <= 0")
+        cursor.execute("DELETE FROM inventory WHERE qty <= 0") # 수량 0이면 행 삭제
         
         cursor.execute('''
             INSERT INTO history (tx_type, item_code, item_name, lot_no, spec, qty, location, remark)
@@ -96,35 +96,37 @@ def move_inventory(from_loc, to_loc, item_code, lot_no, spec, qty):
     try:
         cursor.execute("SELECT * FROM inventory WHERE location=? AND item_code=? AND lot_no=? AND spec=?", (from_loc, item_code, lot_no, spec))
         row = cursor.fetchone()
-        if not row or row['qty'] < qty: raise Exception("이동 재고 부족")
+        if not row or row['qty'] < qty: raise Exception("이동할 재고가 부족합니다.")
+        
+        # 원본 차감 및 목적지 추가
         cursor.execute("UPDATE inventory SET qty = qty - ? WHERE location=? AND item_code=? AND lot_no=? AND spec=?", (qty, from_loc, item_code, lot_no, spec))
-        add_inventory(row['warehouse'], to_loc, item_code, row['item_name'], lot_no, spec, qty, f"{from_loc} 이동")
+        add_inventory(row['warehouse'], to_loc, item_code, row['item_name'], lot_no, spec, qty, f"{from_loc}에서 이동")
         conn.commit()
     finally:
         conn.close()
 
-# --- 조회 로직 ---
+# --- 조회용 로직 (대시보드 및 리스트) ---
 def get_inventory():
     conn = get_db()
-    rows = conn.execute("SELECT * FROM inventory").fetchall()
+    data = conn.execute("SELECT * FROM inventory ORDER BY location ASC").fetchall()
     conn.close()
-    return rows
+    return data
 
 def get_history():
     conn = get_db()
-    rows = conn.execute("SELECT * FROM history ORDER BY created_at DESC").fetchall()
+    data = conn.execute("SELECT * FROM history ORDER BY created_at DESC").fetchall()
     conn.close()
-    return rows
+    return data
 
 def dashboard_summary():
     conn = get_db()
-    items = conn.execute("SELECT COUNT(DISTINCT item_code) FROM inventory").fetchone()[0] or 0
-    qty = conn.execute("SELECT SUM(qty) FROM inventory").fetchone()[0] or 0
+    total_items = conn.execute("SELECT COUNT(DISTINCT item_code) FROM inventory").fetchone()[0] or 0
+    total_qty = conn.execute("SELECT SUM(qty) FROM inventory").fetchone()[0] or 0
     conn.close()
-    return {"total_items": items, "total_qty": qty}
+    return {"total_items": total_items, "total_qty": total_qty}
 
 def get_location_items(location):
     conn = get_db()
-    rows = conn.execute("SELECT * FROM inventory WHERE location=?", (location,)).fetchall()
+    data = conn.execute("SELECT * FROM inventory WHERE location=?", (location,)).fetchall()
     conn.close()
-    return rows
+    return data
