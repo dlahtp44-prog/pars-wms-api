@@ -32,18 +32,14 @@ def init_db():
 def admin_password_ok(password: str) -> bool:
     return password == "admin1234"
 
-# --- [수정된 조회 함수: 검색어 q 지원] ---
+# --- [재고 조회: 검색어 q 지원] ---
 def get_inventory(q: str = None):
     conn = get_db_connection()
     if q:
-        # 품번, 품명, LOT, 로케이션 중 검색어가 포함된 데이터 조회
         query = """
             SELECT * FROM inventory 
             WHERE qty > 0 AND (
-                item_code LIKE ? OR 
-                item_name LIKE ? OR 
-                lot_no LIKE ? OR 
-                location LIKE ?
+                item_code LIKE ? OR item_name LIKE ? OR lot_no LIKE ? OR location LIKE ?
             )
             ORDER BY updated_at DESC
         """
@@ -54,9 +50,14 @@ def get_inventory(q: str = None):
     conn.close()
     return [dict(i) for i in items]
 
-def get_history():
+# --- [이력 조회: limit 매개변수 추가로 에러 해결] ---
+def get_history(limit: int = 200):
     conn = get_db_connection()
-    logs = conn.execute("SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT 100").fetchall()
+    # history_page.py에서 요구하는 limit 인자를 처리합니다.
+    logs = conn.execute(
+        "SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT ?", 
+        (limit,)
+    ).fetchall()
     conn.close()
     return [dict(l) for l in logs]
 
@@ -114,6 +115,7 @@ def move_inventory(item_code, lot_no, from_loc, to_loc, qty, remark):
         conn.close()
         return False
     
+    # 이동 대상 창고 정보 유지
     add_inventory(item['warehouse'], to_loc, item_code, item['item_name'], lot_no, item['spec'], qty, f"이동 출처: {from_loc}")
     conn.execute("UPDATE inventory SET qty = qty - ? WHERE id = ?", (qty, item['id']))
     
