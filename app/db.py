@@ -26,8 +26,11 @@ def init_db():
     )""")
     conn.commit()
     conn.close()
+    print("✅ DB 초기화 및 테이블 확인 완료")
 
-# [이력 저장] 모든 컬럼(from/to)이 저장되도록 수정
+# =========================
+# 작업 이력 (History) 관련
+# =========================
 def log_history(tx_type, warehouse, location, item_code, lot_no, qty, remark, to_location=None, from_location=None):
     conn = get_conn()
     cur = conn.cursor()
@@ -38,7 +41,6 @@ def log_history(tx_type, warehouse, location, item_code, lot_no, qty, remark, to
     conn.commit()
     conn.close()
 
-# [조회] 이력 페이지용 함수
 def get_history(limit=200):
     conn = get_conn()
     cur = conn.cursor()
@@ -47,7 +49,9 @@ def get_history(limit=200):
     conn.close()
     return rows
 
-# [입고] 이력 남기기 포함
+# =========================
+# 물류 핵심 로직 (이력 연동)
+# =========================
 def add_inventory(warehouse, location, brand, item_code, item_name, lot_no, spec, qty, remark=""):
     conn = get_conn()
     cur = conn.cursor()
@@ -58,9 +62,9 @@ def add_inventory(warehouse, location, brand, item_code, item_name, lot_no, spec
     """, (warehouse, location, brand, item_code, item_name, lot_no, spec, qty))
     conn.commit()
     conn.close()
+    # 이력 남기기
     log_history("IN", warehouse, location, item_code, lot_no, qty, remark)
 
-# [출고] 이력 남기기 포함
 def subtract_inventory(warehouse, location, item_code, lot_no, qty, remark=""):
     conn = get_conn()
     cur = conn.cursor()
@@ -68,23 +72,28 @@ def subtract_inventory(warehouse, location, item_code, lot_no, qty, remark=""):
                 (qty, warehouse, location, item_code, lot_no))
     conn.commit()
     conn.close()
+    # 이력 남기기 (출고는 수량을 음수로 기록)
     log_history("OUT", warehouse, location, item_code, lot_no, -qty, remark)
 
-# [이동] 이력 남기기 포함 (from/to 기록)
 def move_inventory(warehouse, from_location, to_location, item_code, lot_no, qty, remark="이동"):
     conn = get_conn()
     cur = conn.cursor()
+    # 출발지 차감
     cur.execute("UPDATE inventory SET qty = qty - ? WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?",
                 (qty, warehouse, from_location, item_code, lot_no))
+    # 목적지 가산
     cur.execute("""
     INSERT INTO inventory (warehouse, location, item_code, lot_no, qty) VALUES (?, ?, ?, ?, ?)
     ON CONFLICT(warehouse, location, item_code, lot_no) DO UPDATE SET qty = qty + excluded.qty
     """, (warehouse, to_location, item_code, lot_no, qty))
     conn.commit()
     conn.close()
+    # 이력 남기기
     log_history("MOVE", warehouse, from_location, item_code, lot_no, qty, remark, to_location=to_location, from_location=from_location)
 
-# (나머지 get_inventory, dashboard_summary, rollback 등은 기존 유지)
+# =========================
+# 조회 및 관리 기능
+# =========================
 def get_inventory(q=None):
     conn = get_conn()
     cur = conn.cursor()
@@ -108,3 +117,23 @@ def dashboard_summary():
     neg = cur.execute("SELECT COUNT(*) FROM inventory WHERE qty < 0").fetchone()[0]
     conn.close()
     return {"inbound_today": inb, "outbound_today": abs(outb), "total_stock": total, "negative_stock": neg}
+
+def rollback(tx_id: int):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM history WHERE id=?", (tx_id,))
+    h = cur.fetchone()
+    if h:
+        if h["tx_type"] == "IN":
+            cur.execute("UPDATE inventory SET qty = qty - ? WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?", (h["qty"], h["warehouse"], h["location"], h["item_code"], h["lot_no"]))
+        elif h["tx_type"] == "OUT":
+            cur.execute("UPDATE inventory SET qty = qty + ? WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?", (abs(h["qty"]), h["warehouse"], h["location"], h["item_code"], h["lot_no"]))
+        elif h["tx_type"] == "MOVE":
+            cur.execute("UPDATE inventory SET qty = qty + ? WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?", (h["qty"], h["warehouse"], h["from_location"], h["item_code"], h["lot_no"]))
+            cur.execute("UPDATE inventory SET qty = qty - ? WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?", (h["qty"], h["warehouse"], h["to_location"], h["item_code"], h["lot_no"]))
+        cur.execute("DELETE FROM history WHERE id=?", (tx_id,))
+    conn.commit()
+    conn.close()
+
+def admin_password_ok(pw: str) -> bool:
+    return pw == "admin123"
