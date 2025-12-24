@@ -1,26 +1,23 @@
 from fastapi import APIRouter, Request, Form
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import RedirectResponse
-from app.db import get_history, admin_password_ok
+from app.db import admin_password_ok, get_history
 
 router = APIRouter(prefix="/admin")
 templates = Jinja2Templates(directory="app/templates")
 
 @router.get("")
-def admin(request: Request):
-    if request.session.get("is_admin") is True:
-        rows = get_history(limit=300)
-        return templates.TemplateResponse("admin.html", {"request": request, "rows": rows})
-    return templates.TemplateResponse("admin.html", {"request": request, "rows": [], "need_login": True})
+def admin_login(request: Request):
+    return templates.TemplateResponse("admin_login.html", {"request": request})
 
-@router.post("/login")
-def admin_login(request: Request, password: str = Form(...)):
-    if admin_password_ok(password):
-        request.session["is_admin"] = True
-        return RedirectResponse("/admin", status_code=303)
-    return templates.TemplateResponse("admin.html", {"request": request, "rows": [], "need_login": True, "error": "비밀번호 오류"})
-
-@router.post("/logout")
-def admin_logout(request: Request):
-    request.session.clear()
-    return RedirectResponse("/admin", status_code=303)
+@router.post("")
+def admin_view(request: Request, password: str = Form(...)):
+    if not admin_password_ok(password):
+        return templates.TemplateResponse(
+            "admin_login.html",
+            {"request": request, "error": "비밀번호 오류"}
+        )
+    rows = get_history()
+    return templates.TemplateResponse(
+        "admin.html",
+        {"request": request, "rows": rows}
+    )
