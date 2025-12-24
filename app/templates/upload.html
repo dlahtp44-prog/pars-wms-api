@@ -1,50 +1,26 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>대량 입고 업로드</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
-    <div class="container py-5">
-        <div class="card shadow mx-auto" style="max-width: 500px;">
-            <div class="card-header bg-primary text-white">📦 대량 엑셀 입고</div>
-            <div class="card-body">
-                <form id="uploadForm">
-                    <div class="mb-3">
-                        <label class="form-label">엑셀 파일 선택 (.xlsx)</label>
-                        <input class="form-control" type="file" id="excelFile" accept=".xlsx, .xls" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary w-100">업로드 시작</button>
-                </form>
-            </div>
-        </div>
-    </div>
+<script>
+    document.getElementById('uploadForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const fileInput = document.getElementById('excelFile');
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
 
-    <script>
-        document.getElementById('uploadForm').onsubmit = async (e) => {
-            e.preventDefault();
-            const fileInput = document.getElementById('excelFile');
-            const formData = new FormData();
-            formData.append('file', fileInput.files[0]);
+        try {
+            // 주소 주의: 반드시 /api/inbound/upload 여야 함
+            const res = await fetch('/api/inbound/upload', { 
+                method: 'POST', 
+                body: formData 
+            });
+            const result = await res.json();
 
-            try {
-                // 경로 수정: /api/excel/upload -> /api/inbound/upload
-                const res = await fetch('/api/inbound/upload', { 
-                    method: 'POST', 
-                    body: formData 
-                });
-                const result = await res.json();
-
-                if (res.ok) {
-                    alert('✅ ' + result.message);
-                    location.href = '/inventory-page'; 
-                } else {
-                    alert('❌ 실패: ' + (result.detail || '알 수 없는 에러'));
-                }
-            } catch (err) {
-                alert('❌ 서버 연결 실패');
+            if (res.ok) {
+                alert('✅ ' + result.message);
+                location.href = '/inventory-page'; 
+            } else {
+                alert('❌ 실패: ' + (result.detail || '알 수 없는 오류'));
             }
-        };
-    </script>
-</body>
-</html>
+        } catch (err) {
+            alert('❌ 서버 연결 실패');
+        }
+    };
+</script>
