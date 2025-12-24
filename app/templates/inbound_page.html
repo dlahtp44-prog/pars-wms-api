@@ -17,50 +17,54 @@
 
     <div class="container mt-4">
         <div class="card shadow-sm">
-            <div class="card-header bg-white">
-                <h5 class="card-title mb-0 text-primary">📝 수기 입고 등록</h5>
+            <div class="card-header bg-white border-bottom-0">
+                <h5 class="card-title mb-0 text-primary fw-bold">📝 수기 입고 등록</h5>
             </div>
             <div class="card-body">
                 <form id="inboundForm">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label">창고 (Warehouse)</label>
+                            <label class="form-label fw-semibold">창고 (Warehouse)</label>
                             <select class="form-select" id="warehouse" required>
                                 <option value="A">A 창고</option>
                                 <option value="B">B 창고</option>
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">로케이션 (Location)</label>
+                            <label class="form-label fw-semibold">로케이션 (Location)</label>
                             <input type="text" class="form-control" id="location" placeholder="예: A-01-01" required>
                         </div>
+
                         <div class="col-md-6">
-                            <label class="form-label">품번 (Item Code)</label>
+                            <label class="form-label fw-semibold">품번 (Item Code)</label>
                             <input type="text" class="form-control" id="item_code" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">품명 (Item Name)</label>
+                            <label class="form-label fw-semibold">품명 (Item Name)</label>
                             <input type="text" class="form-control" id="item_name" required>
                         </div>
+
                         <div class="col-md-4">
-                            <label class="form-label">LOT 번호</label>
+                            <label class="form-label fw-semibold">LOT 번호</label>
                             <input type="text" class="form-control" id="lot_no" required>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label text-info fw-bold">규격 (Spec)</label>
-                            <input type="text" class="form-control" id="spec" placeholder="예: 10kg, Box">
+                            <input type="text" class="form-control" id="spec" placeholder="예: 500g, 10T 등">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">수량 (Qty)</label>
+                            <label class="form-label fw-semibold">수량 (Qty)</label>
                             <input type="number" class="form-control" id="qty" step="0.01" required>
                         </div>
+
                         <div class="col-12">
-                            <label class="form-label">비고 (Remark)</label>
-                            <input type="text" class="form-control" id="remark">
+                            <label class="form-label fw-semibold">비고 (Remark)</label>
+                            <input type="text" class="form-control" id="remark" placeholder="추가 전달 사항 입력">
                         </div>
                     </div>
+
                     <div class="d-grid gap-2 mt-4">
-                        <button type="submit" class="btn btn-primary btn-lg">입고 처리 (Submit)</button>
+                        <button type="submit" class="btn btn-primary btn-lg fw-bold">입고 처리 실행</button>
                     </div>
                 </form>
             </div>
@@ -72,14 +76,14 @@
         document.getElementById('inboundForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            // 규격(spec)을 포함하여 데이터 전송
+            // 서버로 전송할 데이터 구조 통합 (spec 필드 필수 포함)
             const data = {
                 warehouse: document.getElementById('warehouse').value,
                 location: document.getElementById('location').value,
                 item_code: document.getElementById('item_code').value,
                 item_name: document.getElementById('item_name').value,
                 lot_no: document.getElementById('lot_no').value,
-                spec: document.getElementById('spec').value || "", // 값이 없으면 빈 문자열 전송
+                spec: document.getElementById('spec').value || "", // 공백일 경우 빈 문자열로 전송하여 422 에러 방지
                 qty: parseFloat(document.getElementById('qty').value),
                 remark: document.getElementById('remark').value
             };
@@ -95,19 +99,20 @@
                     Swal.fire({
                         icon: 'success',
                         title: '입고 완료',
-                        text: '정상적으로 입고되었습니다.',
+                        text: '재고가 정상적으로 반영되었습니다.',
                         timer: 1500,
                         showConfirmButton: false
                     }).then(() => {
-                        window.location.reload(); 
+                        window.location.reload(); // 등록 후 화면 초기화
                     });
                 } else {
                     const err = await response.json();
-                    Swal.fire('오류', `입고 실패: ${err.detail || '알 수 없는 오류'}`, 'error');
+                    // 상세 에러 메시지가 있을 경우 출력
+                    Swal.fire('등록 실패', `오류 내용: ${err.detail || '입력 데이터를 확인해주세요.'}`, 'error');
                 }
             } catch (error) {
-                console.error(error);
-                Swal.fire('오류', '서버 통신 중 오류가 발생했습니다.', 'error');
+                console.error('Network Error:', error);
+                Swal.fire('통신 오류', '서버와 연결할 수 없습니다.', 'error');
             }
         });
     </script>
