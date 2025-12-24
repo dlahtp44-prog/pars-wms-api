@@ -1,18 +1,22 @@
-{% extends "worker_base.html" %}
-{% block worker_content %}
-<div class="card">
-  <div class="h2">📷 QR 스캔 (로케이션 먼저 → 제품 선택 → 목적지)</div>
+let currentStep = 1; // 1: 출발지 스캔, 2: 품목 선택, 3: 도착지 스캔
+let moveData = { from: '', item: '', qty: 0 };
 
-  <div id="reader" style="width:100%; max-width:360px;"></div>
-  <div class="row">
-    <button class="btn primary" onclick="startScan()">카메라 시작</button>
-    <button class="btn" onclick="stopScan()">중지</button>
-  </div>
-
-  <div id="msg" class="muted"></div>
-  <div id="result" style="margin-top:12px;"></div>
-</div>
-
-<script src="https://unpkg.com/html5-qrcode"></script>
-<script src="/static/qr_camera.js"></script>
-{% endblock %}
+async function onScanSuccess(decodedText) {
+    if (currentStep === 1) {
+        // 출발지 인식
+        const res = await fetch(`/api/qr/location/${decodedText}`);
+        const items = await res.json();
+        if (items.length > 0) {
+            moveData.from = decodedText;
+            renderItems(items); // 품목 리스트를 화면에 표시
+            currentStep = 2;
+        }
+    } else if (currentStep === 3) {
+        // 도착지 인식 및 이동 확정
+        const res = await fetch('/api/move/manual', {
+            method: 'POST',
+            body: JSON.stringify({ ...moveData, to_location: decodedText })
+        });
+        if (res.ok) alert("이동 완료!");
+    }
+}
