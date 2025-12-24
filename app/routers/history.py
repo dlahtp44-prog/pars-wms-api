@@ -1,15 +1,17 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
+from fastapi.responses import JSONResponse
 from app.db import get_history, rollback
 
 router = APIRouter(prefix="/api/history", tags=["이력"])
 
 @router.get("")
-def history_api(limit: int = 300):
-    return get_history(limit=limit, include_rolled_back=True)
+def api_history(limit: int = 500):
+    return get_history(limit=limit)
 
 @router.post("/rollback/{tx_id}")
-def rollback_api(tx_id: int):
+def api_rollback(tx_id: int):
     try:
-        return rollback(tx_id)
+        rollback(tx_id, block_negative=True)
+        return {"ok": True}
     except Exception as e:
-        raise HTTPException(400, str(e))
+        return JSONResponse({"ok": False, "detail": str(e)}, status_code=400)
