@@ -6,7 +6,12 @@ router = APIRouter(prefix="/dashboard")
 templates = Jinja2Templates(directory="app/templates")
 
 @router.get("")
-def page(request: Request):
+def dashboard(request: Request):
     s = dashboard_summary()
-    # "s": s 로 넘겨야 templates에서 s.inbound_today 로 접근 가능합니다.
-    return templates.TemplateResponse("dashboard.html", {"request": request, "s": s})
+    return templates.TemplateResponse(
+        "dashboard.html",
+        {
+            "request": request,
+            "s": s
+        }
+    )
