@@ -1,0 +1,36 @@
+<div class="container mt-4">
+    <h3>🛠️ 관리자 작업 로그 (롤백 관리)</h3>
+    <table class="table table-bordered table-hover mt-3">
+        <thead class="table-dark">
+            <tr>
+                <th>시간</th><th>구분</th><th>창고</th><th>로케이션</th><th>품번</th><th>품명</th><th>LOT</th><th>규격</th><th>수량</th><th>기능</th>
+            </tr>
+        </thead>
+        <tbody id="logTable">
+            </tbody>
+    </table>
+</div>
+
+<script>
+async function loadLogs() {
+    const res = await fetch('/api/admin/logs');
+    const logs = await res.json();
+    const html = logs.map(log => `
+        <tr>
+            <td>${log.created_at}</td>
+            <td><span class="badge ${log.tx_type === 'IN' ? 'bg-primary' : 'bg-danger'}">${log.tx_type}</span></td>
+            <td>${log.warehouse}</td><td>${log.location}</td><td>${log.item_code}</td>
+            <td>${log.item_name}</td><td>${log.lot_no}</td><td>${log.spec}</td><td>${log.qty}</td>
+            <td><button class="btn btn-sm btn-warning" onclick="rollback(${log.id})">롤백</button></td>
+        </tr>
+    `).join('');
+    document.getElementById('logTable').innerHTML = html;
+}
+
+async function rollback(id) {
+    if(!confirm('이 작업을 취소하고 재고를 원상복구 하시겠습니까?')) return;
+    const res = await fetch(`/api/admin/rollback/${id}`, {method: 'POST'});
+    if(res.ok) { alert('롤백 완료'); loadLogs(); }
+}
+loadLogs();
+</script>
