@@ -27,7 +27,20 @@ def init_db():
     conn.commit()
     conn.close()
 
-# --- 필수 함수: 조회 관련 ---
+# --- 관리자 및 대시보드 필수 함수 ---
+def admin_password_ok(pw: str):
+    return pw == "admin123"
+
+def dashboard_summary():
+    conn = get_conn()
+    cur = conn.cursor()
+    total = cur.execute("SELECT IFNULL(SUM(qty),0) FROM inventory").fetchone()[0]
+    inb = cur.execute("SELECT IFNULL(SUM(qty),0) FROM history WHERE tx_type='IN' AND date(created_at)=date('now','localtime')").fetchone()[0]
+    outb = cur.execute("SELECT IFNULL(SUM(qty),0) FROM history WHERE tx_type='OUT' AND date(created_at)=date('now','localtime')").fetchone()[0]
+    conn.close()
+    return {"inbound_today": inb, "outbound_today": abs(outb), "total_stock": total}
+
+# --- 조회 관련 필수 함수 ---
 def get_inventory(q=None):
     conn = get_conn()
     cur = conn.cursor()
@@ -58,7 +71,7 @@ def get_location_items(location: str):
     conn.close()
     return rows
 
-# --- 필수 함수: 처리 관련 ---
+# --- 처리 관련 필수 함수 ---
 def add_inventory(warehouse, location, brand, item_code, item_name, lot_no, spec, qty, remark=""):
     conn = get_conn()
     cur = conn.cursor()
@@ -93,16 +106,3 @@ def move_inventory(warehouse, from_loc, to_loc, item_code, lot_no, qty, remark="
                 (warehouse, from_loc, from_loc, to_loc, item_code, lot_no, qty, remark, datetime.now().isoformat()))
     conn.commit()
     conn.close()
-
-# --- 필수 함수: 기타 ---
-def admin_password_ok(pw: str):
-    return pw == "admin123"
-
-def dashboard_summary():
-    conn = get_conn()
-    cur = conn.cursor()
-    total = cur.execute("SELECT IFNULL(SUM(qty),0) FROM inventory").fetchone()[0]
-    inb = cur.execute("SELECT IFNULL(SUM(qty),0) FROM history WHERE tx_type='IN' AND date(created_at)=date('now','localtime')").fetchone()[0]
-    outb = cur.execute("SELECT IFNULL(SUM(qty),0) FROM history WHERE tx_type='OUT' AND date(created_at)=date('now','localtime')").fetchone()[0]
-    conn.close()
-    return {"inbound_today": inb, "outbound_today": abs(outb), "total_stock": total}
