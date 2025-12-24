@@ -1,22 +1,20 @@
-from fastapi import APIRouter, Form, HTTPException
-from fastapi.responses import RedirectResponse
-from app.db import move_inventory, log_history
+from fastapi import APIRouter, Form
+from fastapi.responses import JSONResponse
+from app.db import move_inventory
 
-router = APIRouter(prefix="/api/move", tags=["이동"])
+router = APIRouter(prefix="/api/move")
 
-@router.post("/manual")
-def move_manual(
-    warehouse: str = Form("MAIN"),
+@router.post("")
+async def move_process(
+    warehouse: str = Form("기본창고"),
     from_location: str = Form(...),
     to_location: str = Form(...),
     item_code: str = Form(...),
-    lot_no: str = Form(...),
-    qty: float = Form(...),
+    lot_no: str = Form(""),
+    qty: float = Form(...)
 ):
     try:
-        move_inventory(warehouse, from_location, to_location, item_code, lot_no, qty, block_negative=True)
-    except ValueError as e:
-        raise HTTPException(400, str(e))
-
-    log_history("MOVE", warehouse, f"{from_location}→{to_location}", item_code, lot_no, qty, "수동 이동")
-    return RedirectResponse(url="/inventory-page", status_code=303)
+        move_inventory(warehouse, from_location, to_location, item_code, lot_no, qty)
+        return JSONResponse({"status": "success", "message": "이동 완료"})
+    except Exception as e:
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
