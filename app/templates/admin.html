@@ -1,44 +1,53 @@
-{% extends "base.html" %}
-{% block content %}
-<div class="card">
-  <div class="row" style="justify-content:space-between;align-items:center;">
-    <div class="h2">🛠 관리자 (롤백)</div>
-    <a class="btn" href="/admin/logout">로그아웃</a>
-  </div>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>관리자 - 작업 관리</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4>⚙️ 관리자 작업 로그 및 롤백</h4>
+            <a href="/api/export/history" class="btn btn-outline-success">📊 전체 이력 엑셀 출력</a>
+        </div>
 
-  <div class="muted">※ 롤백은 실수 복구용입니다. (IN/OUT/MOVE 모두 지원)</div>
+        <div class="alert alert-info">실수로 입력된 입/출고 및 이동 내역을 취소(롤백)할 수 있습니다.</div>
 
-  <div class="tablewrap">
-    <table class="table">
-      <thead>
-        <tr>
-          <th>ID</th><th>구분</th><th>창고</th><th>위치</th><th>품번</th><th>LOT</th>
-          <th class="right">수량</th><th>비고</th><th>시간</th><th>롤백</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for r in rows %}
-        <tr>
-          <td>{{ r.id }}</td>
-          <td>{{ r.tx_type }}</td>
-          <td>{{ r.warehouse }}</td>
-          <td>{{ r.location }}</td>
-          <td>{{ r.item_code }}</td>
-          <td>{{ r.lot_no }}</td>
-          <td class="right"><b>{{ r.qty }}</b></td>
-          <td>{{ r.remark }}</td>
-          <td>{{ r.created_at }}</td>
-          <td>
-            {% if r.rolled_back == 0 %}
-            <button class="btn" onclick="fetch('/api/history/rollback/{{r.id}}',{method:'POST'}).then(()=>location.reload())">롤백</button>
-            {% else %}
-            <span class="muted">완료</span>
-            {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
-{% endblock %}
+        <div class="table-responsive bg-white rounded shadow-sm">
+            <table class="table align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>유형</th><th>품번</th><th>수량</th><th>기존위치</th><th>변경위치</th><th>시간</th><th>관리</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for h in history %}
+                    <tr>
+                        <td>
+                            <span class="badge {{ 'bg-primary' if h.tx_type=='IN' else 'bg-danger' if h.tx_type=='OUT' else 'bg-info' }}">
+                                {{ h.tx_type }}
+                            </span>
+                        </td>
+                        <td>{{ h.item_code }}</td>
+                        <td>{{ h.qty }}</td>
+                        <td>{{ h.from_location or h.location }}</td>
+                        <td>{{ h.to_location or '-' }}</td>
+                        <td class="small">{{ h.created_at[:16] }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-warning" onclick="rollback({{ h.id }})">롤백</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+        async function rollback(id) {
+            if(!confirm("정말 이 작업을 취소하고 재고를 되돌리시겠습니까?")) return;
+            const res = await fetch(`/api/history/rollback/${id}`, {method: 'POST'});
+            if(res.ok) { alert("성공적으로 복구되었습니다."); location.reload(); }
+        }
+    </script>
+</body>
+</html>
