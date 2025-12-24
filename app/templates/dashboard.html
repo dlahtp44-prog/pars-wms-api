@@ -1,20 +1,14 @@
-{% extends "base.html" %}
-{% block content %}
-<div class="card">
-  <div class="h2">📊 대시보드</div>
-
-  <div class="grid4">
-    <div class="card mini"><div class="label">오늘 입고</div><div class="value">{{ s.inbound_today }}</div></div>
-    <div class="card mini"><div class="label">오늘 출고</div><div class="value">{{ s.outbound_today }}</div></div>
-    <div class="card mini"><div class="label">총 재고</div><div class="value">{{ s.total_stock }}</div></div>
-    <div class="card mini {% if s.negative_stock>0 %}warn{% endif %}">
-      <div class="label">음수 재고 건</div><div class="value">{{ s.negative_stock }}</div>
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between">
+                <h6 class="m-0 fw-bold text-dark">🕒 최근 작업 요약</h6>
+                <a href="/history-page" class="small text-decoration-none">전체보기 ></a>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush" id="recent-logs">
+                    </ul>
+            </div>
+        </div>
     </div>
-  </div>
-
-  <div class="hr"></div>
-
-  <div class="h3">최근 재고(요약)</div>
-  {% include "_inventory_table.html" %}
 </div>
-{% endblock %}
