@@ -1,33 +1,13 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
 <style>
-@page { size: 50mm 30mm; margin: 0; }
-body {
-  width:50mm; height:30mm; margin:0;
-  font-family: Arial;
-}
-.box { display:flex; }
-.qr img { width:18mm; height:18mm; }
-.info {
-  font-size:7px;
-  margin-left:2mm;
-  line-height:1.25;
-}
-.code { font-size:9px; font-weight:bold; }
+@page { size:50mm 30mm; margin:0 }
+body { font-size:9px }
 </style>
-</head>
-<body>
-<div class="box">
-  <div class="qr"><img src="{{ qr_url }}"></div>
-  <div class="info">
-    <div class="code">{{ item_code }}</div>
-    <div>{{ item_name }}</div>
-    <div>{{ brand }}</div>
-    <div>{{ spec }}</div>
-    <div>LOT {{ lot_no }}</div>
-  </div>
+
+<div>
+  <b>{{ item_code }}</b><br>
+  {{ item_name }}<br>
+  LOT: {{ lot_no }}<br>
+  {{ spec }}<br>
+  {{ brand }}
 </div>
-</body>
-</html>
+<img src="{{ qr_url }}">
