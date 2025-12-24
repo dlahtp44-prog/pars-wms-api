@@ -198,6 +198,26 @@ def rollback(history_id: int):
     conn.close()
     return True
 
+def get_location_items(location: str):
+    """
+    특정 로케이션의 재고 목록 조회 (QR용)
+    """
+    conn = get_conn()
+    rows = conn.execute("""
+        SELECT
+            item_code,
+            item_name,
+            lot_no,
+            spec,
+            brand,
+            qty
+        FROM inventory
+        WHERE location = ?
+        ORDER BY item_code, lot_no
+    """, (location,)).fetchall()
+    conn.close()
+    return rows
+
 # =====================
 # 관리자
 # =====================
