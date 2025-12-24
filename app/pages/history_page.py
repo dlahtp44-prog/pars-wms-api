@@ -6,6 +6,6 @@ router = APIRouter(prefix="/history-page")
 templates = Jinja2Templates(directory="app/templates")
 
 @router.get("")
-def history_page(request: Request):
-    rows = get_history(limit=500)
+def page(request: Request):
+    rows = get_history()
     return templates.TemplateResponse("history.html", {"request": request, "rows": rows})
