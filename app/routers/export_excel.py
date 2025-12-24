@@ -1,33 +1,34 @@
-# app/routers/export_excel.py
-import csv
-import io
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
-from app.db import get_inventory, get_history
+import pandas as pd
+import io
+from app.db import get_conn
 
 router = APIRouter(prefix="/api/export", tags=["Export"])
 
-def _csv_response(filename: str, rows: list[dict]):
-    if not rows:
-        rows = [{}]
-    buf = io.StringIO()
-    w = csv.DictWriter(buf, fieldnames=list(rows[0].keys()))
-    w.writeheader()
-    for r in rows:
-        w.writerow(r)
-    buf.seek(0)
+@router.get("/{target}")
+async def export_excel_target(target: str):
+    conn = get_conn()
+    if target == "inventory":
+        query = "SELECT * FROM inventory WHERE qty != 0"
+    elif target == "history":
+        query = "SELECT * FROM history"
+    elif target == "rollback":
+        query = "SELECT * FROM history WHERE remark LIKE '%롤백%'"
+    else:
+        conn.close()
+        raise HTTPException(status_code=400, detail="Invalid target")
+    
+    df = pd.read_sql_query(query, conn)
+    conn.close()
+    
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name=target)
+    output.seek(0)
+    
     return StreamingResponse(
-        iter([buf.getvalue()]),
-        media_type="text/csv; charset=utf-8",
-        headers={"Content-Disposition": f"attachment; filename={filename}"}
+        output,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={target}_report.xlsx"}
     )
-
-@router.get("/inventory.csv")
-def export_inventory(q: str = "", warehouse: str = "", location: str = ""):
-    rows = get_inventory(warehouse=warehouse or None, location=location or None, q=q or None)
-    return _csv_response("inventory.csv", rows)
-
-@router.get("/history.csv")
-def export_history(limit: int = 1000):
-    rows = get_history(limit)
-    return _csv_response("history.csv", rows)
