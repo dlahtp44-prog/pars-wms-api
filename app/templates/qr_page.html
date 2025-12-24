@@ -1,33 +1,14 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>PARS WMS · QR 스캔</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <!-- QR 라이브러리 -->
+  <meta name="viewport" content="width=device-width">
   <script src="https://unpkg.com/html5-qrcode"></script>
-
-  <!-- 우리 카메라 로직 -->
   <script src="/static/qr_camera.js"></script>
-
-  <style>
-    body { font-family: Arial, sans-serif; padding: 16px; }
-    button { padding: 10px 14px; margin-right: 6px; }
-    #reader { margin: 12px 0; }
-    #msg { margin-top: 10px; color: #333; }
-  </style>
 </head>
 <body>
-
-  <h2>📷 QR 스캔</h2>
-
-  <div id="reader" style="width:100%; max-width:360px;"></div>
-
-  <button onclick="startScan()">📷 카메라 시작</button>
-  <button onclick="stopScan()">중지</button>
-
-  <div id="msg"></div>
-
+<h2>📷 QR 스캔</h2>
+<div id="reader" style="width:100%;max-width:360px"></div>
+<button onclick="startScan()">카메라 시작</button>
+<div id="result"></div>
 </body>
 </html>
