@@ -153,6 +153,51 @@ def dashboard_summary():
     conn.close()
     return inbound, outbound, total
 
+def rollback(history_id: int):
+    """
+    이력 롤백 (관리자 전용)
+    """
+    conn = get_conn()
+    cur = conn.cursor()
+
+    row = cur.execute("""
+        SELECT * FROM history WHERE id=?
+    """, (history_id,)).fetchone()
+
+    if not row:
+        conn.close()
+        return False
+
+    tx_type = row["tx_type"]
+    warehouse = row["warehouse"]
+    location = row["location"]
+    item_code = row["item_code"]
+    lot_no = row["lot_no"]
+    qty = row["qty"]
+
+    # 🔁 반대 작업 수행
+    if tx_type == "IN":
+        # 입고 → 취소 = 출고
+        subtract_inventory(warehouse, location, item_code, lot_no, qty)
+
+    elif tx_type == "OUT":
+        # 출고 → 취소 = 입고
+        add_inventory(
+            warehouse, location, "",
+            item_code, "", lot_no, "", qty
+        )
+
+    elif tx_type == "MOVE":
+        # 이동 → 되돌리기
+        from_loc, to_loc = location.split("→")
+        move_inventory(warehouse, to_loc, from_loc, item_code, lot_no, qty)
+
+    # 이력 삭제
+    cur.execute("DELETE FROM history WHERE id=?", (history_id,))
+    conn.commit()
+    conn.close()
+    return True
+
 # =====================
 # 관리자
 # =====================
