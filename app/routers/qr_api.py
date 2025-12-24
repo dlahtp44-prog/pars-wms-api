@@ -1,25 +1,16 @@
-from fastapi import APIRouter, HTTPException
-from app import db
+from fastapi import APIRouter, Query
+from app.db import get_inventory, get_location_items
 
-router = APIRouter(prefix="/api/qr", tags=["QR API"])
+router = APIRouter(prefix="/api/qr", tags=["qr-api"])
 
-@router.get("/location/{location_id}")
-async def read_location(location_id: str):
-    items = db.get_location_items(location_id)
-    return items
+@router.get("/search")
+def qr_search(q: str = Query(...)):
+    # item_code/lot/품명 등 검색
+    return get_inventory(q=q)
 
-@router.post("/move")
-async def qr_move(data: dict):
-    try:
-        db.move_inventory(
-            warehouse=data.get("warehouse", "MAIN"),
-            from_loc=data["from_location"],
-            to_loc=data["to_location"],
-            item_code=data["item_code"],
-            lot_no=data["lot_no"],
-            qty=float(data["qty"]),
-            remark="QR 이동"
-        )
-        return {"status": "success"}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+@router.get("/location-items")
+def location_items(
+    warehouse: str = Query("MAIN"),
+    location: str = Query(...)
+):
+    return get_location_items(warehouse, location)
