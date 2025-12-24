@@ -1,20 +1,23 @@
-from fastapi import APIRouter, Form
-from fastapi.responses import RedirectResponse
-from app.db import add_inventory, log_history
+from fastapi import APIRouter, Request, Form
+from fastapi.responses import JSONResponse
+from app.db import add_inventory
 
-router = APIRouter(prefix="/api/inbound", tags=["입고"])
+router = APIRouter(prefix="/api/inbound")
 
 @router.post("/manual")
-def inbound_manual(
-    warehouse: str = Form("MAIN"),
+async def inbound_manual(
+    warehouse: str = Form("기본창고"),
     location: str = Form(...),
     brand: str = Form(""),
     item_code: str = Form(...),
     item_name: str = Form(""),
-    lot_no: str = Form(...),
+    lot_no: str = Form(""),
     spec: str = Form(""),
-    qty: float = Form(...)
+    qty: float = Form(...),
+    remark: str = Form("")
 ):
-    add_inventory(warehouse, location, brand, item_code, item_name, lot_no, spec, qty)
-    log_history("IN", warehouse, location, item_code, lot_no, qty, "수동 입고")
-    return RedirectResponse(url="/inventory-page", status_code=303)
+    try:
+        add_inventory(warehouse, location, brand, item_code, item_name, lot_no, spec, qty, remark)
+        return JSONResponse({"status": "success", "message": "입고 완료"})
+    except Exception as e:
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
