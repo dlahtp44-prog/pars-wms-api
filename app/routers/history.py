@@ -1,14 +1,12 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 from app.db import get_history, rollback
-from app.auth import require_admin
 
-router = APIRouter(prefix="/api/history", tags=["history"])
+router = APIRouter(prefix="/api/history")
 
 @router.get("")
-def api_history(limit: int = 300):
-    return get_history(limit=limit)
+def history():
+    return get_history()
 
-@router.post("/rollback/{tx_id}")
-def api_rollback(tx_id: int, _=Depends(require_admin)):
-    rollback(tx_id)
-    return {"ok": True}
+@router.post("/rollback/{hid}")
+def history_rollback(hid: int):
+    return rollback(hid)
