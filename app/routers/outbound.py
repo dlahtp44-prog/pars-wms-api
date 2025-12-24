@@ -1,20 +1,16 @@
 from fastapi import APIRouter, Form
-from fastapi.responses import JSONResponse
+from fastapi.responses import RedirectResponse
 from app.db import subtract_inventory
 
-router = APIRouter(prefix="/api/outbound")
+router = APIRouter(prefix="/api/outbound", tags=["outbound"])
 
 @router.post("/manual")
-async def outbound_manual(
-    warehouse: str = Form("기본창고"),
+def outbound_manual(
+    warehouse: str = Form("MAIN"),
     location: str = Form(...),
     item_code: str = Form(...),
-    lot_no: str = Form(""),
+    lot_no: str = Form(...),
     qty: float = Form(...),
-    remark: str = Form("")
 ):
-    try:
-        subtract_inventory(warehouse, location, item_code, lot_no, qty, remark)
-        return JSONResponse({"status": "success", "message": "출고 완료"})
-    except Exception as e:
-        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+    subtract_inventory(warehouse, location, item_code, lot_no, qty, remark="MANUAL OUT")
+    return RedirectResponse(url="/inventory-page", status_code=303)
