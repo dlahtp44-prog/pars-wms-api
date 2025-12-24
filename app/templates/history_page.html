@@ -3,7 +3,7 @@
 <div class="container-fluid mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="fw-bold text-primary mb-0">📜 작업 이력 (History)</h2>
-        <button class="btn btn-success shadow-sm" onclick="location.href='/api/export_excel/history'">
+        <button class="btn btn-success shadow-sm fw-bold" onclick="location.href='/api/export_excel/history'">
             📊 엑셀 내보내기
         </button>
     </div>
@@ -34,7 +34,7 @@
 <script>
 async function loadHistory() {
     try {
-        // API 호출 (데이터베이스 함수와 연결)
+        // API 호출
         const res = await fetch('/api/history');
         if (!res.ok) throw new Error("데이터를 가져오는데 실패했습니다.");
         
@@ -46,19 +46,19 @@ async function loadHistory() {
             const tr = document.createElement('tr');
             tr.className = "align-middle border-bottom";
             
-            // 1. 유형별 배지(Badge) 색상 처리
+            // 1. 유형별 배지(Badge) 색상 및 텍스트 처리
             let typeTag = `<span class="badge bg-secondary">${h.tx_type}</span>`;
             if(h.tx_type === 'IN') typeTag = `<span class="badge bg-success-subtle text-success border border-success-subtle px-2">입고</span>`;
             if(h.tx_type === 'OUT') typeTag = `<span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2">출고</span>`;
             if(h.tx_type === 'MOVE') typeTag = `<span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2">이동</span>`;
 
-            // 2. 로케이션 정보 처리 (이동일 경우 화살표 표시)
+            // 2. 로케이션 정보 처리 (이동일 경우 From ➔ To 표시)
             let locInfo = `<span class="badge bg-light text-dark border">${h.location || '-'}</span>`;
             if(h.tx_type === 'MOVE') {
-                locInfo = `<span class="text-muted">${h.from_location || '-'}</span> ➔ <span class="fw-bold">${h.to_location || '-'}</span>`;
+                locInfo = `<span class="text-muted">${h.from_location || '-'}</span> ➔ <span class="fw-bold text-primary">${h.to_location || '-'}</span>`;
             }
 
-            // 3. 행 구성 (규격 데이터 row.spec 추가)
+            // 3. 행 구성 (사용자가 제공한 TEST.xlsx의 '규격' 데이터 포함)
             tr.innerHTML = `
                 <td class="px-4 py-3 text-muted" style="font-size: 0.85rem;">
                     ${h.created_at ? h.created_at.replace('T', ' ').substring(0, 16) : '-'}
@@ -68,7 +68,7 @@ async function loadHistory() {
                     <div class="fw-bold text-dark">${h.item_code}</div>
                     <small class="text-muted">${h.item_name || ''}</small>
                 </td>
-                <td class="px-4 py-3 text-info font-monospace">${h.spec || '-'}</td>
+                <td class="px-4 py-3 text-info font-monospace" style="font-size: 0.9rem;">${h.spec || '-'}</td>
                 <td class="px-4 py-3 fw-bold ${h.tx_type === 'OUT' ? 'text-danger' : 'text-primary'}">
                     ${h.tx_type === 'OUT' ? '-' : '+'}${h.qty.toLocaleString()}
                 </td>
@@ -97,6 +97,10 @@ document.addEventListener('DOMContentLoaded', loadHistory);
     }
     .badge {
         font-weight: 500;
+        font-size: 0.85rem;
+    }
+    .font-monospace {
+        font-family: 'Courier New', Courier, monospace;
     }
 </style>
 {% endblock %}
