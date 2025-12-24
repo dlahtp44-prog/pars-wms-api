@@ -1,50 +1,40 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>현재고 현황</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body { background-color: #f4f7f6; }
-        .header-box { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
-    </style>
-</head>
-<body>
-    <div class="container py-4">
-        <div class="header-box d-flex justify-content-between align-items-center">
-            <h4 class="m-0">📦 현재고 실시간 현황</h4>
-            <div>
-                <a href="/api/export/inventory" class="btn btn-success">📊 재고 엑셀 다운로드</a>
-            </div>
-        </div>
+{% extends "worker_base.html" %}
+{% block worker_content %}
 
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <table class="table table-hover">
-                    <thead class="table-light">
-                        <tr>
-                            <th>창고</th><th>로케이션</th><th>품번</th><th>품명</th><th>LOT</th><th>수량</th>
-                        </tr>
-                    </thead>
-                    <tbody id="inventory-list">
-                        </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-    <script>
-        fetch('/api/inventory').then(res => res.json()).then(data => {
-            const html = data.map(item => `
-                <tr>
-                    <td>${item.warehouse}</td>
-                    <td><span class="badge bg-secondary">${item.location}</span></td>
-                    <td><strong>${item.item_code}</strong></td>
-                    <td>${item.item_name}</td>
-                    <td>${item.lot_no}</td>
-                    <td class="text-primary fw-bold">${item.qty}</td>
-                </tr>
-            `).join('');
-            document.getElementById('inventory-list').innerHTML = html;
-        });
-    </script>
-</body>
-</html>
+<div class="card">
+  <h2>📦 재고 현황</h2>
+
+  <!-- ✅ 엑셀 다운로드 버튼 -->
+  <div style="margin-bottom:12px;">
+    <a class="btn" href="/api/export/inventory">📥 재고 엑셀 다운로드</a>
+  </div>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>창고</th>
+        <th>로케이션</th>
+        <th>품번</th>
+        <th>LOT</th>
+        <th>품명</th>
+        <th>규격</th>
+        <th>수량</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td>{{ r.warehouse }}</td>
+        <td>{{ r.location }}</td>
+        <td>{{ r.item_code }}</td>
+        <td>{{ r.lot_no }}</td>
+        <td>{{ r.item_name }}</td>
+        <td>{{ r.spec }}</td>
+        <td>{{ r.qty }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}
