@@ -1,15 +1,59 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="card">
-  <div class="h2">📦 재고 조회</div>
-
-  <form class="row" method="get" action="/inventory-page">
-    <input name="q" value="{{ q }}" placeholder="품번/품명/LOT/브랜드/규격 검색">
-    <input name="warehouse" value="{{ warehouse }}" placeholder="창고(선택)">
-    <input name="location" value="{{ location }}" placeholder="로케이션(선택)">
-    <button class="btn primary" type="submit">검색</button>
-  </form>
-
-  {% include "_inventory_table.html" %}
+    <div class="card-header flex justify-between items-center">
+        <h2>📦 현재고 현황</h2>
+        <div class="flex gap-2">
+            <input type="text" id="searchInput" placeholder="품목명, 코드, 로케이션 검색..." 
+                   class="bg-slate-800 border border-slate-700 rounded px-3 py-1 text-sm focus:outline-none focus:border-blue-500">
+            <button onclick="loadInventory()" class="bg-blue-600 hover:bg-blue-500 px-3 py-1 rounded text-sm">검색</button>
+        </div>
+    </div>
+    <div class="table-container">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="border-b border-slate-700 text-slate-400">
+                    <th class="p-3">로케이션</th>
+                    <th class="p-3">품목코드</th>
+                    <th class="p-3">품목명 / 규격</th>
+                    <th class="p-3">LOT NO</th>
+                    <th class="p-3">재고량</th>
+                </tr>
+            </thead>
+            <tbody id="inventory-list"></tbody>
+        </table>
+    </div>
 </div>
+
+<script>
+async function loadInventory() {
+    const q = document.getElementById('searchInput').value;
+    const res = await fetch(`/api/inventory?q=${encodeURIComponent(q)}`);
+    const data = await res.json();
+    const list = document.getElementById('inventory-list');
+    list.innerHTML = '';
+
+    data.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.className = "border-b border-slate-800 hover:bg-slate-800/50";
+        tr.innerHTML = `
+            <td class="p-3 font-bold text-orange-400">${item.location}</td>
+            <td class="p-3 font-mono">${item.item_code}</td>
+            <td class="p-3">
+                <div class="text-sm">${item.item_name}</div>
+                <div class="text-xs text-slate-500">${item.spec || ''}</div>
+            </td>
+            <td class="p-3 text-sm">${item.lot_no || '-'}</td>
+            <td class="p-3 font-bold ${item.qty <= 0 ? 'text-red-500' : 'text-blue-400'}">${item.qty}</td>
+        `;
+        list.appendChild(tr);
+    });
+}
+document.addEventListener('DOMContentLoaded', loadInventory);
+
+// 엔터키 검색 지원
+document.getElementById('searchInput').addEventListener('keypress', (e) => {
+    if(e.key === 'Enter') loadInventory();
+});
+</script>
 {% endblock %}
