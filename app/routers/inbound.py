@@ -31,19 +31,17 @@ def inbound_manual(data: InboundRequest):
 async def inbound_upload(file: UploadFile = File(...)):
     try:
         contents = await file.read()
-        # 이미지의 안내 문구에 따른 엑셀/CSV 컬럼 매핑 처리
         df = pd.read_excel(io.BytesIO(contents))
         
         count = 0
         for _, row in df.iterrows():
-            # 이미지 컬럼: type, location_name, brand, item_code, item_name, lot_no, spec, location, qty
-            # location_name을 창고(warehouse)로, location을 로케이션으로 매핑
+            # 이미지 컬럼 가이드를 준수하여 매핑
             warehouse_val = str(row.get('location_name', '기본창고'))
-            location_val = str(row.get('location', '미지정'))
+            location_val = str(row.get('location', row.get('location_name', '미지정')))
             item_code_val = str(row.get('item_code', ''))
             item_name_val = str(row.get('item_name', ''))
             lot_no_val = str(row.get('lot_no', ''))
-            spec_val = str(row.get('spec', ''))  # 규격 데이터 추출
+            spec_val = str(row.get('spec', ''))
             qty_val = float(row.get('qty', 0))
             brand_val = str(row.get('brand', ''))
 
@@ -56,11 +54,9 @@ async def inbound_upload(file: UploadFile = File(...)):
                     lot_no=lot_no_val,
                     spec=spec_val,
                     qty=qty_val,
-                    remark=f"엑셀업로드(Brand:{brand_val})"
+                    remark=f"업로드(Brand:{brand_val})"
                 )
                 count += 1
-            
-        return {"status": "success", "message": f"{count}건의 데이터(규격 포함)가 정상 처리되었습니다."}
+        return {"status": "success", "message": f"{count}건 데이터 처리 완료(규격 포함)"}
     except Exception as e:
-        print(f"Upload Error: {e}")
-        raise HTTPException(status_code=500, detail=f"업로드 실패: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"업로드 에러: {str(e)}")
