@@ -7,7 +7,7 @@ def get_db_connection():
 
 def init_db():
     conn = get_db_connection()
-    # 인벤토리 (6개 항목 통일: 창고, 로케이션, 품번, 품명, LOT, 규격)
+    # 1. 메인 재고 테이블 (6개 필수 항목 포함)
     conn.execute('''
         CREATE TABLE IF NOT EXISTS inventory (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -16,29 +16,30 @@ def init_db():
             qty REAL, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     ''')
-    # 작업 로그 및 롤백용 테이블
+    # 2. 통합 작업 로그 (입고, 출고, 이동, 롤백 모두 기록)
     conn.execute('''
         CREATE TABLE IF NOT EXISTS audit_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             tx_type TEXT, warehouse TEXT, location TEXT,
             item_code TEXT, item_name TEXT, lot_no TEXT,
-            spec TEXT, qty REAL, remark TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            spec TEXT, qty REAL, from_location TEXT, to_location TEXT, 
+            remark TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     ''')
     conn.commit()
     conn.close()
 
-# --- 조회 함수들 ---
+# --- [페이지/API 필수 함수들 복구] ---
+
 def get_inventory():
     conn = get_db_connection()
-    items = conn.execute("SELECT * FROM inventory WHERE qty > 0").fetchall()
+    items = conn.execute("SELECT * FROM inventory WHERE qty > 0 ORDER BY updated_at DESC").fetchall()
     conn.close()
     return [dict(i) for i in items]
 
 def get_history():
     conn = get_db_connection()
-    logs = conn.execute("SELECT * FROM audit_logs ORDER BY created_at DESC").fetchall()
+    logs = conn.execute("SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT 100").fetchall()
     conn.close()
     return [dict(l) for l in logs]
 
@@ -51,19 +52,28 @@ def dashboard_summary():
     conn.close()
     return {"total_qty": total_qty, "total_items": total_items, "today_in": today_in, "today_out": today_out}
 
-# --- 작업 함수들 ---
-def add_inventory(warehouse, location, item_code, item_name, lot_no, spec, qty, remark, tx_type="IN"):
+def get_location_items(location):
     conn = get_db_connection()
+    items = conn.execute("SELECT * FROM inventory WHERE location=? AND qty > 0", (location,)).fetchall()
+    conn.close()
+    return [dict(i) for i in items]
+
+# --- [입/출고/이동 로직] ---
+
+def add_inventory(warehouse, location, item_code, item_name, lot_no, spec, qty, remark):
+    conn = get_db_connection()
+    # 기존 재고 확인
     curr = conn.execute("SELECT id, qty FROM inventory WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?",
                        (warehouse, location, item_code, lot_no)).fetchone()
     if curr:
-        conn.execute("UPDATE inventory SET qty = qty + ? WHERE id = ?", (qty, curr['id']))
+        conn.execute("UPDATE inventory SET qty = qty + ?, updated_at=DATETIME('now') WHERE id = ?", (qty, curr['id']))
     else:
         conn.execute("INSERT INTO inventory (warehouse, location, item_code, item_name, lot_no, spec, qty) VALUES (?,?,?,?,?,?,?)",
                     (warehouse, location, item_code, item_name, lot_no, spec, qty))
     
+    # 로그 기록
     conn.execute("INSERT INTO audit_logs (tx_type, warehouse, location, item_code, item_name, lot_no, spec, qty, remark) VALUES (?,?,?,?,?,?,?,?,?)",
-                (tx_type, warehouse, location, item_code, item_name, lot_no, spec, qty, remark))
+                ("IN", warehouse, location, item_code, item_name, lot_no, spec, qty, remark))
     conn.commit()
     conn.close()
 
@@ -75,19 +85,38 @@ def subtract_inventory(warehouse, location, item_code, lot_no, qty, remark):
         conn.close()
         return False
     
-    conn.execute("UPDATE inventory SET qty = qty - ? WHERE id = ?", (qty, item['id']))
+    conn.execute("UPDATE inventory SET qty = qty - ?, updated_at=DATETIME('now') WHERE id = ?", (qty, item['id']))
     conn.execute("INSERT INTO audit_logs (tx_type, warehouse, location, item_code, item_name, lot_no, spec, qty, remark) VALUES (?,?,?,?,?,?,?,?,?)",
                 ("OUT", warehouse, location, item_code, item['item_name'], lot_no, item['spec'], qty, remark))
     conn.commit()
     conn.close()
     return True
 
+def move_inventory(item_code, lot_no, from_loc, to_loc, qty, remark):
+    conn = get_db_connection()
+    # 원본 창고/규격 정보 가져오기
+    item = conn.execute("SELECT * FROM inventory WHERE location=? AND item_code=? AND lot_no=?", 
+                       (from_loc, item_code, lot_no)).fetchone()
+    if not item or item['qty'] < qty:
+        conn.close() return False
+    
+    # 보낼 곳에 추가 (add_inventory 로직 활용)
+    add_inventory(item['warehouse'], to_loc, item_code, item['item_name'], lot_no, item['spec'], qty, f"이동 출처: {from_loc}")
+    # 원본에서 차감
+    conn.execute("UPDATE inventory SET qty = qty - ? WHERE id = ?", (qty, item['id']))
+    # 이동 로그 기록
+    conn.execute("INSERT INTO audit_logs (tx_type, warehouse, from_location, to_location, item_code, item_name, lot_no, spec, qty, remark) VALUES (?,?,?,?,?,?,?,?,?,?)",
+                ("MOVE", item['warehouse'], from_loc, to_loc, item_code, item['item_name'], lot_no, item['spec'], qty, remark))
+    conn.commit()
+    conn.close()
+    return True
+
+# --- [관리자 롤백] ---
 def process_rollback(log_id):
     conn = get_db_connection()
     log = conn.execute("SELECT * FROM audit_logs WHERE id=?", (log_id,)).fetchone()
     if not log: return False
     
-    # 반대 방향으로 재고 조정
     adj_qty = -log['qty'] if log['tx_type'] == 'IN' else log['qty']
     conn.execute("UPDATE inventory SET qty = qty + ? WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?",
                 (adj_qty, log['warehouse'], log['location'], log['item_code'], log['lot_no']))
