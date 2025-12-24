@@ -136,7 +136,29 @@ def get_all_data(table: str):
     rows = [dict(r) for r in cur.fetchall()]
     conn.close()
     return rows
+# app/db.py에 추가 또는 수정
 
+def get_history_for_excel():
+    """작업 이력을 엑셀 출력에 최적화된 형태로 가져오기"""
+    conn = get_conn()
+    cur = conn.cursor()
+    # tx_type을 한글로 변경하여 가독성 높임
+    cur.execute("""
+        SELECT 
+            CASE tx_type 
+                WHEN 'IN' THEN '입고' 
+                WHEN 'OUT' THEN '출고' 
+                WHEN 'MOVE' THEN '이동' 
+                ELSE tx_type 
+            END as 구분,
+            warehouse as 창고, location as 위치, from_location as 출발지, to_location as 도착지,
+            item_code as 품번, lot_no as LOT, qty as 수량, remark as 비고, created_at as 시간
+        FROM history 
+        ORDER BY created_at DESC
+    """)
+    rows = [dict(r) for r in cur.fetchall()]
+    conn.close()
+    return rows
 def rollback_inventory(tx_id: int):
     conn = get_conn()
     cur = conn.cursor()
