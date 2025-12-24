@@ -1,50 +1,23 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
+import csv, io
 from fastapi.responses import StreamingResponse
-import io
+from app.db import get_conn
 
-router = APIRouter(prefix="/api/export", tags=["엑셀"])
+router = APIRouter(prefix="/api/export")
 
-try:
-    import pandas as pd
-except ImportError:
-    pd = None
-
-from app.db import get_inventory, get_history
-
-
-@router.get("/inventory")
+@router.get("/inventory.xlsx")
 def export_inventory():
-    if not pd:
-        raise HTTPException(500, "pandas 미설치")
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM inventory")
+    rows = cur.fetchall()
+    conn.close()
 
-    rows = get_inventory()
-    df = pd.DataFrame(rows)
+    def gen():
+        yield "warehouse,location,item_code,item_name,lot_no,spec,qty\n"
+        for r in rows:
+            yield ",".join(map(str,r))+"\n"
 
-    buf = io.BytesIO()
-    df.to_excel(buf, index=False)
-    buf.seek(0)
-
-    return StreamingResponse(
-        buf,
-        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers={"Content-Disposition": "attachment; filename=inventory.xlsx"}
-    )
-
-
-@router.get("/history")
-def export_history():
-    if not pd:
-        raise HTTPException(500, "pandas 미설치")
-
-    rows = get_history(5000)
-    df = pd.DataFrame(rows)
-
-    buf = io.BytesIO()
-    df.to_excel(buf, index=False)
-    buf.seek(0)
-
-    return StreamingResponse(
-        buf,
-        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers={"Content-Disposition": "attachment; filename=history.xlsx"}
-    )
+    return StreamingResponse(gen(),
+        headers={"Content-Disposition":"attachment; filename=inventory.csv"},
+        media_type="text/csv")
