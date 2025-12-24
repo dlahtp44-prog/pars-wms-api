@@ -5,7 +5,7 @@ from app.db import get_inventory, get_history
 
 router = APIRouter(prefix="/api/export")
 
-def csv_response(filename: str, headers: list, rows: list):
+def csv_response(filename, headers, rows):
     buf = io.StringIO()
     writer = csv.writer(buf)
     writer.writerow(headers)
@@ -15,25 +15,17 @@ def csv_response(filename: str, headers: list, rows: list):
     return StreamingResponse(
         buf,
         media_type="text/csv",
-        headers={
-            "Content-Disposition": f"attachment; filename={filename}"
-        }
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
 
 @router.get("/inventory")
 def export_inventory():
     rows = get_inventory()
-    headers = [
-        "warehouse","location","brand",
-        "item_code","item_name","lot_no","spec","qty"
-    ]
+    headers = ["warehouse","location","item_code","lot_no","item_name","spec","qty"]
     return csv_response("inventory.csv", headers, rows)
 
 @router.get("/history")
 def export_history():
     rows = get_history()
-    headers = [
-        "id","tx_type","warehouse","location",
-        "item_code","lot_no","qty","remark","created_at"
-    ]
+    headers = ["id","tx_type","location","item_code","lot_no","qty","remark","created_at"]
     return csv_response("history.csv", headers, rows)
