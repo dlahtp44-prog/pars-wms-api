@@ -1,26 +1,25 @@
 from fastapi import APIRouter, HTTPException
-from app.db import get_location_items, move_inventory
-from pydantic import BaseModel
+from app import db
 
-router = APIRouter(prefix="/api/qr", tags=["QR"])
+router = APIRouter(prefix="/api/qr", tags=["QR API"])
 
-class MoveRequest(BaseModel):
-    warehouse: str = "기본창고"
-    from_location: str
-    to_location: str
-    item_code: str
-    lot_no: str
-    qty: float
-
-@router.get("/location/{loc}")
-async def qr_location_view(loc: str):
-    items = get_location_items(loc)
+@router.get("/location/{location_id}")
+async def read_location(location_id: str):
+    items = db.get_location_items(location_id)
     return items
 
 @router.post("/move")
-async def qr_move_process(req: MoveRequest):
+async def qr_move(data: dict):
     try:
-        move_inventory(req.warehouse, req.from_location, req.to_location, req.item_code, req.lot_no, req.qty)
-        return {"status": "success", "message": "이동 완료"}
+        db.move_inventory(
+            warehouse=data.get("warehouse", "MAIN"),
+            from_loc=data["from_location"],
+            to_loc=data["to_location"],
+            item_code=data["item_code"],
+            lot_no=data["lot_no"],
+            qty=float(data["qty"]),
+            remark="QR 이동"
+        )
+        return {"status": "success"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e))
