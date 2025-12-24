@@ -8,5 +8,5 @@ templates = Jinja2Templates(directory="app/templates")
 @router.get("")
 def page(request: Request):
     s = dashboard_summary()
-    # **s를 {"s": s}로 변경하여 템플릿의 변수 구조와 맞춥니다.
+    # "s": s 로 넘겨야 templates에서 s.inbound_today 로 접근 가능합니다.
     return templates.TemplateResponse("dashboard.html", {"request": request, "s": s})
