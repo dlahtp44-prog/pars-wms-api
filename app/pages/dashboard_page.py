@@ -7,11 +7,8 @@ templates = Jinja2Templates(directory="app/templates")
 
 @router.get("")
 def dashboard(request: Request):
-    s = dashboard_summary()
+    data = dashboard_summary()
     return templates.TemplateResponse(
         "dashboard.html",
-        {
-            "request": request,
-            "s": s
-        }
+        {"request": request, **data}
     )
