@@ -1,62 +1,23 @@
-let qrScanner = null;
+let scanner;
 
 async function startScan(){
-  const msg = document.getElementById("msg");
-  msg.innerText = "📷 카메라 준비 중…";
+  scanner = new Html5Qrcode("reader");
+  const cams = await Html5Qrcode.getCameras();
+  const back = cams.find(c=>c.label.toLowerCase().includes("back")) || cams[0];
 
-  if(qrScanner) return;
-
-  try{
-    qrScanner = new Html5Qrcode("reader");
-
-    const cameras = await Html5Qrcode.getCameras();
-    if(!cameras || cameras.length === 0){
-      throw "카메라 없음";
-    }
-
-    // 🔥 후면 카메라 우선
-    const backCam =
-      cameras.find(c => c.label.toLowerCase().includes("back")) || cameras[0];
-
-    await qrScanner.start(
-      backCam.id,
-      { fps: 10, qrbox: 250 },
-      (decodedText) => {
-        stopScan();
-        processQR(decodedText);
-      }
-    );
-
-    msg.innerText = "📷 스캔 중…";
-  }catch(e){
-    msg.innerText = "❌ 카메라 접근 실패 (권한/HTTPS 확인)";
-    qrScanner = null;
-  }
-}
-
-function stopScan(){
-  if(!qrScanner) return;
-  qrScanner.stop().then(()=>{
-    qrScanner.clear();
-    qrScanner = null;
-  });
-}
-
-async function processQR(text){
-  try{
-    const params = new URLSearchParams(text);
-    const data = Object.fromEntries(params.entries());
-
-    const res = await fetch("/api/qr/process", {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify(data)
+  scanner.start(back.id,{fps:10,qrbox:250}, async text=>{
+    scanner.stop();
+    const res = await fetch("/api/qr/process",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(Object.fromEntries(new URLSearchParams(text)))
     });
-
     const d = await res.json();
-    document.getElementById("msg").innerText =
-      res.ok ? "✅ 처리 완료" : "❌ " + JSON.stringify(d);
-  }catch(e){
-    document.getElementById("msg").innerText = "❌ QR 처리 실패";
-  }
+    document.getElementById("result").innerHTML =
+      d.type==="LOCATION"
+        ? `<h3>📍 ${d.location}</h3>` + d.items.map(i=>`
+            <div>${i.item_code} / ${i.lot_no} / ${i.qty}</div>
+          `).join("")
+        : "처리 실패";
+  });
 }
