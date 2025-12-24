@@ -1,17 +1,11 @@
 from fastapi import APIRouter
-from app.db import get_inventory, dashboard_summary
+from app.db import get_inventory
 
-router = APIRouter(prefix="/api", tags=["재고"])
+router = APIRouter(prefix="/api/inventory", tags=["재고"])
 
-@router.get("/inventory")
-def inventory_api(q: str = "", warehouse: str = "", location: str = ""):
-    rows = get_inventory(
-        warehouse=warehouse if warehouse else None,
-        location=location if location else None,
-        q=q
-    )
-    return rows
-
-@router.get("/dashboard")
-def dashboard_api():
-    return dashboard_summary()
+@router.get("")
+def api_inventory(q: str = "", warehouse: str = "", location: str = ""):
+    w = warehouse or None
+    l = location or None
+    qq = q or None
+    return get_inventory(warehouse=w, location=l, q=qq)
