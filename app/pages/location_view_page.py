@@ -6,9 +6,9 @@ router = APIRouter(prefix="/location")
 templates = Jinja2Templates(directory="app/templates")
 
 @router.get("")
-def location_view(request: Request, location: str):
+def location_view(request: Request, location: str = Query(...)):
     rows = get_inventory(location=location)
     return templates.TemplateResponse(
         "location_view.html",
-        {"request": request, "rows": rows, "location": location}
+        {"request": request, "location": location, "rows": rows}
     )
