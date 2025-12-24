@@ -27,7 +27,7 @@ def init_db():
     conn.commit()
     conn.close()
 
-# --- 라우터들이 공통으로 사용하는 로그 함수 ---
+# 로그 기록 통합 함수
 def log_history(tx_type, warehouse, location, item_code, lot_no, qty, remark, to_location=None, from_location=None):
     conn = get_conn()
     cur = conn.cursor()
@@ -38,7 +38,7 @@ def log_history(tx_type, warehouse, location, item_code, lot_no, qty, remark, to
     conn.commit()
     conn.close()
 
-# --- 입고 / 출고 / 이동 핵심 로직 ---
+# --- 물류 핵심 로직 ---
 def add_inventory(warehouse, location, brand, item_code, item_name, lot_no, spec, qty, remark=""):
     conn = get_conn()
     cur = conn.cursor()
@@ -59,22 +59,19 @@ def subtract_inventory(warehouse, location, item_code, lot_no, qty, remark=""):
     conn.close()
     log_history('OUT', warehouse, location, item_code, lot_no, -qty, remark)
 
-# QR 및 매뉴얼 이동에서 찾는 함수명: move_inventory
-def move_inventory(warehouse, from_location, to_location, item_code, lot_no, qty, remark="이동"):
+def move_inventory(warehouse, from_loc, to_loc, item_code, lot_no, qty, remark="이동"):
     conn = get_conn()
     cur = conn.cursor()
-    # 출발지 차감
-    cur.execute("UPDATE inventory SET qty = qty - ? WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?", (qty, warehouse, from_location, item_code, lot_no))
-    # 도착지 가산
+    cur.execute("UPDATE inventory SET qty = qty - ? WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?", (qty, warehouse, from_loc, item_code, lot_no))
     cur.execute("""
     INSERT INTO inventory (warehouse, location, item_code, lot_no, qty) VALUES (?, ?, ?, ?, ?)
     ON CONFLICT(warehouse, location, item_code, lot_no) DO UPDATE SET qty = qty + excluded.qty
-    """, (warehouse, to_location, item_code, lot_no, qty))
+    """, (warehouse, to_loc, item_code, lot_no, qty))
     conn.commit()
     conn.close()
-    log_history('MOVE', warehouse, from_location, item_code, lot_no, qty, remark, to_location=to_location, from_location=from_location)
+    log_history('MOVE', warehouse, from_loc, item_code, lot_no, qty, remark, to_location=to_loc, from_location=from_loc)
 
-# --- 조회 관련 함수 ---
+# --- 조회/관리 로직 ---
 def get_inventory(q=None):
     conn = get_conn()
     cur = conn.cursor()
@@ -105,10 +102,6 @@ def get_history(limit=500):
     conn.close()
     return rows
 
-# --- 관리자 및 대시보드 ---
-def admin_password_ok(pw: str):
-    return pw == "admin123"
-
 def dashboard_summary():
     conn = get_conn()
     cur = conn.cursor()
@@ -119,28 +112,20 @@ def dashboard_summary():
     conn.close()
     return {"inbound_today": inb, "outbound_today": abs(outb), "total_stock": total, "negative_stock": neg}
 
-# --- 🔥 핵심: 관리자 재고 롤백 ---
 def rollback_inventory(tx_id: int):
     conn = get_conn()
     cur = conn.cursor()
     cur.execute("SELECT * FROM history WHERE id=?", (tx_id,))
-    row = cur.fetchone()
-    if not row:
-        conn.close()
-        return False
-    
-    # 유형별 반대 작업 수행
-    if row['tx_type'] == 'IN':
-        cur.execute("UPDATE inventory SET qty = qty - ? WHERE location=? AND item_code=? AND lot_no=?", (row['qty'], row['location'], row['item_code'], row['lot_no']))
-    elif row['tx_type'] == 'OUT':
-        cur.execute("UPDATE inventory SET qty = qty + ? WHERE location=? AND item_code=? AND lot_no=?", (abs(row['qty']), row['location'], row['item_code'], row['lot_no']))
-    elif row['tx_type'] == 'MOVE':
-        # 보냈던 곳에 더하고, 받은 곳에서 빼기
-        cur.execute("UPDATE inventory SET qty = qty + ? WHERE location=? AND item_code=? AND lot_no=?", (row['qty'], row['from_location'], row['item_code'], row['lot_no']))
-        cur.execute("UPDATE inventory SET qty = qty - ? WHERE location=? AND item_code=? AND lot_no=?", (row['qty'], row['to_location'], row['item_code'], row['lot_no']))
-    
-    # 이력에 롤백 기록 남기고 원본 삭제
-    cur.execute("DELETE FROM history WHERE id=?", (tx_id,))
+    h = cur.fetchone()
+    if h:
+        if h['tx_type'] == 'IN':
+            cur.execute("UPDATE inventory SET qty = qty - ? WHERE location=? AND item_code=? AND lot_no=?", (h['qty'], h['location'], h['item_code'], h['lot_no']))
+        elif h['tx_type'] == 'OUT':
+            cur.execute("UPDATE inventory SET qty = qty + ? WHERE location=? AND item_code=? AND lot_no=?", (abs(h['qty']), h['location'], h['item_code'], h['lot_no']))
+        elif h['tx_type'] == 'MOVE':
+            cur.execute("UPDATE inventory SET qty = qty + ? WHERE location=? AND item_code=? AND lot_no=?", (h['qty'], h['from_location'], h['item_code'], h['lot_no']))
+            cur.execute("UPDATE inventory SET qty = qty - ? WHERE location=? AND item_code=? AND lot_no=?", (h['qty'], h['to_location'], h['item_code'], h['lot_no']))
+        cur.execute("DELETE FROM history WHERE id=?", (tx_id,))
     conn.commit()
     conn.close()
     return True
