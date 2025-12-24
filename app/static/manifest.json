@@ -1,9 +1,9 @@
 {
   "name": "PARS WMS",
-  "short_name": "PARS WMS",
-  "start_url": "/worker",
+  "short_name": "WMS",
+  "start_url": "/",
   "display": "standalone",
-  "background_color": "#0b1220",
-  "theme_color": "#0b1220",
-  "icons": []
+  "icons": [
+    {"src":"/static/icon-192.png","sizes":"192x192","type":"image/png"}
+  ]
 }
