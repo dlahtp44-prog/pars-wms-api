@@ -26,11 +26,48 @@ def init_db():
     )""")
     conn.commit()
     conn.close()
-    print("✅ DB 초기화 및 테이블 확인 완료")
+    print("✅ DB 초기화 완료")
 
 # =========================
-# 작업 이력 (History) 관련
+# [필수] 조회 및 이력 함수
 # =========================
+
+def get_inventory(q: str | None = None):
+    conn = get_conn()
+    cur = conn.cursor()
+    sql = "SELECT * FROM inventory WHERE qty != 0"
+    params = []
+    if q:
+        sql += " AND (item_code LIKE ? OR item_name LIKE ? OR lot_no LIKE ? OR location LIKE ?)"
+        kw = f"%{q}%"
+        params = [kw, kw, kw, kw]
+    sql += " ORDER BY item_code ASC"
+    cur.execute(sql, params)
+    rows = [dict(r) for r in cur.fetchall()]
+    conn.close()
+    return rows
+
+def get_history(limit=200):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM history ORDER BY created_at DESC LIMIT ?", (limit,))
+    rows = [dict(r) for r in cur.fetchall()]
+    conn.close()
+    return rows
+
+def get_location_items(location: str):
+    """실패했던 location_view_page를 위한 함수"""
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM inventory WHERE location=? AND qty != 0", (location,))
+    rows = [dict(r) for r in cur.fetchall()]
+    conn.close()
+    return rows
+
+# =========================
+# [필수] 물류 처리 및 이력 기록
+# =========================
+
 def log_history(tx_type, warehouse, location, item_code, lot_no, qty, remark, to_location=None, from_location=None):
     conn = get_conn()
     cur = conn.cursor()
@@ -41,28 +78,16 @@ def log_history(tx_type, warehouse, location, item_code, lot_no, qty, remark, to
     conn.commit()
     conn.close()
 
-def get_history(limit=200):
-    conn = get_conn()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM history ORDER BY created_at DESC LIMIT ?", (limit,))
-    rows = [dict(r) for r in cur.fetchall()]
-    conn.close()
-    return rows
-
-# =========================
-# 물류 핵심 로직 (이력 연동)
-# =========================
 def add_inventory(warehouse, location, brand, item_code, item_name, lot_no, spec, qty, remark=""):
     conn = get_conn()
     cur = conn.cursor()
     cur.execute("""
-    INSERT INTO inventory (warehouse, location, brand, item_code, item_name, lot_no, spec, qty) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO inventory VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(warehouse, location, item_code, lot_no)
     DO UPDATE SET qty = qty + excluded.qty, item_name = excluded.item_name, brand = excluded.brand, spec = excluded.spec
     """, (warehouse, location, brand, item_code, item_name, lot_no, spec, qty))
     conn.commit()
     conn.close()
-    # 이력 남기기
     log_history("IN", warehouse, location, item_code, lot_no, qty, remark)
 
 def subtract_inventory(warehouse, location, item_code, lot_no, qty, remark=""):
@@ -72,41 +97,24 @@ def subtract_inventory(warehouse, location, item_code, lot_no, qty, remark=""):
                 (qty, warehouse, location, item_code, lot_no))
     conn.commit()
     conn.close()
-    # 이력 남기기 (출고는 수량을 음수로 기록)
     log_history("OUT", warehouse, location, item_code, lot_no, -qty, remark)
 
 def move_inventory(warehouse, from_location, to_location, item_code, lot_no, qty, remark="이동"):
     conn = get_conn()
     cur = conn.cursor()
-    # 출발지 차감
     cur.execute("UPDATE inventory SET qty = qty - ? WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?",
                 (qty, warehouse, from_location, item_code, lot_no))
-    # 목적지 가산
     cur.execute("""
     INSERT INTO inventory (warehouse, location, item_code, lot_no, qty) VALUES (?, ?, ?, ?, ?)
     ON CONFLICT(warehouse, location, item_code, lot_no) DO UPDATE SET qty = qty + excluded.qty
     """, (warehouse, to_location, item_code, lot_no, qty))
     conn.commit()
     conn.close()
-    # 이력 남기기
     log_history("MOVE", warehouse, from_location, item_code, lot_no, qty, remark, to_location=to_location, from_location=from_location)
 
 # =========================
-# 조회 및 관리 기능
+# 관리자 및 대시보드
 # =========================
-def get_inventory(q=None):
-    conn = get_conn()
-    cur = conn.cursor()
-    sql = "SELECT * FROM inventory WHERE 1=1"
-    params = []
-    if q:
-        sql += " AND (item_code LIKE ? OR item_name LIKE ? OR lot_no LIKE ? OR location LIKE ?)"
-        kw = f"%{q}%"
-        params = [kw, kw, kw, kw]
-    cur.execute(sql, params)
-    rows = [dict(r) for r in cur.fetchall()]
-    conn.close()
-    return rows
 
 def dashboard_summary():
     conn = get_conn()
