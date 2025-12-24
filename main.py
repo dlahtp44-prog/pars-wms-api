@@ -1,41 +1,74 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.sessions import SessionMiddleware
+import os
+
 from app.db import init_db
-from app.routers import inbound, outbound, inventory, history, move, qr_api, export_excel, admin
-from app.pages import index_page, worker_page, inbound_page, outbound_page, inventory_page, history_page, qr_page, dashboard_page, admin_page, location_view_page, label_page, upload_page
 
-app = FastAPI(title="PARS WMS 통합 시스템")
+app = FastAPI(
+    title="PARS WMS",
+    description="입고/출고/이동/재고/이력/QR/대시보드/관리자(롤백)/라벨/CSV",
+    version="1.0.0"
+)
 
-# 1. 서버 시작 시 DB 초기화 실행
-init_db()
+@app.on_event("startup")
+def startup():
+    init_db()
+    print("✅ DB 초기화 완료")
 
-# 2. 정적 파일 마운트
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
+# static
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+STATIC_DIR = os.path.join(BASE_DIR, "app", "static")
+if os.path.isdir(STATIC_DIR):
+    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+    print("✅ static 마운트:", STATIC_DIR)
 
-# 3. API 라우터 등록
-app.include_router(inbound.router)
-app.include_router(outbound.router)
-app.include_router(inventory.router)
-app.include_router(history.router)
-app.include_router(move.router)
-app.include_router(qr_api.router)
-app.include_router(export_excel.router)
-app.include_router(admin.router)
+# middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+SECRET_KEY = os.getenv("SECRET_KEY", "pars-wms-secret-key-change-me")
+app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
 
-# 4. 페이지 라우터 등록
-app.include_router(index_page.router)
-app.include_router(worker_page.router)
-app.include_router(inbound_page.router)
-app.include_router(outbound_page.router)
-app.include_router(inventory_page.router)
-app.include_router(history_page.router)
-app.include_router(qr_page.router)
-app.include_router(dashboard_page.router)
-app.include_router(admin_page.router)
-app.include_router(location_view_page.router)
-app.include_router(label_page.router)
-app.include_router(upload_page.router)
+def safe_include(path: str):
+    try:
+        m = __import__(path, fromlist=["router"])
+        app.include_router(m.router)
+        print(f"✅ {path} 등록")
+    except Exception as e:
+        print(f"❌ {path} 실패:", e)
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8080, reload=True)
+# Pages
+safe_include("app.pages.index_page")
+safe_include("app.pages.worker_page")
+safe_include("app.pages.inbound_page")
+safe_include("app.pages.outbound_page")
+safe_include("app.pages.move_page")
+safe_include("app.pages.inventory_page")
+safe_include("app.pages.history_page")
+safe_include("app.pages.qr_page")
+safe_include("app.pages.dashboard_page")
+safe_include("app.pages.admin_page")
+safe_include("app.pages.upload_page")
+safe_include("app.pages.location_view_page")
+safe_include("app.pages.label_page")
+
+# APIs
+safe_include("app.routers.inbound")
+safe_include("app.routers.outbound")
+safe_include("app.routers.move")
+safe_include("app.routers.inventory")
+safe_include("app.routers.history")
+safe_include("app.routers.qr_process")
+safe_include("app.routers.qr_api")
+safe_include("app.routers.upload_inventory")
+safe_include("app.routers.upload_outbound")
+safe_include("app.routers.export_excel")
+
+@app.get("/ping")
+def ping():
+    return {"status": "OK"}
