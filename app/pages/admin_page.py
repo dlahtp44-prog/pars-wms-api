@@ -1,33 +1,39 @@
 from fastapi import APIRouter, Request, Form
-from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
-from app.db import get_history, admin_password_ok
+from fastapi.responses import RedirectResponse
+from app.db import get_history, rollback, admin_password_ok
 
 router = APIRouter(prefix="/admin")
 templates = Jinja2Templates(directory="app/templates")
 
-def is_admin(request: Request) -> bool:
-    return bool(request.session.get("is_admin"))
+@router.get("")
+def admin_page(request: Request):
+    # 로그인 안 되어 있으면 로그인 화면
+    if not request.session.get("admin"):
+        return templates.TemplateResponse(
+            "admin_login.html",
+            {"request": request}
+        )
 
-@router.get("/login")
-def admin_login(request: Request):
-    return templates.TemplateResponse("admin_login.html", {"request": request, "err": ""})
+    rows = get_history(limit=300)
+    return templates.TemplateResponse(
+        "admin.html",
+        {"request": request, "rows": rows}
+    )
 
 @router.post("/login")
-def admin_login_post(request: Request, password: str = Form("")):
+def admin_login(request: Request, password: str = Form(...)):
     if admin_password_ok(password):
-        request.session["is_admin"] = True
+        request.session["admin"] = True
         return RedirectResponse("/admin", status_code=303)
-    return templates.TemplateResponse("admin_login.html", {"request": request, "err": "비밀번호가 틀렸습니다."})
+    return templates.TemplateResponse(
+        "admin_login.html",
+        {"request": request, "error": "비밀번호 오류"}
+    )
 
-@router.get("/logout")
-def admin_logout(request: Request):
-    request.session.clear()
-    return RedirectResponse("/", status_code=303)
-
-@router.get("")
-def admin_home(request: Request):
-    if not is_admin(request):
-        return RedirectResponse("/admin/login", status_code=303)
-    rows = get_history(limit=800, include_rolled_back=True)
-    return templates.TemplateResponse("admin.html", {"request": request, "rows": rows})
+@router.post("/rollback/{tx_id}")
+def admin_rollback(request: Request, tx_id: int):
+    if not request.session.get("admin"):
+        return RedirectResponse("/admin", status_code=303)
+    rollback(tx_id)
+    return RedirectResponse("/admin", status_code=303)
