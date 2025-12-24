@@ -7,7 +7,7 @@ def get_db_connection():
 
 def init_db():
     conn = get_db_connection()
-    # 1. 메인 재고 테이블 (창고, 로케이션, 품번, 품명, LOT, 규격 통합)
+    # 1. 메인 재고 테이블
     conn.execute('''
         CREATE TABLE IF NOT EXISTS inventory (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -16,7 +16,7 @@ def init_db():
             qty REAL, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     ''')
-    # 2. 통합 작업 로그 및 롤백용 테이블
+    # 2. 통합 작업 로그
     conn.execute('''
         CREATE TABLE IF NOT EXISTS audit_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -29,16 +29,28 @@ def init_db():
     conn.commit()
     conn.close()
 
-# --- [관리자 인증 함수 - 추가됨] ---
 def admin_password_ok(password: str) -> bool:
-    # 관리자 페이지 접속 비밀번호 (원하시는 대로 수정하세요)
-    ADMIN_SECRET = "admin1234" 
-    return password == ADMIN_SECRET
+    return password == "admin1234"
 
-# --- [조회 함수들] ---
-def get_inventory():
+# --- [수정된 조회 함수: 검색어 q 지원] ---
+def get_inventory(q: str = None):
     conn = get_db_connection()
-    items = conn.execute("SELECT * FROM inventory WHERE qty > 0 ORDER BY updated_at DESC").fetchall()
+    if q:
+        # 품번, 품명, LOT, 로케이션 중 검색어가 포함된 데이터 조회
+        query = """
+            SELECT * FROM inventory 
+            WHERE qty > 0 AND (
+                item_code LIKE ? OR 
+                item_name LIKE ? OR 
+                lot_no LIKE ? OR 
+                location LIKE ?
+            )
+            ORDER BY updated_at DESC
+        """
+        search = f"%{q}%"
+        items = conn.execute(query, (search, search, search, search)).fetchall()
+    else:
+        items = conn.execute("SELECT * FROM inventory WHERE qty > 0 ORDER BY updated_at DESC").fetchall()
     conn.close()
     return [dict(i) for i in items]
 
@@ -106,12 +118,11 @@ def move_inventory(item_code, lot_no, from_loc, to_loc, qty, remark):
     conn.execute("UPDATE inventory SET qty = qty - ? WHERE id = ?", (qty, item['id']))
     
     conn.execute("INSERT INTO audit_logs (tx_type, warehouse, from_location, to_location, item_code, item_name, lot_no, spec, qty, remark) VALUES (?,?,?,?,?,?,?,?,?,?)",
-                ("MOVE", item['warehouse'], from_loc, to_loc, item_code, item['item_name'], lot_no, spec, qty, remark))
+                ("MOVE", item['warehouse'], from_loc, to_loc, item_code, item['item_name'], lot_no, item['spec'], qty, remark))
     conn.commit()
     conn.close()
     return True
 
-# --- [관리자 전용 롤백] ---
 def process_rollback(log_id):
     conn = get_db_connection()
     log = conn.execute("SELECT * FROM audit_logs WHERE id=?", (log_id,)).fetchone()
