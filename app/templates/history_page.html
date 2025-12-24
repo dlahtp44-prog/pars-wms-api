@@ -1,39 +1,66 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="card">
-  <div class="h2">🧾 작업 이력</div>
-
-  <div class="tablewrap">
-    <table class="table">
-      <thead>
-        <tr>
-          <th>ID</th><th>구분</th><th>창고</th><th>위치</th><th>품번</th><th>LOT</th>
-          <th class="right">수량</th><th>비고</th><th>시간</th><th>롤백</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for r in rows %}
-        <tr>
-          <td>{{ r.id }}</td>
-          <td>{{ r.tx_type }}</td>
-          <td>{{ r.warehouse }}</td>
-          <td>{{ r.location }}</td>
-          <td>{{ r.item_code }}</td>
-          <td>{{ r.lot_no }}</td>
-          <td class="right"><b>{{ r.qty }}</b></td>
-          <td>{{ r.remark }}</td>
-          <td>{{ r.created_at }}</td>
-          <td>
-            {% if r.rolled_back == 0 %}
-            <button class="btn" onclick="fetch('/api/history/rollback/{{r.id}}',{method:'POST'}).then(()=>location.reload())">롤백</button>
-            {% else %}
-            <span class="muted">완료</span>
-            {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+    <div class="card-header">
+        <h2>📜 최근 작업 이력</h2>
+    </div>
+    <div class="table-container">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="border-b border-slate-700 text-slate-400">
+                    <th class="p-3">일시</th>
+                    <th class="p-3">유형</th>
+                    <th class="p-3">품목코드</th>
+                    <th class="p-3">수량</th>
+                    <th class="p-3">로케이션</th>
+                    <th class="p-3">비고</th>
+                </tr>
+            </thead>
+            <tbody id="history-list">
+                </tbody>
+        </table>
+    </div>
 </div>
+
+<script>
+async function loadHistory() {
+    try {
+        const res = await fetch('/api/history');
+        const data = await res.json();
+        const list = document.getElementById('history-list');
+        list.innerHTML = '';
+
+        data.forEach(h => {
+            const tr = document.createElement('tr');
+            tr.className = "border-b border-slate-800 hover:bg-slate-800/50";
+            
+            // 유형별 색상 처리
+            let typeTag = `<span class="px-2 py-1 rounded text-xs font-bold bg-slate-700">${h.tx_type}</span>`;
+            if(h.tx_type === 'IN') typeTag = `<span class="px-2 py-1 rounded text-xs font-bold bg-green-900 text-green-300">입고</span>`;
+            if(h.tx_type === 'OUT') typeTag = `<span class="px-2 py-1 rounded text-xs font-bold bg-red-900 text-red-300">출고</span>`;
+            if(h.tx_type === 'MOVE') typeTag = `<span class="px-2 py-1 rounded text-xs font-bold bg-blue-900 text-blue-300">이동</span>`;
+
+            // 로케이션 표시 (이동인 경우 From -> To)
+            let locInfo = h.location || '-';
+            if(h.tx_type === 'MOVE' && h.to_location) {
+                locInfo = `${h.from_location || h.location} ➔ ${h.to_location}`;
+            }
+
+            tr.innerHTML = `
+                <td class="p-3 text-slate-400 text-sm">${h.created_at.replace('T', ' ').substring(0, 16)}</td>
+                <td class="p-3">${typeTag}</td>
+                <td class="p-3 font-mono">${h.item_code}</td>
+                <td class="p-3 ${h.qty < 0 ? 'text-red-400' : 'text-green-400'}">${h.qty}</td>
+                <td class="p-3 text-sm">${locInfo}</td>
+                <td class="p-3 text-slate-500 text-xs">${h.remark || ''}</td>
+            `;
+            list.appendChild(tr);
+        });
+    } catch (e) {
+        console.error("이력 로드 실패:", e);
+    }
+}
+// 페이지 로드 시 즉시 실행
+document.addEventListener('DOMContentLoaded', loadHistory);
+</script>
 {% endblock %}
