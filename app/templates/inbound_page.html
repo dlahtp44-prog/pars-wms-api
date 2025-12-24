@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>입고 작업 (Inbound)</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/app.css">
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="/">📦 WMS 입고</a>
+            <button class="btn btn-light btn-sm" onclick="location.href='/'">메인으로</button>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="card-title mb-0 text-primary">📝 수기 입고 등록</h5>
+            </div>
+            <div class="card-body">
+                <form id="inboundForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">창고 (Warehouse)</label>
+                            <select class="form-select" id="warehouse" required>
+                                <option value="A">A 창고</option>
+                                <option value="B">B 창고</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">로케이션 (Location)</label>
+                            <input type="text" class="form-control" id="location" placeholder="예: A-01-01" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">품번 (Item Code)</label>
+                            <input type="text" class="form-control" id="item_code" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">품명 (Item Name)</label>
+                            <input type="text" class="form-control" id="item_name" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">LOT 번호</label>
+                            <input type="text" class="form-control" id="lot_no" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-info fw-bold">규격 (Spec)</label>
+                            <input type="text" class="form-control" id="spec" placeholder="예: 10kg, Box">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">수량 (Qty)</label>
+                            <input type="number" class="form-control" id="qty" step="0.01" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">비고 (Remark)</label>
+                            <input type="text" class="form-control" id="remark">
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg">입고 처리 (Submit)</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        document.getElementById('inboundForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // 데이터 수집 (규격 포함)
+            const data = {
+                warehouse: document.getElementById('warehouse').value,
+                location: document.getElementById('location').value,
+                item_code: document.getElementById('item_code').value,
+                item_name: document.getElementById('item_name').value,
+                lot_no: document.getElementById('lot_no').value,
+                spec: document.getElementById('spec').value || "", // 값이 없으면 빈 문자열 전송
+                qty: parseFloat(document.getElementById('qty').value),
+                remark: document.getElementById('remark').value
+            };
+
+            try {
+                const response = await fetch('/api/inbound/manual', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '입고 완료',
+                        text: '정상적으로 입고되었습니다.',
+                        timer: 1500,
+                        showConfirmButton: false
+                    }).then(() => {
+                        window.location.reload(); // 페이지 새로고침
+                    });
+                } else {
+                    const err = await response.json();
+                    Swal.fire('오류', `입고 실패: ${err.detail || '알 수 없는 오류'}`, 'error');
+                }
+            } catch (error) {
+                console.error(error);
+                Swal.fire('오류', '서버 통신 중 오류가 발생했습니다.', 'error');
+            }
+        });
+    </script>
+</body>
+</html>
