@@ -29,8 +29,13 @@ def init_db():
     conn.commit()
     conn.close()
 
-# --- [조회 함수들] ---
+# --- [관리자 인증 함수 - 추가됨] ---
+def admin_password_ok(password: str) -> bool:
+    # 기본 관리자 비밀번호 설정 (원하시는 비번으로 수정 가능합니다)
+    ADMIN_SECRET = "admin1234" 
+    return password == ADMIN_SECRET
 
+# --- [조회 함수들] ---
 def get_inventory():
     conn = get_db_connection()
     items = conn.execute("SELECT * FROM inventory WHERE qty > 0 ORDER BY updated_at DESC").fetchall()
@@ -59,7 +64,6 @@ def get_location_items(location):
     return [dict(i) for i in items]
 
 # --- [입/출고/이동 로직] ---
-
 def add_inventory(warehouse, location, item_code, item_name, lot_no, spec, qty, remark):
     conn = get_db_connection()
     curr = conn.execute("SELECT id, qty FROM inventory WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?",
@@ -96,11 +100,9 @@ def move_inventory(item_code, lot_no, from_loc, to_loc, qty, remark):
                        (from_loc, item_code, lot_no)).fetchone()
     if not item or item['qty'] < qty:
         conn.close()
-        return False # <-- 여기서 붙어있던 에러를 수정했습니다.
+        return False
     
-    # 이동 대상 창고 정보 유지하며 추가
     add_inventory(item['warehouse'], to_loc, item_code, item['item_name'], lot_no, item['spec'], qty, f"이동 출처: {from_loc}")
-    # 원본 위치에서 차감
     conn.execute("UPDATE inventory SET qty = qty - ? WHERE id = ?", (qty, item['id']))
     
     conn.execute("INSERT INTO audit_logs (tx_type, warehouse, from_location, to_location, item_code, item_name, lot_no, spec, qty, remark) VALUES (?,?,?,?,?,?,?,?,?,?)",
@@ -117,12 +119,10 @@ def process_rollback(log_id):
         conn.close()
         return False
     
-    # 작업 방향의 반대로 재고 원복
     adj_qty = -log['qty'] if log['tx_type'] == 'IN' else log['qty']
     conn.execute("UPDATE inventory SET qty = qty + ? WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?",
                 (adj_qty, log['warehouse'], log['location'], log['item_code'], log['lot_no']))
     
-    # 롤백 완료 후 해당 로그 삭제
     conn.execute("DELETE FROM audit_logs WHERE id=?", (log_id,))
     conn.commit()
     conn.close()
