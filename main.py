@@ -1,3 +1,4 @@
+# main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -8,8 +9,8 @@ from app.db import init_db
 
 app = FastAPI(
     title="PARS WMS",
-    description="입고/출고/이동/재고/이력/QR/대시보드/관리자(롤백)/라벨/CSV",
-    version="2.0.0"
+    description="입고/출고/이동/재고/이력/QR/대시보드/관리자(롤백)/라벨/엑셀",
+    version="1.0.0"
 )
 
 @app.on_event("startup")
@@ -17,12 +18,14 @@ def startup():
     init_db()
     print("✅ DB 초기화 완료")
 
+# static
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "app", "static")
 if os.path.isdir(STATIC_DIR):
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
     print("✅ static 마운트:", STATIC_DIR)
 
+# middlewares
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -62,9 +65,10 @@ safe_include("app.routers.inventory")
 safe_include("app.routers.history")
 safe_include("app.routers.qr_process")
 safe_include("app.routers.qr_api")
+safe_include("app.routers.export_excel")
+safe_include("app.routers.qr_generate")
 safe_include("app.routers.upload_inventory")
 safe_include("app.routers.upload_outbound")
-safe_include("app.routers.export_excel")
 
 @app.get("/ping")
 def ping():
