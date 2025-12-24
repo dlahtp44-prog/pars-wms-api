@@ -7,7 +7,7 @@ def get_db_connection():
 
 def init_db():
     conn = get_db_connection()
-    # spec 컬럼 포함 확인
+    # 인벤토리 테이블: 규격(spec) 포함
     conn.execute('''
         CREATE TABLE IF NOT EXISTS inventory (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -16,6 +16,7 @@ def init_db():
             qty REAL, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+    # 이력 로그 테이블: 규격(spec) 및 이동 경로 포함
     conn.execute('''
         CREATE TABLE IF NOT EXISTS audit_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -28,25 +29,40 @@ def init_db():
     conn.commit()
     conn.close()
 
-def get_inventory(q: str = None):
+# --- 페이지 로딩 에러 해결을 위한 함수들 ---
+
+def dashboard_summary():
+    """대시보드 요약 정보 (대시보드 페이지 에러 해결)"""
     conn = get_db_connection()
-    if q:
-        search = f"%{q}%"
-        # 품번, 품명, LOT, 로케이션, 규격까지 검색 범위 확대
-        query = """
-            SELECT * FROM inventory 
-            WHERE qty > 0 AND (item_code LIKE ? OR item_name LIKE ? OR lot_no LIKE ? OR location LIKE ? OR spec LIKE ?)
-            ORDER BY updated_at DESC
-        """
-        items = conn.execute(query, (search, search, search, search, search)).fetchall()
+    total_qty = conn.execute("SELECT SUM(qty) FROM inventory").fetchone()[0] or 0
+    total_items = conn.execute("SELECT COUNT(DISTINCT item_code) FROM inventory").fetchone()[0] or 0
+    today_in = conn.execute("SELECT SUM(qty) FROM audit_logs WHERE tx_type='IN' AND date(created_at)=date('now')").fetchone()[0] or 0
+    today_out = conn.execute("SELECT SUM(qty) FROM audit_logs WHERE tx_type='OUT' AND date(created_at)=date('now')").fetchone()[0] or 0
+    conn.close()
+    return {"total_qty": total_qty, "total_items": total_items, "today_in": today_in, "today_out": today_out}
+
+def get_history(limit: int = None):
+    """작업 이력 조회 (이력 페이지 및 관리자 페이지 에러 해결)"""
+    conn = get_db_connection()
+    if limit:
+        logs = conn.execute("SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT ?", (limit,)).fetchall()
     else:
-        items = conn.execute("SELECT * FROM inventory WHERE qty > 0 ORDER BY updated_at DESC").fetchall()
+        logs = conn.execute("SELECT * FROM audit_logs ORDER BY created_at DESC").fetchall()
+    conn.close()
+    return [dict(l) for l in logs]
+
+def get_location_items(location):
+    """특정 로케이션 재고 조회 (로케이션 뷰 에러 해결)"""
+    conn = get_db_connection()
+    items = conn.execute("SELECT * FROM inventory WHERE location=? AND qty > 0", (location,)).fetchall()
     conn.close()
     return [dict(i) for i in items]
 
+# --- API 작동 에러 해결을 위한 함수들 ---
+
 def add_inventory(warehouse, location, item_code, item_name, lot_no, spec, qty, remark):
+    """입고 로직"""
     conn = get_db_connection()
-    # 기존 재고 확인 시 spec도 조건에 포함하여 관리할 수 있습니다.
     curr = conn.execute("SELECT id, qty FROM inventory WHERE warehouse=? AND location=? AND item_code=? AND lot_no=? AND spec=?",
                        (warehouse, location, item_code, lot_no, spec)).fetchone()
     if curr:
@@ -54,8 +70,60 @@ def add_inventory(warehouse, location, item_code, item_name, lot_no, spec, qty, 
     else:
         conn.execute("INSERT INTO inventory (warehouse, location, item_code, item_name, lot_no, spec, qty) VALUES (?,?,?,?,?,?,?)",
                     (warehouse, location, item_code, item_name, lot_no, spec, qty))
-    
     conn.execute("INSERT INTO audit_logs (tx_type, warehouse, location, item_code, item_name, lot_no, spec, qty, remark) VALUES (?,?,?,?,?,?,?,?,?)",
                 ("IN", warehouse, location, item_code, item_name, lot_no, spec, qty, remark))
     conn.commit()
     conn.close()
+
+def subtract_inventory(warehouse, location, item_code, lot_no, qty, remark):
+    """출고 로직 (출고 API 에러 해결)"""
+    conn = get_db_connection()
+    item = conn.execute("SELECT * FROM inventory WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?",
+                       (warehouse, location, item_code, lot_no)).fetchone()
+    if not item or item['qty'] < qty:
+        conn.close()
+        return False
+    conn.execute("UPDATE inventory SET qty = qty - ?, updated_at=DATETIME('now') WHERE id = ?", (qty, item['id']))
+    conn.execute("INSERT INTO audit_logs (tx_type, warehouse, location, item_code, item_name, lot_no, spec, qty, remark) VALUES (?,?,?,?,?,?,?,?,?)",
+                ("OUT", warehouse, location, item_code, item['item_name'], lot_no, item['spec'], qty, remark))
+    conn.commit()
+    conn.close()
+    return True
+
+def move_inventory(item_code, lot_no, from_loc, to_loc, qty, remark):
+    """재고 이동 로직 (이동 API 에러 해결)"""
+    conn = get_db_connection()
+    item = conn.execute("SELECT * FROM inventory WHERE location=? AND item_code=? AND lot_no=?", 
+                       (from_loc, item_code, lot_no)).fetchone()
+    if not item or item['qty'] < qty:
+        conn.close()
+        return False
+    
+    # 1. 기존 위치 차감
+    conn.execute("UPDATE inventory SET qty = qty - ? WHERE id = ?", (qty, item['id']))
+    # 2. 새 위치 추가 (add_inventory 함수 활용 가능하나 트랜잭션을 위해 직접 구현)
+    dest = conn.execute("SELECT id FROM inventory WHERE location=? AND item_code=? AND lot_no=?", (to_loc, item_code, lot_no)).fetchone()
+    if dest:
+        conn.execute("UPDATE inventory SET qty = qty + ? WHERE id = ?", (qty, dest['id']))
+    else:
+        conn.execute("INSERT INTO inventory (warehouse, location, item_code, item_name, lot_no, spec, qty) VALUES (?,?,?,?,?,?,?)",
+                    (item['warehouse'], to_loc, item_code, item['item_name'], lot_no, item['spec'], qty))
+    
+    # 3. 이동 로그 기록
+    conn.execute("INSERT INTO audit_logs (tx_type, warehouse, from_location, to_location, item_code, item_name, lot_no, spec, qty, remark) VALUES (?,?,?,?,?,?,?,?,?,?)",
+                ("MOVE", item['warehouse'], from_loc, to_loc, item_code, item['item_name'], lot_no, item['spec'], qty, remark))
+    
+    conn.commit()
+    conn.close()
+    return True
+
+def get_inventory(q: str = None):
+    conn = get_db_connection()
+    if q:
+        search = f"%{q}%"
+        query = "SELECT * FROM inventory WHERE qty > 0 AND (item_code LIKE ? OR item_name LIKE ? OR lot_no LIKE ? OR location LIKE ?) ORDER BY updated_at DESC"
+        items = conn.execute(query, (search, search, search, search)).fetchall()
+    else:
+        items = conn.execute("SELECT * FROM inventory WHERE qty > 0 ORDER BY updated_at DESC").fetchall()
+    conn.close()
+    return [dict(i) for i in items]
