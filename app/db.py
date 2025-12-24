@@ -8,7 +8,7 @@ def get_db_connection():
 def init_db():
     """데이터베이스 초기화 및 테이블 생성"""
     conn = get_db_connection()
-    # 재고 테이블
+    # 재고 테이블 (spec 컬럼 포함)
     conn.execute('''
         CREATE TABLE IF NOT EXISTS inventory (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -31,13 +31,37 @@ def init_db():
     conn.close()
     print("✅ 데이터베이스 및 테이블 초기화 완료")
 
+# --- 관리자 인증 및 로그 (추가됨) ---
+
+def admin_password_ok(password: str) -> bool:
+    """관리자 비밀번호 일치 여부 확인 (기본값: 1234)"""
+    ADMIN_PW = "1234"
+    return password == ADMIN_PW
+
+def get_admin_logs():
+    """관리자용 전체 로그 조회 (최신 100건)"""
+    conn = get_db_connection()
+    logs = conn.execute("SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT 100").fetchall()
+    conn.close()
+    return [dict(l) for l in logs]
+
 # --- 조회 관련 함수 ---
 
 def get_inventory(q: str = None):
     conn = get_db_connection()
     if q:
         search = f"%{q}%"
-        query = "SELECT * FROM inventory WHERE qty > 0 AND (item_code LIKE ? OR item_name LIKE ? OR lot_no LIKE ? OR spec LIKE ? OR location LIKE ?) ORDER BY updated_at DESC"
+        query = """
+            SELECT * FROM inventory 
+            WHERE qty > 0 AND (
+                item_code LIKE ? OR 
+                item_name LIKE ? OR 
+                lot_no LIKE ? OR 
+                location LIKE ? OR 
+                spec LIKE ?
+            ) 
+            ORDER BY updated_at DESC
+        """
         items = conn.execute(query, (search, search, search, search, search)).fetchall()
     else:
         items = conn.execute("SELECT * FROM inventory WHERE qty > 0 ORDER BY updated_at DESC").fetchall()
@@ -45,7 +69,7 @@ def get_inventory(q: str = None):
     return [dict(i) for i in items]
 
 def get_history():
-    """입출고 및 이동 전체 이력 조회"""
+    """전체 이력 조회"""
     conn = get_db_connection()
     logs = conn.execute("SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT 500").fetchall()
     conn.close()
@@ -117,8 +141,10 @@ def move_inventory(item_code, lot_no, from_loc, to_loc, qty, remark):
     
     # 기존 위치 수량 차감
     conn.execute("UPDATE inventory SET qty = qty - ? WHERE id = ?", (qty, source['id']))
-    # 새 위치 수량 증가/생성 (warehouse는 새 로케이션 앞자리 기준 등으로 자동설정 가능하나 여기선 기존 유지)
-    dest = conn.execute("SELECT id FROM inventory WHERE location=? AND item_code=? AND lot_no=?", (to_loc, item_code, lot_no)).fetchone()
+    
+    # 목적지 확인 및 추가
+    dest = conn.execute("SELECT id FROM inventory WHERE location=? AND item_code=? AND lot_no=? AND spec=?", 
+                       (to_loc, item_code, lot_no, source['spec'])).fetchone()
     if dest:
         conn.execute("UPDATE inventory SET qty = qty + ? WHERE id = ?", (qty, dest['id']))
     else:
