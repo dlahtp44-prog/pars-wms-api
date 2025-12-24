@@ -1,22 +1,39 @@
-let currentStep = 1; // 1: 출발지 스캔, 2: 품목 선택, 3: 도착지 스캔
-let moveData = { from: '', item: '', qty: 0 };
+{% extends "worker_base.html" %}
+{% block worker_content %}
 
-async function onScanSuccess(decodedText) {
-    if (currentStep === 1) {
-        // 출발지 인식
-        const res = await fetch(`/api/qr/location/${decodedText}`);
-        const items = await res.json();
-        if (items.length > 0) {
-            moveData.from = decodedText;
-            renderItems(items); // 품목 리스트를 화면에 표시
-            currentStep = 2;
-        }
-    } else if (currentStep === 3) {
-        // 도착지 인식 및 이동 확정
-        const res = await fetch('/api/move/manual', {
-            method: 'POST',
-            body: JSON.stringify({ ...moveData, to_location: decodedText })
-        });
-        if (res.ok) alert("이동 완료!");
-    }
-}
+<div class="card">
+  <div class="h2">📷 QR 스캔</div>
+
+  <div class="form">
+    <input id="manual_qr" placeholder="QR 내용 직접 입력 (type=LOCATION&location=D01-01 등)" />
+    <button class="btn" onclick="manualSearch()">직접 처리</button>
+  </div>
+
+  <div class="row">
+    <select id="action">
+      <option value="IN">입고</option>
+      <option value="OUT">출고</option>
+    </select>
+    <button class="btn primary" onclick="startScan()">카메라 시작</button>
+    <button class="btn" onclick="stopScan()">중지</button>
+    <button class="btn" onclick="resetMove()">이동 초기화</button>
+  </div>
+
+  <div id="reader" style="width:100%; max-width:360px; margin-top:10px;"></div>
+  <div id="msg" class="muted"></div>
+</div>
+
+<div id="moveBox" class="card" style="display:none;">
+  <div class="h2">🔁 로케이션 → 제품 선택 → 목적지 스캔 이동</div>
+  <div class="muted">출발: <b id="fromLoc"></b> / 목적지: <b id="toLoc"></b></div>
+  <div class="row" style="margin-top:10px;">
+    <div class="muted" id="picked">선택된 제품 없음</div>
+    <input id="qty" type="number" value="1" min="1" style="max-width:120px;">
+  </div>
+  <div id="locItems" style="margin-top:10px;"></div>
+</div>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script src="/static/qr_camera.js"></script>
+
+{% endblock %}
