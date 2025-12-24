@@ -34,7 +34,6 @@
                             <label class="form-label fw-semibold">로케이션 (Location)</label>
                             <input type="text" class="form-control" id="location" placeholder="예: A-01-01" required>
                         </div>
-
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">품번 (Item Code)</label>
                             <input type="text" class="form-control" id="item_code" required>
@@ -43,7 +42,6 @@
                             <label class="form-label fw-semibold">품명 (Item Name)</label>
                             <input type="text" class="form-control" id="item_name" required>
                         </div>
-
                         <div class="col-md-4">
                             <label class="form-label fw-semibold">LOT 번호</label>
                             <input type="text" class="form-control" id="lot_no" required>
@@ -56,13 +54,11 @@
                             <label class="form-label fw-semibold">수량 (Qty)</label>
                             <input type="number" class="form-control" id="qty" step="0.01" required>
                         </div>
-
                         <div class="col-12">
                             <label class="form-label fw-semibold">비고 (Remark)</label>
                             <input type="text" class="form-control" id="remark" placeholder="추가 전달 사항 입력">
                         </div>
                     </div>
-
                     <div class="d-grid gap-2 mt-4">
                         <button type="submit" class="btn btn-primary btn-lg fw-bold shadow-sm">🚀 입고 처리 실행</button>
                     </div>
@@ -76,33 +72,31 @@
         document.getElementById('inboundForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            // 1. 데이터 수집 및 가공 (422 에러 방지를 위한 타입 변환)
-            const data = {
+            // 서버 InboundRequest 모델과 1:1 매칭 (422 에러 방지용 가공)
+            const payload = {
                 warehouse: document.getElementById('warehouse').value || "A",
                 location: document.getElementById('location').value.trim(),
                 item_code: document.getElementById('item_code').value.trim(),
                 item_name: document.getElementById('item_name').value.trim(),
                 lot_no: document.getElementById('lot_no').value.trim(),
-                spec: document.getElementById('spec').value.trim() || "-", // 필수: 값이 없으면 "-" 기본값 전송
-                qty: parseFloat(document.getElementById('qty').value) || 0, // 필수: 반드시 숫자 타입
+                spec: document.getElementById('spec').value.trim() || "-", // 빈값이면 "-" 강제 할당
+                qty: parseFloat(document.getElementById('qty').value) || 0, // 숫자형 변환 필수
                 remark: document.getElementById('remark').value.trim() || "수기 입고"
             };
 
-            // 2. 간단한 클라이언트 측 유효성 검사
-            if (!data.item_code || !data.location || data.qty <= 0) {
+            if (!payload.item_code || !payload.location || payload.qty <= 0) {
                 Swal.fire('입력 누락', '품번, 로케이션, 수량은 필수입니다.', 'warning');
                 return;
             }
 
             try {
-                // 3. 서버 전송
                 const response = await fetch('/api/inbound/manual', {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',
                         'Accept': 'application/json' 
                     },
-                    body: JSON.stringify(data)
+                    body: JSON.stringify(payload)
                 });
 
                 if (response.ok) {
@@ -113,15 +107,12 @@
                         timer: 1500,
                         showConfirmButton: false
                     });
-                    window.location.reload(); // 성공 시 폼 초기화
+                    window.location.reload();
                 } else {
                     const err = await response.json();
-                    console.error("서버 에러 상세:", err);
-                    // 서버의 상세 에러(detail) 메시지를 보여줌
                     Swal.fire('등록 실패', `오류: ${err.detail || '데이터 형식이 맞지 않습니다.'}`, 'error');
                 }
             } catch (error) {
-                console.error('Network Error:', error);
                 Swal.fire('통신 오류', '서버와 연결할 수 없습니다.', 'error');
             }
         });
