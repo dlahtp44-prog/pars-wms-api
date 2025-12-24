@@ -19,8 +19,3 @@ def worker_outbound(request: Request):
 @router.get("/move")
 def worker_move(request: Request):
     return templates.TemplateResponse("worker_move.html", {"request": request})
-
-@router.get("/inventory")
-def worker_inventory_redirect(request: Request):
-    # 동일 템플릿을 inventory-page에서 제공하니 링크만 inventory-page로 두는 걸 권장
-    return templates.TemplateResponse("inventory_page.html", {"request": request})
