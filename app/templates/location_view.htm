@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>📍 로케이션 {{ location }}</h2>
+<p class="muted">이동할 제품을 선택하세요</p>
+
+<table class="table">
+  <thead>
+    <tr>
+      <th>품번</th>
+      <th>LOT</th>
+      <th>수량</th>
+      <th>이동</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for r in rows %}
+    <tr>
+      <td>{{ r.item_code }}</td>
+      <td>{{ r.lot_no }}</td>
+      <td>{{ r.qty }}</td>
+      <td>
+        <input type="number" min="1" max="{{ r.qty }}" value="{{ r.qty }}"
+               id="q{{ loop.index }}">
+        <button onclick="
+          sessionStorage.setItem(
+            'move_item',
+            JSON.stringify({
+              item_code:'{{ r.item_code }}',
+              lot_no:'{{ r.lot_no }}',
+              qty:Number(document.getElementById('q{{ loop.index }}').value)
+            })
+          );
+          alert('이동 제품 선택 완료\\n도착 로케이션 QR을 스캔하세요');
+        ">선택</button>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<div class="hint">
+  👉 선택 후 <b>도착 로케이션 QR</b>을 찍으면 즉시 이동됩니다
+</div>
+
+{% endblock %}
