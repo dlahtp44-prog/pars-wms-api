@@ -27,7 +27,6 @@ def init_db():
     conn.commit()
     conn.close()
 
-# 로그 기록 통합 함수
 def log_history(tx_type, warehouse, location, item_code, lot_no, qty, remark, to_location=None, from_location=None):
     conn = get_conn()
     cur = conn.cursor()
@@ -38,7 +37,6 @@ def log_history(tx_type, warehouse, location, item_code, lot_no, qty, remark, to
     conn.commit()
     conn.close()
 
-# --- 물류 핵심 로직 ---
 def add_inventory(warehouse, location, brand, item_code, item_name, lot_no, spec, qty, remark=""):
     conn = get_conn()
     cur = conn.cursor()
@@ -71,7 +69,6 @@ def move_inventory(warehouse, from_loc, to_loc, item_code, lot_no, qty, remark="
     conn.close()
     log_history('MOVE', warehouse, from_loc, item_code, lot_no, qty, remark, to_location=to_loc, from_location=from_loc)
 
-# --- 조회/관리 로직 ---
 def get_inventory(q=None):
     conn = get_conn()
     cur = conn.cursor()
