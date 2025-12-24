@@ -26,7 +26,37 @@ def init_db():
     )""")
     conn.commit()
     conn.close()
+    print("✅ DB 초기화 완료")
 
+# =========================
+# [추가됨] 필수 조회 함수
+# =========================
+def get_inventory(q: str | None = None):
+    conn = get_conn()
+    cur = conn.cursor()
+    sql = "SELECT * FROM inventory WHERE 1=1"
+    params = []
+    if q:
+        sql += " AND (item_code LIKE ? OR item_name LIKE ? OR lot_no LIKE ? OR location LIKE ?)"
+        kw = f"%{q}%"
+        params = [kw, kw, kw, kw]
+    sql += " ORDER BY item_code ASC"
+    cur.execute(sql, params)
+    rows = [dict(r) for r in cur.fetchall()]
+    conn.close()
+    return rows
+
+def get_history(limit=200):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM history ORDER BY created_at DESC LIMIT ?", (limit,))
+    rows = [dict(r) for r in cur.fetchall()]
+    conn.close()
+    return rows
+
+# =========================
+# 핵심 물류 로직
+# =========================
 def log_history(tx_type, warehouse, location, item_code, lot_no, qty, remark, to_location=None, from_location=None):
     conn = get_conn()
     cur = conn.cursor()
@@ -41,7 +71,7 @@ def add_inventory(warehouse, location, brand, item_code, item_name, lot_no, spec
     conn = get_conn()
     cur = conn.cursor()
     cur.execute("""
-    INSERT INTO inventory VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO inventory (warehouse, location, brand, item_code, item_name, lot_no, spec, qty) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(warehouse, location, item_code, lot_no)
     DO UPDATE SET qty = qty + excluded.qty, item_name = excluded.item_name, brand = excluded.brand, spec = excluded.spec
     """, (warehouse, location, brand, item_code, item_name, lot_no, spec, qty))
@@ -61,10 +91,8 @@ def subtract_inventory(warehouse, location, item_code, lot_no, qty, remark=""):
 def move_inventory(warehouse, from_location, to_location, item_code, lot_no, qty, remark="이동"):
     conn = get_conn()
     cur = conn.cursor()
-    # 1. 기존 위치 차감
     cur.execute("UPDATE inventory SET qty = qty - ? WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?",
                 (qty, warehouse, from_location, item_code, lot_no))
-    # 2. 새 위치 가산 (기본 정보 유지를 위해 단순 INSERT/UPDATE)
     cur.execute("""
     INSERT INTO inventory (warehouse, location, item_code, lot_no, qty) VALUES (?, ?, ?, ?, ?)
     ON CONFLICT(warehouse, location, item_code, lot_no) DO UPDATE SET qty = qty + excluded.qty
@@ -73,7 +101,30 @@ def move_inventory(warehouse, from_location, to_location, item_code, lot_no, qty
     conn.close()
     log_history("MOVE", warehouse, from_location, item_code, lot_no, qty, remark, to_location=to_location)
 
-# 대시보드 및 기타 함수 (기존과 동일하되 localtime 적용)
+# =========================
+# 관리 및 대시보드
+# =========================
+def rollback(tx_id: int):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM history WHERE id=?", (tx_id,))
+    h = cur.fetchone()
+    if h:
+        if h["tx_type"] == "IN":
+            cur.execute("UPDATE inventory SET qty = qty - ? WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?",
+                        (h["qty"], h["warehouse"], h["location"], h["item_code"], h["lot_no"]))
+        elif h["tx_type"] == "OUT":
+            cur.execute("UPDATE inventory SET qty = qty + ? WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?",
+                        (abs(h["qty"]), h["warehouse"], h["location"], h["item_code"], h["lot_no"]))
+        elif h["tx_type"] == "MOVE":
+            cur.execute("UPDATE inventory SET qty = qty + ? WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?",
+                        (h["qty"], h["warehouse"], h["from_location"], h["item_code"], h["lot_no"]))
+            cur.execute("UPDATE inventory SET qty = qty - ? WHERE warehouse=? AND location=? AND item_code=? AND lot_no=?",
+                        (h["qty"], h["warehouse"], h["to_location"], h["item_code"], h["lot_no"]))
+        cur.execute("DELETE FROM history WHERE id=?", (tx_id,))
+    conn.commit()
+    conn.close()
+
 def dashboard_summary():
     conn = get_conn()
     cur = conn.cursor()
@@ -83,3 +134,14 @@ def dashboard_summary():
     neg = cur.execute("SELECT COUNT(*) FROM inventory WHERE qty < 0").fetchone()[0]
     conn.close()
     return {"inbound_today": inb, "outbound_today": abs(outb), "total_stock": total, "negative_stock": neg}
+
+def get_location_items(location: str):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT item_code, item_name, lot_no, spec, qty FROM inventory WHERE location=? ORDER BY item_code", (location,))
+    rows = [dict(r) for r in cur.fetchall()]
+    conn.close()
+    return rows
+
+def admin_password_ok(pw: str) -> bool:
+    return pw == "admin123"
