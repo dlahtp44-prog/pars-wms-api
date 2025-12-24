@@ -68,12 +68,11 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
     <script>
         document.getElementById('inboundForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            // 데이터 수집 (규격 포함)
+            // 규격(spec)을 포함하여 데이터 전송
             const data = {
                 warehouse: document.getElementById('warehouse').value,
                 location: document.getElementById('location').value,
@@ -100,7 +99,7 @@
                         timer: 1500,
                         showConfirmButton: false
                     }).then(() => {
-                        window.location.reload(); // 페이지 새로고침
+                        window.location.reload(); 
                     });
                 } else {
                     const err = await response.json();
