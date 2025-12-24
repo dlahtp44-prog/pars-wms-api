@@ -9,4 +9,4 @@ templates = Jinja2Templates(directory="app/templates")
 def dashboard(request: Request):
     s = dashboard_summary()
     rows = get_inventory()
-    return templates.TemplateResponse("dashboard.html", {"request": request, "s": s, "rows": rows})
+    return templates.TemplateResponse("dashboard.html", {"request": request, "rows": rows, **s})
