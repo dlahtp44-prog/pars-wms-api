@@ -1,45 +1,33 @@
-<script>
-async function processQR(text){
-  const params = new URLSearchParams(text);
-  const type = params.get("type");
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>PARS WMS · QR 스캔</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  if(type === "LOCATION"){
-    const loc = params.get("location");
-    const res = await fetch(`/api/location/inventory?location=${loc}`);
-    const data = await res.json();
-    renderLocationInventory(data);
-    return;
-  }
+  <!-- QR 라이브러리 -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
 
-  if(type === "ITEM"){
-    alert("제품 QR입니다. 입고/출고/이동 화면에서 사용하세요.");
-    return;
-  }
+  <!-- 우리 카메라 로직 -->
+  <script src="/static/qr_camera.js"></script>
 
-  alert("알 수 없는 QR");
-}
+  <style>
+    body { font-family: Arial, sans-serif; padding: 16px; }
+    button { padding: 10px 14px; margin-right: 6px; }
+    #reader { margin: 12px 0; }
+    #msg { margin-top: 10px; color: #333; }
+  </style>
+</head>
+<body>
 
-function renderLocationInventory(data){
-  let html = `<h3>📍 ${data.location} 재고</h3>`;
-  html += `<table class="table">
-    <tr>
-      <th>품번</th><th>품명</th><th>브랜드</th>
-      <th>규격</th><th>LOT</th><th>수량</th>
-    </tr>`;
+  <h2>📷 QR 스캔</h2>
 
-  for(const r of data.items){
-    html += `
-    <tr>
-      <td>${r.item_code}</td>
-      <td>${r.item_name}</td>
-      <td>${r.brand}</td>
-      <td>${r.spec}</td>
-      <td>${r.lot_no}</td>
-      <td class="right">${r.qty}</td>
-    </tr>`;
-  }
+  <div id="reader" style="width:100%; max-width:360px;"></div>
 
-  html += "</table>";
-  document.getElementById("result").innerHTML = html;
-}
-</script>
+  <button onclick="startScan()">📷 카메라 시작</button>
+  <button onclick="stopScan()">중지</button>
+
+  <div id="msg"></div>
+
+</body>
+</html>
