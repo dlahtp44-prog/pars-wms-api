@@ -14,6 +14,7 @@ async function startScan(){
       throw "카메라 없음";
     }
 
+    // 🔥 후면 카메라 우선
     const backCam =
       cameras.find(c => c.label.toLowerCase().includes("back")) || cameras[0];
 
