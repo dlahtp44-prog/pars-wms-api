@@ -38,12 +38,13 @@ def safe_include(path: str):
     except Exception as e:
         print(f"❌ {path} 실패:", e)
 
+# main.py의 하단부 safe_include 부분
+
 # Pages
 safe_include("app.pages.index_page")
 safe_include("app.pages.worker_page")
 safe_include("app.pages.inbound_page")
 safe_include("app.pages.outbound_page")
-safe_include("app.pages.move_page")
 safe_include("app.pages.inventory_page")
 safe_include("app.pages.history_page")
 safe_include("app.pages.qr_page")
@@ -51,7 +52,7 @@ safe_include("app.pages.dashboard_page")
 safe_include("app.pages.admin_page")
 safe_include("app.pages.location_view_page")
 safe_include("app.pages.label_page")
-safe_include("app.pages.upload_page")   # ✅ /upload
+safe_include("app.pages.upload_page")
 
 # APIs
 safe_include("app.routers.inbound")
@@ -59,11 +60,8 @@ safe_include("app.routers.outbound")
 safe_include("app.routers.move")
 safe_include("app.routers.inventory")
 safe_include("app.routers.history")
-safe_include("app.routers.qr_process")
-safe_include("app.routers.qr_api")
+safe_include("app.routers.qr_api")      # qr_process 대신 이것만 사용
 safe_include("app.routers.export_excel")
-safe_include("app.routers.upload_inventory")
-safe_include("app.routers.upload_outbound")
 
 @app.get("/ping")
 def ping():
