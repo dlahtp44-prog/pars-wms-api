@@ -382,3 +382,12 @@ def dashboard_summary() -> Dict[str, Any]:
         "negative_cnt": negative_cnt,
         "no_location": no_location
     }
+# ===== 관리자 비밀번호 체크 =====
+def admin_password_ok(input_pw: str) -> bool:
+    """
+    관리자 비밀번호 검증
+    (초기 버전: 환경변수 또는 고정값)
+    """
+    import os
+    ADMIN_PW = os.getenv("ADMIN_PASSWORD", "1234")
+    return input_pw == ADMIN_PW
