@@ -1,34 +1,9 @@
-<!doctype html>
-<html lang="ko">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>HEQ-3118 로케이션 라벨</title>
-<style>
-  @page { size: 50mm 30mm; margin: 0; }
-  body { margin:0; }
-  .wrap { width:50mm; height:30mm; padding:2mm; box-sizing:border-box; font-family: Arial; display:flex; align-items:center; justify-content:space-between; }
-  .loc { font-size:14px; font-weight:900; }
-  .qr { width:18mm; height:18mm; }
-</style>
-</head>
-<body>
-<div class="wrap">
-  <div>
-    <div class="loc">{{ location }}</div>
-    <div style="font-size:9px;color:#555">WH: {{ warehouse }}</div>
-  </div>
-  <div id="qrcode" class="qr"></div>
+<!DOCTYPE html>
+<html>
+<body onload="window.print()">
+<div style="width:50mm;height:30mm;font-size:10px;text-align:center">
+  <h3>{{ qr }}</h3>
+  <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ qr }}">
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-<script>
-  new QRCode(document.getElementById("qrcode"), {
-    text: "{{ qr_text }}",
-    width: 100,
-    height: 100
-  });
-  window.onload = () => window.print();
-</script>
 </body>
 </html>
