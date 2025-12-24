@@ -2,39 +2,48 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 from app.db import add_inventory, subtract_inventory, move_inventory
 
-router = APIRouter(prefix="/api/qr", tags=["qr"])
+router = APIRouter(prefix="/api/qr/process")
 
 class QRBody(BaseModel):
-    action: str  # IN / OUT / MOVE / LOCATION
+    action: str
     warehouse: str = "MAIN"
-
-    # 공통
     location: str = ""
-    item_code: str = ""
-    item_name: str = ""
-    lot_no: str = ""
-    spec: str = ""
-    brand: str = ""
-    qty: float = 0
-
-    # move
     from_location: str = ""
     to_location: str = ""
+    item_code: str
+    item_name: str = ""
+    lot_no: str
+    spec: str = ""
+    brand: str = ""
+    qty: float
 
-@router.post("/process")
-def process_qr(b: QRBody):
-    act = (b.action or "").upper().strip()
+@router.post("")
+def process(body: QRBody):
+    if body.action == "IN":
+        add_inventory(
+            body.warehouse, body.location, body.brand,
+            body.item_code, body.item_name,
+            body.lot_no, body.spec, body.qty
+        )
+    elif body.action == "OUT":
+        subtract_inventory(
+            body.warehouse, body.location, body.brand,
+            body.item_code, body.item_name,
+            body.lot_no, body.spec, body.qty
+        )
+    elif body.action == "MOVE":
+        move_inventory(
+            body.warehouse,
+            body.from_location,
+            body.to_location,
+            body.brand,
+            body.item_code,
+            body.item_name,
+            body.lot_no,
+            body.spec,
+            body.qty
+        )
+    else:
+        raise ValueError("Invalid action")
 
-    if act == "IN":
-        add_inventory(b.warehouse, b.location, b.brand, b.item_code, b.item_name, b.lot_no, b.spec, b.qty, remark="QR IN")
-        return {"ok": True, "action": "IN"}
-
-    if act == "OUT":
-        subtract_inventory(b.warehouse, b.location, b.item_code, b.lot_no, b.qty, remark="QR OUT")
-        return {"ok": True, "action": "OUT"}
-
-    if act == "MOVE":
-        move_inventory(b.warehouse, b.from_location, b.to_location, b.item_code, b.lot_no, b.qty, remark="QR MOVE")
-        return {"ok": True, "action": "MOVE"}
-
-    return {"ok": False, "detail": "지원하지 않는 action"}
+    return {"result": "OK"}
