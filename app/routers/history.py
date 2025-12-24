@@ -1,17 +1,13 @@
-# app/routers/history.py
 from fastapi import APIRouter, HTTPException
-from app.db import get_history, rollback
+from app.db import get_history
 
-router = APIRouter(prefix="/api/history", tags=["History"])
+router = APIRouter(prefix="/api/history")
 
 @router.get("")
-def api_get_history(limit: int = 300):
-    return get_history(limit)
-
-@router.post("/rollback/{tx_id}")
-def api_rollback(tx_id: int):
+async def read_history(limit: int = 200):
     try:
-        rollback(tx_id)
-        return {"ok": True}
+        data = get_history(limit=limit)
+        # 만약 데이터가 없으면 빈 리스트 [] 를 반환하여 에러를 방지합니다.
+        return data if data else []
     except Exception as e:
-        raise HTTPException(400, str(e))
+        raise HTTPException(status_code=500, detail=str(e))
