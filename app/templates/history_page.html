@@ -1,66 +1,102 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="card">
-    <div class="card-header">
-        <h2>📜 최근 작업 이력</h2>
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-primary mb-0">📜 작업 이력 (History)</h2>
+        <button class="btn btn-success shadow-sm" onclick="location.href='/api/export_excel/history'">
+            📊 엑셀 내보내기
+        </button>
     </div>
-    <div class="table-container">
-        <table class="w-full text-left border-collapse">
-            <thead>
-                <tr class="border-b border-slate-700 text-slate-400">
-                    <th class="p-3">일시</th>
-                    <th class="p-3">유형</th>
-                    <th class="p-3">품목코드</th>
-                    <th class="p-3">수량</th>
-                    <th class="p-3">로케이션</th>
-                    <th class="p-3">비고</th>
-                </tr>
-            </thead>
-            <tbody id="history-list">
-                </tbody>
-        </table>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" style="min-width: 1000px;">
+                    <thead class="bg-light text-secondary">
+                        <tr>
+                            <th class="px-4 py-3">일시</th>
+                            <th class="px-4 py-3">유형</th>
+                            <th class="px-4 py-3">품목코드</th>
+                            <th class="px-4 py-3 text-info">규격(Spec)</th>
+                            <th class="px-4 py-3">수량</th>
+                            <th class="px-4 py-3">로케이션</th>
+                            <th class="px-4 py-3">비고</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-list">
+                        </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
 
 <script>
 async function loadHistory() {
     try {
+        // API 호출 (데이터베이스 함수와 연결)
         const res = await fetch('/api/history');
+        if (!res.ok) throw new Error("데이터를 가져오는데 실패했습니다.");
+        
         const data = await res.json();
         const list = document.getElementById('history-list');
         list.innerHTML = '';
 
         data.forEach(h => {
             const tr = document.createElement('tr');
-            tr.className = "border-b border-slate-800 hover:bg-slate-800/50";
+            tr.className = "align-middle border-bottom";
             
-            // 유형별 색상 처리
-            let typeTag = `<span class="px-2 py-1 rounded text-xs font-bold bg-slate-700">${h.tx_type}</span>`;
-            if(h.tx_type === 'IN') typeTag = `<span class="px-2 py-1 rounded text-xs font-bold bg-green-900 text-green-300">입고</span>`;
-            if(h.tx_type === 'OUT') typeTag = `<span class="px-2 py-1 rounded text-xs font-bold bg-red-900 text-red-300">출고</span>`;
-            if(h.tx_type === 'MOVE') typeTag = `<span class="px-2 py-1 rounded text-xs font-bold bg-blue-900 text-blue-300">이동</span>`;
+            // 1. 유형별 배지(Badge) 색상 처리
+            let typeTag = `<span class="badge bg-secondary">${h.tx_type}</span>`;
+            if(h.tx_type === 'IN') typeTag = `<span class="badge bg-success-subtle text-success border border-success-subtle px-2">입고</span>`;
+            if(h.tx_type === 'OUT') typeTag = `<span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2">출고</span>`;
+            if(h.tx_type === 'MOVE') typeTag = `<span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2">이동</span>`;
 
-            // 로케이션 표시 (이동인 경우 From -> To)
-            let locInfo = h.location || '-';
-            if(h.tx_type === 'MOVE' && h.to_location) {
-                locInfo = `${h.from_location || h.location} ➔ ${h.to_location}`;
+            // 2. 로케이션 정보 처리 (이동일 경우 화살표 표시)
+            let locInfo = `<span class="badge bg-light text-dark border">${h.location || '-'}</span>`;
+            if(h.tx_type === 'MOVE') {
+                locInfo = `<span class="text-muted">${h.from_location || '-'}</span> ➔ <span class="fw-bold">${h.to_location || '-'}</span>`;
             }
 
+            // 3. 행 구성 (규격 데이터 row.spec 추가)
             tr.innerHTML = `
-                <td class="p-3 text-slate-400 text-sm">${h.created_at.replace('T', ' ').substring(0, 16)}</td>
-                <td class="p-3">${typeTag}</td>
-                <td class="p-3 font-mono">${h.item_code}</td>
-                <td class="p-3 ${h.qty < 0 ? 'text-red-400' : 'text-green-400'}">${h.qty}</td>
-                <td class="p-3 text-sm">${locInfo}</td>
-                <td class="p-3 text-slate-500 text-xs">${h.remark || ''}</td>
+                <td class="px-4 py-3 text-muted" style="font-size: 0.85rem;">
+                    ${h.created_at ? h.created_at.replace('T', ' ').substring(0, 16) : '-'}
+                </td>
+                <td class="px-4 py-3">${typeTag}</td>
+                <td class="px-4 py-3">
+                    <div class="fw-bold text-dark">${h.item_code}</div>
+                    <small class="text-muted">${h.item_name || ''}</small>
+                </td>
+                <td class="px-4 py-3 text-info font-monospace">${h.spec || '-'}</td>
+                <td class="px-4 py-3 fw-bold ${h.tx_type === 'OUT' ? 'text-danger' : 'text-primary'}">
+                    ${h.tx_type === 'OUT' ? '-' : '+'}${h.qty.toLocaleString()}
+                </td>
+                <td class="px-4 py-3">${locInfo}</td>
+                <td class="px-4 py-3 text-muted" style="font-size: 0.8rem;">${h.remark || ''}</td>
             `;
             list.appendChild(tr);
         });
     } catch (e) {
         console.error("이력 로드 실패:", e);
+        document.getElementById('history-list').innerHTML = 
+            `<tr><td colspan="7" class="text-center py-5 text-danger font-bold">⚠️ 데이터를 불러올 수 없습니다.</td></tr>`;
     }
 }
+
 // 페이지 로드 시 즉시 실행
 document.addEventListener('DOMContentLoaded', loadHistory);
 </script>
+
+<style>
+    /* 테이블 가독성을 위한 스타일 조정 */
+    .table thead th {
+        font-weight: 600;
+        font-size: 0.9rem;
+        letter-spacing: -0.02em;
+    }
+    .badge {
+        font-weight: 500;
+    }
+</style>
 {% endblock %}
