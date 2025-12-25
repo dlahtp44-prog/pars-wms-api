@@ -1,42 +1,20 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
-import pandas as pd
-from app import db
-import io
-
-router = APIRouter(prefix="/api/inbound", tags=["Inbound"])
-
-@router.post("/upload")
-async def upload_inbound_excel(file: UploadFile = File(...)):
-    if not file.filename.endswith(('.xlsx', '.xls')):
-        raise HTTPException(status_code=400, detail="엑셀 파일(.xlsx)만 업로드 가능합니다.")
-    
-    try:
-        # 엑셀 데이터 읽기
-        contents = await file.read()
-        df = pd.read_excel(io.BytesIO(contents))
-        
-        # 필수 컬럼(양식) 확인
-        required_cols = ['창고', '로케이션', '품번', '품명', 'LOT', '수량']
-        for col in required_cols:
-            if col not in df.columns:
-                raise HTTPException(status_code=400, detail=f"엑셀 양식이 틀립니다. '{col}' 컬럼이 필요합니다.")
-        
-        success_count = 0
-        for _, row in df.iterrows():
-            # DB에 재고 추가 (품번/LOT/로케이션 기준 합산 또는 신규 생성)
-            db.add_inventory(
-                warehouse=str(row['창고']),
-                location=str(row['로케이션']),
-                brand=str(row.get('브랜드', '-')),
-                item_code=str(row['품번']),
-                item_name=str(row['품명']),
-                lot_no=str(row['LOT']),
-                spec=str(row.get('규격', '-')),
-                qty=float(row['수량']),
-                remark="엑셀 일괄 입고"
-            )
-            success_count += 1
-            
-        return {"message": f"총 {success_count}건의 품목이 성공적으로 입고되었습니다."}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"처리 중 오류: {str(e)}")
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Inbound</title>
+  <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+<h2>Inbound</h2>
+<form action="/api/inbound" method="post">
+  <input name="item_code" placeholder="Item Code">
+  <input name="item_name" placeholder="Item Name">
+  <input name="brand" placeholder="Brand">
+  <input name="spec" placeholder="Spec">
+  <input name="location_code" placeholder="Location">
+  <input name="lot" placeholder="LOT">
+  <input name="quantity" type="number" placeholder="Qty">
+  <button type="submit">INBOUND</button>
+</form>
+</body>
+</html>
