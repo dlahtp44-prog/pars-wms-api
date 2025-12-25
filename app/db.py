@@ -161,60 +161,38 @@ def subtract_inventory(
 # =========================
 # 이동
 # =========================
-def move_inventory(
-    warehouse,
-    from_location,
-    to_location,
-    brand,
-    item_code,
-    item_name,
-    lot_no,
-    spec,
-    qty
-):
-    ok, msg = subtract_inventory(
-        warehouse, from_location, brand,
-        item_code, item_name, lot_no, spec, qty,
-        remark=f"이동 출고 → {to_location}"
-    )
-    if not ok:
-        return False, msg
-
-    add_inventory(
-        warehouse, to_location, brand,
-        item_code, item_name, lot_no, spec, qty,
-        remark=f"이동 입고 ← {from_location}"
-    )
-
-    return True, "이동 완료"
-def get_location_items(warehouse: str, location: str):
+def move_inventory(warehouse, item_code, lot_no, qty, from_location, to_location):
     conn = get_conn()
     cur = conn.cursor()
 
+    # 출발지 차감
     cur.execute("""
-        SELECT
-            item_code,
-            item_name,
-            spec,
-            lot_no,
-            qty
-        FROM inventory
-        WHERE warehouse = ?
-          AND location = ?
-          AND qty > 0
-        ORDER BY item_code
-    """, (warehouse, location))
+        UPDATE inventory
+        SET qty = qty - ?
+        WHERE warehouse=? AND item_code=? AND lot_no=? AND location=?
+    """, (qty, warehouse, item_code, lot_no, from_location))
 
-    rows = cur.fetchall()
+    # 도착지 증가
+    cur.execute("""
+        INSERT INTO inventory (warehouse, location, item_code, lot_no, qty)
+        VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(warehouse, location, item_code, lot_no)
+        DO UPDATE SET qty = qty + excluded.qty
+    """, (warehouse, to_location, item_code, lot_no, qty))
+
+    # 이력
+    cur.execute("""
+        INSERT INTO history (tx_type, warehouse, location, item_code, lot_no, qty, remark)
+        VALUES ('MOVE', ?, ?, ?, ?, ?, ?)
+    """, (
+        warehouse,
+        f"{from_location}→{to_location}",
+        item_code,
+        lot_no,
+        qty,
+        "QR 이동"
+    ))
+
+    conn.commit()
     conn.close()
 
-    return [
-        {
-            "item_code": r[0],
-            "item_name": r[1],
-            "spec": r[2],
-            "lot_no": r[3],
-            "qty": r[4],
-        }
-        for r in rows
-    ]
