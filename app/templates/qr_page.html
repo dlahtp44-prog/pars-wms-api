@@ -1,40 +1,26 @@
-{% extends "worker_base.html" %}
-{% block worker_content %}
+{% extends "base.html" %}
+{% block content %}
+<h2 class="h2">📷 QR 이동 (2단계)</h2>
 
 <div class="card">
-  <div class="h2">📷 QR 스캔</div>
-  <div class="muted">
-    ✅ 이동(2단계): <b>출발 로케이션(LOC)</b> → <b>제품(ITEM)</b> → <b>목적지 로케이션(LOC)</b>
-  </div>
+  <div id="stage" class="muted">1) 출발 로케이션 QR 스캔</div>
 
-  <div class="hr"></div>
-
-  <!-- 수동 입력 -->
-  <div class="form">
-    <input id="manual_qr" placeholder="QR 내용 직접 입력 (type=LOC&location=...)" />
-    <button class="btn" onclick="manualSend()">전송</button>
-  </div>
-
-  <div class="hr"></div>
-
-  <div id="reader" style="width:100%; max-width:360px;"></div>
-
-  <div class="row">
-    <select id="action">
-      <option value="LOC">이동-출발 로케이션(LOC)</option>
-      <option value="ITEM">이동-제품 선택(ITEM)</option>
-      <option value="MOVE">이동-목적지 로케이션(LOC)</option>
-      <option value="IN">입고(IN)</option>
-      <option value="OUT">출고(OUT)</option>
-    </select>
-    <button class="btn primary" onclick="startScan()">카메라 시작</button>
+  <div class="row" style="margin-top:10px">
+    <select id="cameraSel" class="input"></select>
+    <button class="btn" onclick="startScan()">카메라 시작</button>
     <button class="btn" onclick="stopScan()">중지</button>
   </div>
 
+  <div id="reader" style="width:100%; max-width:360px; margin-top:10px;"></div>
+
+  <div class="hr"></div>
+  <div id="pickList"></div>
+
+  <div class="hr"></div>
   <div id="msg" class="muted"></div>
 </div>
 
 <script src="https://unpkg.com/html5-qrcode"></script>
 <script src="/static/qr_camera.js"></script>
-
+<script>setStage();</script>
 {% endblock %}
