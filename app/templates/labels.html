@@ -1,0 +1,31 @@
+{% extends "worker_base.html" %}
+{% block worker_content %}
+
+<div class="card">
+  <div class="h2">🏷 라벨 출력</div>
+  <div class="muted">HEQ-3108(제품) / HEQ-3118(로케이션) 전용 출력</div>
+
+  <div class="hr"></div>
+
+  <h3>제품 라벨(HEQ-3108)</h3>
+  <form class="form" action="/api/qr/label/item" method="get" target="_blank">
+    <input name="item_code" placeholder="품번" required>
+    <input name="lot_no" placeholder="LOT" required>
+    <input name="item_name" placeholder="품명">
+    <input name="spec" placeholder="규격">
+    <input name="brand" placeholder="브랜드">
+    <button class="btn primary" type="submit">라벨 인쇄</button>
+  </form>
+
+  <div class="hr"></div>
+
+  <h3>로케이션 라벨(HEQ-3118)</h3>
+  <form class="form" action="/api/qr/label/location" method="get" target="_blank">
+    <input name="location" placeholder="로케이션 (예: D01-01)" required>
+    <input name="warehouse" placeholder="창고" value="MAIN">
+    <button class="btn primary" type="submit">라벨 인쇄</button>
+  </form>
+
+</div>
+
+{% endblock %}
