@@ -1,24 +1,23 @@
 from fastapi import APIRouter, Request, Query
-from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from app.db import get_inventory_by_location
+from app.db import get_location_items
 
-router = APIRouter()
+router = APIRouter(prefix="/location")
 templates = Jinja2Templates(directory="app/templates")
 
-@router.get("/location-view", response_class=HTMLResponse)
+@router.get("")
 def location_view(
     request: Request,
-    location: str = Query(...),
-    warehouse: str = Query("MAIN")
+    warehouse: str = Query("MAIN"),
+    location: str = Query(...)
 ):
-    rows = get_inventory_by_location(warehouse, location)
+    rows = get_location_items(warehouse, location)
     return templates.TemplateResponse(
         "location_view.html",
         {
             "request": request,
-            "location": location,
             "warehouse": warehouse,
+            "location": location,
             "rows": rows
         }
     )
