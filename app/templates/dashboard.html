@@ -1,88 +1,26 @@
 {% extends "worker_base.html" %}
-{% block content %}
+{% block worker_content %}
 
-<h2>📊 대시보드</h2>
+<div class="card">
+  <div class="h2">📊 대시보드</div>
 
-<div class="cards">
-  <div class="card blue">
-    <div class="title">오늘 입고</div>
-    <div id="inToday" class="num">0</div>
+  <div class="grid">
+    <div class="card2"><div class="label">오늘 입고</div><div class="value">{{ s.inbound_today }}</div></div>
+    <div class="card2"><div class="label">오늘 출고</div><div class="value">{{ s.outbound_today }}</div></div>
+    <div class="card2"><div class="label">총 재고</div><div class="value">{{ s.total_stock }}</div></div>
+    <div class="card2 {% if s.negative_count > 0 %}warn{% endif %}">
+      <div class="label">음수 재고(건)</div><div class="value">{{ s.negative_count }}</div>
+    </div>
   </div>
-  <div class="card red">
-    <div class="title">오늘 출고</div>
-    <div id="outToday" class="num">0</div>
-  </div>
-</div>
 
-<div class="grid">
-  <div class="panel">
-    <h3>📦 재고 TOP 5</h3>
-    <canvas id="topChart"></canvas>
-  </div>
-  <div class="panel">
-    <h3>📈 최근 7일 입·출고</h3>
-    <canvas id="weekChart"></canvas>
+  <div class="hr"></div>
+
+  <div class="row">
+    <a class="btn" href="/inventory-page">📦 재고</a>
+    <a class="btn" href="/history-page">🧾 이력</a>
+    <a class="btn" href="/labels">🏷 라벨</a>
+    <a class="btn" href="/admin">🛠 관리자</a>
   </div>
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-async function loadDashboard(){
-  const res = await fetch("/api/dashboard/summary");
-  const d = await res.json();
-
-  document.getElementById("inToday").innerText = d.today.in;
-  document.getElementById("outToday").innerText = d.today.out;
-
-  // TOP 재고
-  new Chart(document.getElementById("topChart"), {
-    type: "bar",
-    data: {
-      labels: d.top_items.map(x=>x.item_code),
-      datasets: [{
-        label: "재고 수량",
-        data: d.top_items.map(x=>x.qty),
-        backgroundColor: "#2563eb"
-      }]
-    }
-  });
-
-  // 주간 입출고
-  new Chart(document.getElementById("weekChart"), {
-    type: "line",
-    data: {
-      labels: d.weekly.map(x=>x.date),
-      datasets: [
-        {
-          label: "입고",
-          data: d.weekly.map(x=>x.in),
-          borderColor: "#16a34a",
-          fill: false
-        },
-        {
-          label: "출고",
-          data: d.weekly.map(x=>x.out),
-          borderColor: "#dc2626",
-          fill: false
-        }
-      ]
-    }
-  });
-}
-
-loadDashboard();
-</script>
-
-<style>
-.cards{display:flex;gap:12px;margin-bottom:16px}
-.card{flex:1;padding:16px;border-radius:12px;color:#fff}
-.card.blue{background:#2563eb}
-.card.red{background:#dc2626}
-.card .title{font-size:14px;opacity:.9}
-.card .num{font-size:28px;font-weight:900;margin-top:6px}
-
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.panel{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:12px}
-</style>
 
 {% endblock %}
