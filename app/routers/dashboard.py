@@ -1,13 +1,9 @@
 from fastapi import APIRouter
+from app.db import dashboard_summary
 
-router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
+router = APIRouter(prefix="/api/dashboard", tags=["Dashboard"])
 
-@router.get("/")
-def dashboard_summary():
-    return {
-        "inbound_today": 0,
-        "outbound_today": 0,
-        "total_stock": 0,
-        "no_location": 0,
-        "status": "DASHBOARD API OK"
-    }
+
+@router.get("")
+def dashboard():
+    return dashboard_summary()
