@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Form
 from app.db import add_inventory
 
 router = APIRouter(prefix="/api/inbound", tags=["Inbound"])
@@ -6,13 +6,13 @@ router = APIRouter(prefix="/api/inbound", tags=["Inbound"])
 
 @router.post("")
 def inbound_item(
-    item_code: str,
-    item_name: str,
-    brand: str,
-    spec: str,
-    location_code: str,
-    lot: str,
-    quantity: int
+    item_code: str = Form(...),
+    item_name: str = Form(...),
+    brand: str = Form(...),
+    spec: str = Form(...),
+    location_code: str = Form(...),
+    lot: str = Form(...),
+    quantity: int = Form(...)
 ):
     add_inventory(
         item_code=item_code,
