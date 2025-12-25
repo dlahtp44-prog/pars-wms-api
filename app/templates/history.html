@@ -1,42 +1,55 @@
-{% extends "worker_base.html" %}
-{% block worker_content %}
+{% extends "base.html" %}
+{% block content %}
 
-<div class="card">
-  <h2>🧾 재고 이력</h2>
+<h2>🧾 재고 이력</h2>
 
-  <!-- ✅ 엑셀 다운로드 버튼 -->
-  <div style="margin-bottom:12px;">
-    <a class="btn" href="/api/export/history">📥 이력 엑셀 다운로드</a>
-  </div>
-
-  <table class="table">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>구분</th>
-        <th>로케이션</th>
-        <th>품번</th>
-        <th>LOT</th>
-        <th>수량</th>
-        <th>비고</th>
-        <th>시간</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for r in rows %}
-      <tr>
-        <td>{{ r.id }}</td>
-        <td>{{ r.tx_type }}</td>
-        <td>{{ r.location }}</td>
-        <td>{{ r.item_code }}</td>
-        <td>{{ r.lot_no }}</td>
-        <td>{{ r.qty }}</td>
-        <td>{{ r.remark }}</td>
-        <td>{{ r.created_at }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+<div style="margin-bottom:12px;">
+  <a class="btn" href="/api/export/history">📥 이력 엑셀 다운로드</a>
 </div>
+
+<table class="table">
+  <thead>
+    <tr>
+      <th>일시</th>
+      <th>구분</th>
+      <th>창고</th>
+      <th>로케이션</th>
+      <th>품번</th>
+      <th>LOT</th>
+      <th class="right">수량</th>
+      <th>비고</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in rows %}
+    <tr>
+      <td>{{ r.created_at }}</td>
+      <td>{{ r.tx_type }}</td>
+      <td>{{ r.warehouse }}</td>
+      <td>{{ r.location }}</td>
+      <td>{{ r.item_code }}</td>
+      <td>{{ r.lot_no }}</td>
+      <td class="right">{{ r.qty }}</td>
+      <td>{{ r.remark }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<style>
+.table{width:100%;border-collapse:collapse}
+.table th,.table td{padding:8px;border-bottom:1px solid #e5e7eb;font-size:13px}
+.table th{background:#111827;color:#fff}
+.right{text-align:right}
+.btn{
+  display:inline-block;
+  padding:8px 12px;
+  background:#16a34a;
+  color:#fff;
+  border-radius:6px;
+  text-decoration:none;
+  font-size:14px;
+}
+</style>
 
 {% endblock %}
