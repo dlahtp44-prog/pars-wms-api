@@ -1,55 +1,58 @@
-{% extends "base.html" %}
-{% block content %}
+{% extends "worker_base.html" %}
+{% block worker_content %}
 
-<h2>📦 재고 현황</h2>
+<div class="card">
+  <div class="h2">📦 재고 조회</div>
 
-<div style="margin-bottom:12px;">
-  <a class="btn" href="/api/export/inventory">📥 재고 엑셀 다운로드</a>
+  <div class="row">
+    <a class="btn" href="/api/export/inventory">⬇️ 재고 엑셀 다운로드</a>
+    <a class="btn" href="/labels">🏷 라벨 출력</a>
+  </div>
+
+  <div class="hr"></div>
+
+  <div class="form">
+    <input id="q" placeholder="품번/품명/LOT 검색" />
+    <button class="btn primary" onclick="search()">검색</button>
+  </div>
+
+  <div class="tablewrap">
+    <table class="table" id="tbl">
+      <thead>
+        <tr>
+          <th>창고</th><th>로케이션</th><th>브랜드</th>
+          <th>품번</th><th>품명</th><th>LOT</th><th>규격</th>
+          <th class="right">수량</th><th>업데이트</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 </div>
 
-<table class="table">
-  <thead>
+<script>
+async function load(q=""){
+  const res = await fetch("/api/inventory?q=" + encodeURIComponent(q));
+  const rows = await res.json();
+  const tb = document.querySelector("#tbl tbody");
+  tb.innerHTML = rows.map(r=>`
     <tr>
-      <th>창고</th>
-      <th>로케이션</th>
-      <th>브랜드</th>
-      <th>품번</th>
-      <th>품명</th>
-      <th>LOT</th>
-      <th>규격</th>
-      <th class="right">수량</th>
+      <td>${r.warehouse||""}</td>
+      <td><a href="/loc?location=${encodeURIComponent(r.location||"")}" class="link">${r.location||""}</a></td>
+      <td>${r.brand||""}</td>
+      <td>${r.item_code||""}</td>
+      <td>${r.item_name||""}</td>
+      <td>${r.lot_no||""}</td>
+      <td>${r.spec||""}</td>
+      <td class="right"><b>${r.qty||0}</b></td>
+      <td>${r.updated_at||""}</td>
     </tr>
-  </thead>
-  <tbody>
-    {% for r in rows %}
-    <tr>
-      <td>{{ r.warehouse }}</td>
-      <td>{{ r.location }}</td>
-      <td>{{ r.brand }}</td>
-      <td>{{ r.item_code }}</td>
-      <td>{{ r.item_name }}</td>
-      <td>{{ r.lot_no }}</td>
-      <td>{{ r.spec }}</td>
-      <td class="right">{{ r.qty }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-
-<style>
-.table{width:100%;border-collapse:collapse}
-.table th,.table td{padding:8px;border-bottom:1px solid #e5e7eb;font-size:13px}
-.table th{background:#111827;color:#fff}
-.right{text-align:right}
-.btn{
-  display:inline-block;
-  padding:8px 12px;
-  background:#2563eb;
-  color:#fff;
-  border-radius:6px;
-  text-decoration:none;
-  font-size:14px;
+  `).join("");
 }
-</style>
+function search(){
+  load(document.getElementById("q").value.trim());
+}
+load();
+</script>
 
 {% endblock %}
