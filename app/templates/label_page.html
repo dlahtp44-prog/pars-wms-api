@@ -1,0 +1,191 @@
+{% extends "worker_base.html" %}
+{% block content %}
+
+<h2>🏷 라벨 출력 (HEQ-3108 / HEQ-3118)</h2>
+
+<div class="card">
+  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+    <a class="btn" href="/label?mode=item">📦 제품 라벨(HEQ-3108)</a>
+    <a class="btn" href="/label?mode=location">📍 로케이션 라벨(HEQ-3118)</a>
+  </div>
+
+  <div class="hr"></div>
+
+  <!-- 제품 라벨 입력 -->
+  <div id="itemForm" class="form" style="display:none">
+    <div class="h3">📦 제품 라벨 (HEQ-3108)</div>
+
+    <input id="brand" placeholder="브랜드 (예: AST)" />
+    <input id="item_code" placeholder="품번 (예: 728750)" />
+    <input id="item_name" placeholder="품명 (예: TEST TILE)" />
+    <input id="spec" placeholder="규격 (예: 600×600)" />
+    <input id="lot_no" placeholder="LOT (예: H5415)" />
+
+    <div class="row">
+      <button class="btn primary" onclick="renderItem()">라벨 미리보기</button>
+      <button class="btn" onclick="doPrint()">인쇄</button>
+    </div>
+  </div>
+
+  <!-- 로케이션 라벨 입력 -->
+  <div id="locForm" class="form" style="display:none">
+    <div class="h3">📍 로케이션 라벨 (HEQ-3118)</div>
+
+    <input id="location" placeholder="로케이션 코드 (예: D01-02)" />
+
+    <div class="row">
+      <button class="btn primary" onclick="renderLoc()">라벨 미리보기</button>
+      <button class="btn" onclick="doPrint()">인쇄</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 출력 영역 ===== -->
+<div id="printArea" style="margin-top:14px;"></div>
+
+<script src="/static/qr_label.js"></script>
+<script>
+const params = new URLSearchParams(location.search);
+const mode = params.get("mode") || "item";
+
+document.getElementById("itemForm").style.display = (mode==="item") ? "" : "none";
+document.getElementById("locForm").style.display  = (mode==="location") ? "" : "none";
+
+/* ✅ HEQ-3108: 제품 라벨 (대략 50×30mm 가정) */
+function renderItem(){
+  const brand = val("brand");
+  const item_code = val("item_code");
+  const item_name = val("item_name");
+  const spec = val("spec");
+  const lot_no = val("lot_no");
+
+  if(!item_code || !lot_no){
+    alert("품번/LOT는 필수입니다");
+    return;
+  }
+
+  // QR 내용: 제품용 (필드 제한: 품번/LOT/품명/규격/브랜드)
+  const qrText = new URLSearchParams({
+    type:"ITEM",
+    item_code,
+    lot_no,
+    item_name,
+    spec,
+    brand
+  }).toString();
+
+  // 라벨 카드 생성
+  const html = `
+  <div class="label label-item">
+    <div class="left">
+      <div class="t1">${escapeHtml(item_code)}</div>
+      <div class="t2">LOT: ${escapeHtml(lot_no)}</div>
+      <div class="t3">${escapeHtml(item_name)}</div>
+      <div class="t4">${escapeHtml(spec)}</div>
+      <div class="t5">${escapeHtml(brand)}</div>
+    </div>
+    <div class="right">
+      <canvas id="qrCanvas"></canvas>
+    </div>
+  </div>
+  `;
+  document.getElementById("printArea").innerHTML = html;
+  makeQR("qrCanvas", qrText);
+}
+
+/* ✅ HEQ-3118: 로케이션 라벨 (대략 70×40mm 가정) */
+function renderLoc(){
+  const location = val("location");
+  if(!location){
+    alert("로케이션은 필수입니다");
+    return;
+  }
+
+  // QR 내용: 로케이션 스캔 → 해당 위치 재고 조회 연결용
+  // (향후 /location-view?location=... 페이지로 연결할 수도 있음)
+  const qrText = new URLSearchParams({
+    type:"LOCATION",
+    location
+  }).toString();
+
+  const html = `
+  <div class="label label-loc">
+    <div class="locCode">${escapeHtml(location)}</div>
+    <div class="locQR"><canvas id="qrCanvas"></canvas></div>
+    <div class="hint">Scan → 위치 재고 확인</div>
+  </div>
+  `;
+  document.getElementById("printArea").innerHTML = html;
+  makeQR("qrCanvas", qrText);
+}
+
+function doPrint(){
+  if(!document.getElementById("printArea").innerHTML.trim()){
+    alert("먼저 라벨을 미리보기로 생성하세요");
+    return;
+  }
+  window.print();
+}
+
+function val(id){ return (document.getElementById(id).value || "").trim(); }
+</script>
+
+<style>
+/* 화면용 */
+.card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:12px;margin-top:10px}
+.h3{font-weight:800;margin:0 0 10px 0}
+.form input{width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:10px;margin:6px 0}
+.row{display:flex;gap:8px;margin-top:8px}
+.btn{display:inline-block;padding:10px 12px;border-radius:10px;background:#111827;color:#fff;text-decoration:none;border:none}
+.btn.primary{background:#2563eb}
+.hr{border-top:1px solid #e5e7eb;margin:12px 0}
+
+/* 라벨 공통 */
+.label{
+  background:#fff;
+  border:1px solid #111827;
+  border-radius:6px;
+  padding:6px;
+  display:flex;
+  gap:8px;
+  align-items:center;
+  width:fit-content;
+}
+
+/* 제품 라벨(HEQ-3108) */
+.label-item{
+  width: 50mm;
+  height: 30mm;
+  box-sizing:border-box;
+}
+.label-item .left{flex:1;line-height:1.05}
+.label-item .t1{font-weight:900;font-size:12px}
+.label-item .t2{font-weight:800;font-size:10px;margin-top:2px}
+.label-item .t3{font-size:9px;margin-top:2px}
+.label-item .t4{font-size:9px;margin-top:1px}
+.label-item .t5{font-size:9px;margin-top:1px;color:#374151}
+.label-item .right{width:22mm;display:flex;justify-content:center;align-items:center}
+.label-item canvas{width:20mm;height:20mm}
+
+/* 로케이션 라벨(HEQ-3118) */
+.label-loc{
+  width: 70mm;
+  height: 40mm;
+  box-sizing:border-box;
+  flex-direction:column;
+  justify-content:center;
+  text-align:center;
+}
+.label-loc .locCode{font-weight:900;font-size:22px;letter-spacing:1px}
+.label-loc canvas{width:26mm;height:26mm;margin-top:4px}
+.label-loc .hint{font-size:9px;color:#6b7280;margin-top:2px}
+
+/* 인쇄 전용 */
+@media print{
+  body *{visibility:hidden}
+  #printArea, #printArea *{visibility:visible}
+  #printArea{position:absolute;left:0;top:0}
+}
+</style>
+
+{% endblock %}
