@@ -2,20 +2,24 @@ async function loadInventory() {
   const res = await fetch("/api/inventory");
   const data = await res.json();
 
-  const tbody = document.querySelector("#inventory tbody");
+  const tbody = document.querySelector("#inventory-table tbody");
   tbody.innerHTML = "";
 
-  data.forEach(r => {
+  data.forEach(row => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${r.item_code}</td>
-      <td>${r.location_code}</td>
-      <td>${r.lot}</td>
-      <td>${r.quantity}</td>
+      <td>${row.item_code}</td>
+      <td>${row.item_name || ""}</td>
+      <td>${row.brand || ""}</td>
+      <td>${row.spec || ""}</td>
+      <td>${row.location_code}</td>
+      <td>${row.lot}</td>
+      <td style="text-align:right;">${row.quantity}</td>
     `;
     tbody.appendChild(tr);
   });
 }
+
 
 
 async function loadHistory() {
