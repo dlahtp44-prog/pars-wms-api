@@ -1,39 +1,38 @@
 {% extends "worker_base.html" %}
 {% block worker_content %}
 
-<h2>📍 로케이션 재고</h2>
+<div class="card">
+  <h3>📍 로케이션: {{ warehouse }} / {{ location }}</h3>
 
-<div class="muted">
-  창고: {{ warehouse }} / 위치: <b>{{ location }}</b>
-</div>
-
-<table class="table">
-  <thead>
+  {% if rows %}
+  <table class="table">
     <tr>
       <th>품번</th>
-      <th>품명</th>
       <th>LOT</th>
-      <th>규격</th>
       <th>수량</th>
+      <th></th>
     </tr>
-  </thead>
-  <tbody>
     {% for r in rows %}
     <tr>
-      <td>{{ r[0] }}</td>
-      <td>{{ r[1] }}</td>
-      <td>{{ r[2] }}</td>
-      <td>{{ r[3] }}</td>
-      <td>{{ r[4] }}</td>
-    </tr>
-    {% else %}
-    <tr>
-      <td colspan="5">재고 없음</td>
+      <td>{{ r.item_code }}</td>
+      <td>{{ r.lot_no }}</td>
+      <td><b>{{ r.qty }}</b></td>
+      <td>
+        <a class="btn"
+           href="/move-page
+           ?warehouse={{ warehouse }}
+           &from_location={{ location }}
+           &item_code={{ r.item_code }}
+           &lot_no={{ r.lot_no }}">
+           이동
+        </a>
+      </td>
     </tr>
     {% endfor %}
-  </tbody>
-</table>
-
-<a class="btn" href="/qr-page">← QR 스캔으로 돌아가기</a>
+  </table>
+  {% else %}
+    <p>재고 없음</p>
+  {% endif %}
+</div>
 
 {% endblock %}
