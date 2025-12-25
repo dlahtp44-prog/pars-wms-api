@@ -1,101 +1,44 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>A3 재고 리포트</title>
-
 <style>
-@page {
-  size: A3;
-  margin: 10mm;
-}
-
-body {
-  font-family: "Malgun Gothic", Arial, sans-serif;
-  font-size: 11px;
-}
-
-h1 { font-size: 20px; margin: 0 }
-h2 { font-size: 14px; margin-top: 18px }
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.btn {
-  padding: 6px 12px;
-  border: 1px solid #333;
-  background: #fff;
-  cursor: pointer;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 6px;
-}
-
-th, td {
-  border: 1px solid #333;
-  padding: 4px;
-  text-align: center;
-}
-
-th {
-  background: #f1f5f9;
-}
+@page { size:A3; margin:10mm }
+table { border-collapse:collapse; width:100% }
+th,td { border:1px solid #333; padding:4px; font-size:11px }
 </style>
 </head>
-
 <body>
 
-<div class="header">
-  <div>
-    <h1>📦 재고 현황 리포트 (A3)</h1>
-    <div>기준일: {{ today }}</div>
-  </div>
-  <button class="btn" onclick="window.print()">🖨️ PDF 저장</button>
-</div>
+<h1>📦 재고 리포트 ({{ today }})</h1>
+<button onclick="window.print()">🖨️ PDF 저장</button>
 
-<h2>📍 로케이션별 재고 합계</h2>
-<table>
-  <tr>
-    <th>로케이션</th>
-    <th>총 수량</th>
-  </tr>
-  {% for r in location_summary %}
-  <tr>
-    <td>{{ r[0] }}</td>
-    <td>{{ r[1] }}</td>
-  </tr>
-  {% endfor %}
-</table>
+<canvas id="chart" height="100"></canvas>
 
-<h2>📦 전체 재고 상세</h2>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+new Chart(document.getElementById("chart"), {
+  type: "bar",
+  data: {
+    labels: {{ summary.keys()|list }},
+    datasets: [{
+      label: "재고",
+      data: {{ summary.values()|list }},
+      backgroundColor: "#2563eb"
+    }]
+  }
+});
+</script>
+
 <table>
-  <tr>
-    <th>창고</th>
-    <th>로케이션</th>
-    <th>품번</th>
-    <th>품명</th>
-    <th>LOT</th>
-    <th>규격</th>
-    <th>수량</th>
-  </tr>
-  {% for r in inventory %}
-  <tr>
-    <td>{{ r[0] }}</td>
-    <td>{{ r[1] }}</td>
-    <td>{{ r[2] }}</td>
-    <td>{{ r[3] }}</td>
-    <td>{{ r[4] }}</td>
-    <td>{{ r[5] }}</td>
-    <td>{{ r[6] }}</td>
-  </tr>
-  {% endfor %}
+<tr>
+<th>창고</th><th>위치</th><th>품번</th><th>품명</th><th>LOT</th><th>규격</th><th>수량</th>
+</tr>
+{% for r in rows %}
+<tr>
+<td>{{ r[0] }}</td><td>{{ r[1] }}</td><td>{{ r[2] }}</td>
+<td>{{ r[3] }}</td><td>{{ r[4] }}</td><td>{{ r[5] }}</td><td>{{ r[6] }}</td>
+</tr>
+{% endfor %}
 </table>
 
 </body>
