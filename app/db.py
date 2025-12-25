@@ -429,9 +429,16 @@ def rollback(tx_id: int):
 # -------------------------
 # 관리자 비밀번호 체크
 # -------------------------
+import os
+
 def admin_password_ok(pw: str) -> bool:
-    admin_pw = os.getenv("ADMIN_PASSWORD", "1234")
-    return (pw or "") == admin_pw
+    """
+    관리자 비밀번호 확인
+    기본값: admin_1234
+    """
+    ADMIN_PW = os.getenv("ADMIN_PASSWORD", "admin_1234")
+    return pw == ADMIN_PW
+
     
 # =========================
 # 📍 로케이션 재고 조회
