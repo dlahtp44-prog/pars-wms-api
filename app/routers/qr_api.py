@@ -1,16 +1,13 @@
+# app/routers/qr_api.py
 from fastapi import APIRouter, Query
-from app.db import get_location_items
+from app.db import get_location_items, get_inventory
 
-router = APIRouter(prefix="/api/qr", tags=["QR API"])
+router = APIRouter(prefix="/api", tags=["QR API"])
 
-@router.get("/location")
-def location_inventory(
-    warehouse: str = Query("MAIN"),
-    location: str = Query(...)
-):
-    items = get_location_items(warehouse, location)
-    return {
-        "warehouse": warehouse,
-        "location": location,
-        "items": items
-    }
+@router.get("/location-items")
+def api_location_items(warehouse: str = Query("MAIN"), location: str = Query(...)):
+    return get_location_items(warehouse, location)
+
+@router.get("/inventory")
+def api_inventory(q: str = Query("")):
+    return get_inventory(q)
