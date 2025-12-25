@@ -68,7 +68,7 @@ safe_include("app.routers.qr_api")
 safe_include("app.routers.upload_inventory")
 safe_include("app.routers.upload_outbound")
 safe_include("app.routers.export_excel")
-
+safe_include("app.routers.dashboard_api")
 @app.get("/ping")
 def ping():
     return {"status": "OK"}
