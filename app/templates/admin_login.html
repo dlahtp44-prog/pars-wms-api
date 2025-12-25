@@ -1,12 +1,8 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="card">
-  <div class="h2">🔐 관리자 로그인</div>
-  {% if err %}<div class="bad">{{ err }}</div>{% endif %}
-  <form method="post" action="/admin/login" class="form">
-    <input name="password" placeholder="관리자 비밀번호" type="password" required>
-    <button class="btn primary" type="submit">로그인</button>
-  </form>
-  <div class="muted">Railway 환경변수 <b>ADMIN_PASSWORD</b> 설정 권장</div>
-</div>
+<h3>🔐 관리자 로그인</h3>
+<form method="post" action="/admin/login">
+  <input type="password" name="password" placeholder="비밀번호" required>
+  <button type="submit">로그인</button>
+</form>
 {% endblock %}
