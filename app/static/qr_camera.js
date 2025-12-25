@@ -2,6 +2,14 @@
 let qrScanner = null;
 let currentCameraId = null;
 let camerasCache = [];
+let scanned = false;
+
+(decodedText) => {
+  if(scanned) return;
+  scanned = true;
+  stopScan();
+  processQR(decodedText);
+}
 
 /* 카메라 목록 로드 */
 async function loadCameras() {
