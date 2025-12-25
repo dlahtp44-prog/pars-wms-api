@@ -56,6 +56,7 @@ safe_include("app.pages.admin_page")
 safe_include("app.pages.upload_page")
 safe_include("app.pages.location_view_page")
 safe_include("app.pages.label_page")
+safe_include("app.pages.report_page")
 
 # APIs
 safe_include("app.routers.inbound")
