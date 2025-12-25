@@ -10,13 +10,17 @@ def product_label(
     lot_no: str = Query(...),
     item_name: str = Query(""),
     spec: str = Query(""),
-    brand: str = Query("")
+    brand: str = Query(""),
+    warehouse: str = Query("MAIN"),
+    location: str = Query("")   # ← 추가
 ):
     """
     제품 QR 라벨 (HEQ-3108 : 50x30mm)
     """
 
     qr_data = urllib.parse.urlencode({
+        "warehouse": warehouse,
+        "location": location,
         "item_code": item_code,
         "lot_no": lot_no,
         "item_name": item_name,
@@ -56,6 +60,10 @@ body {{
   font-weight: bold;
   font-size: 9px;
 }}
+.loc {{
+  font-size: 7px;
+  color: #555;
+}}
 </style>
 </head>
 <body onload="window.print()">
@@ -68,6 +76,7 @@ body {{
       <div>{item_name}</div>
       <div>{spec}</div>
       <div>{brand}</div>
+      <div class="loc">{warehouse} {location}</div>
     </div>
   </div>
 </body>
