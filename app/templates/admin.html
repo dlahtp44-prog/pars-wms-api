@@ -1,87 +1,15 @@
-{% extends "base.html" %}
-{% block content %}
-
-<div class="container mt-4">
-  <h3>🛠️ 관리자 작업 로그 (롤백 관리)</h3>
-  <p class="text-danger">
-    ⚠️ 관리자 전용 화면입니다. 롤백 시 실제 재고가 변경됩니다.
-  </p>
-
-  <div class="table-responsive">
-    <table class="table table-bordered table-hover mt-3 align-middle">
-      <thead class="table-dark">
-        <tr>
-          <th>시간</th>
-          <th>구분</th>
-          <th>창고</th>
-          <th>로케이션</th>
-          <th>품번</th>
-          <th>LOT</th>
-          <th>수량</th>
-          <th>비고</th>
-          <th>기능</th>
-        </tr>
-      </thead>
-      <tbody id="logTable"></tbody>
-    </table>
-  </div>
-</div>
-
-<script>
-async function loadLogs() {
-  const res = await fetch('/api/admin/logs');
-  const logs = await res.json();
-
-  const html = logs.map(log => {
-    let badge = "bg-secondary";
-    if (log.tx_type === "IN") badge = "bg-primary";
-    if (log.tx_type === "OUT") badge = "bg-danger";
-    if (log.tx_type === "MOVE") badge = "bg-warning text-dark";
-
-    return `
-      <tr>
-        <td>${log.created_at}</td>
-        <td><span class="badge ${badge}">${log.tx_type}</span></td>
-        <td>${log.warehouse}</td>
-        <td>${log.location}</td>
-        <td><b>${log.item_code}</b></td>
-        <td>${log.lot_no}</td>
-        <td class="text-end">${log.qty}</td>
-        <td>${log.remark || ""}</td>
-        <td>
-          <button class="btn btn-sm btn-outline-danger"
-            onclick="rollback(${log.id}, '${log.tx_type}')">
-            롤백
-          </button>
-        </td>
-      </tr>
-    `;
-  }).join("");
-
-  document.getElementById("logTable").innerHTML = html;
-}
-
-async function rollback(id, type) {
-  let msg = "이 작업을 롤백하시겠습니까?";
-  if (type === "MOVE") {
-    msg = "⚠️ 이동 작업입니다.\n출발/도착 재고가 모두 되돌아갑니다.\n진행할까요?";
-  }
-
-  if (!confirm(msg)) return;
-
-  const res = await fetch(`/api/admin/rollback/${id}`, {
-    method: "POST"
-  });
-
-  if (res.ok) {
-    alert("✅ 롤백 완료");
-    loadLogs();
-  } else {
-    alert("❌ 롤백 실패");
-  }
-}
-
-loadLogs();
-</script>
-
-{% endblock %}
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin</title>
+  <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+<h2>Admin Login</h2>
+<form action="/api/admin/login" method="post">
+  <input name="username" placeholder="Username">
+  <input name="password" type="password" placeholder="Password">
+  <button type="submit">LOGIN</button>
+</form>
+</body>
+</html>
