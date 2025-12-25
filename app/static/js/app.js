@@ -25,17 +25,25 @@ async function loadInventory() {
 async function loadHistory() {
   const res = await fetch("/api/history");
   const data = await res.json();
-  const table = document.getElementById("history");
-  table.innerHTML = "<tr><th>Action</th><th>Item</th><th>Qty</th><th>Date</th></tr>";
-  data.forEach(r => {
-    table.innerHTML += `<tr>
-      <td>${r.action}</td>
-      <td>${r.item_code}</td>
-      <td>${r.quantity}</td>
-      <td>${r.created_at}</td>
-    </tr>`;
+
+  const tbody = document.querySelector("#history-table tbody");
+  tbody.innerHTML = "";
+
+  data.forEach(row => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${row.action}</td>
+      <td>${row.item_code}</td>
+      <td>${row.location_from || ""}</td>
+      <td>${row.location_to || ""}</td>
+      <td>${row.lot}</td>
+      <td style="text-align:right;">${row.quantity}</td>
+      <td>${row.created_at.replace("T", " ")}</td>
+    `;
+    tbody.appendChild(tr);
   });
 }
+
 
 async function loadDashboard() {
   const res = await fetch("/api/dashboard");
