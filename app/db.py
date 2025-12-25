@@ -471,4 +471,25 @@ def get_inventory_by_location(warehouse: str, location: str):
     rows = cur.fetchall()
     conn.close()
     return rows
+    
+def get_location_items(warehouse: str, location: str):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT
+            item_code,
+            item_name,
+            lot_no,
+            spec,
+            brand,
+            qty
+        FROM inventory
+        WHERE warehouse = ?
+          AND location = ?
+          AND qty > 0
+        ORDER BY item_code
+    """, (warehouse, location))
+    rows = [dict(r) for r in cur.fetchall()]
+    conn.close()
+    return rows
 
