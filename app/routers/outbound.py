@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Form
+from fastapi.responses import JSONResponse
 from app.db import subtract_inventory
 
 router = APIRouter(prefix="/api/outbound", tags=["Outbound"])
@@ -11,10 +12,16 @@ def outbound_item(
     lot: str = Form(...),
     quantity: int = Form(...)
 ):
-    subtract_inventory(
-        item_code=item_code,
-        location_code=location_code,
-        lot=lot,
-        quantity=quantity
-    )
-    return {"result": "OK"}
+    try:
+        subtract_inventory(
+            item_code=item_code,
+            location_code=location_code,
+            lot=lot,
+            quantity=quantity
+        )
+        return {"result": "OK"}
+    except ValueError as e:
+        return JSONResponse(
+            status_code=400,
+            content={"error": str(e)}
+        )
