@@ -187,3 +187,34 @@ def move_inventory(
     )
 
     return True, "이동 완료"
+def get_location_items(warehouse: str, location: str):
+    conn = get_conn()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT
+            item_code,
+            item_name,
+            spec,
+            lot_no,
+            qty
+        FROM inventory
+        WHERE warehouse = ?
+          AND location = ?
+          AND qty > 0
+        ORDER BY item_code
+    """, (warehouse, location))
+
+    rows = cur.fetchall()
+    conn.close()
+
+    return [
+        {
+            "item_code": r[0],
+            "item_name": r[1],
+            "spec": r[2],
+            "lot_no": r[3],
+            "qty": r[4],
+        }
+        for r in rows
+    ]
