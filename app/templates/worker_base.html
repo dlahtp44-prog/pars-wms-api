@@ -1,15 +1,28 @@
-{% extends "base.html" %}
-{% block content %}
-<div class="card">
-  <div class="h2">작업자 메뉴</div>
-  <div class="row">
-    <a class="btn" href="/worker/inbound">📥 입고</a>
-    <a class="btn" href="/worker/outbound">📤 출고</a>
-    <a class="btn" href="/worker/move">🔁 이동</a>
-    <a class="btn" href="/inventory-page">📦 재고</a>
-    <a class="btn" href="/qr-page">📷 QR</a>
-  </div>
-</div>
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PARS WMS</title>
+  <link rel="stylesheet" href="/static/app.css" />
+  <link rel="manifest" href="/static/manifest.json" />
+  <meta name="theme-color" content="#111827" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">PARS WMS</div>
+    <nav class="nav">
+      <a href="/worker">작업</a>
+      <a href="/inventory-page">재고</a>
+      <a href="/history-page">이력</a>
+      <a href="/qr-page">QR</a>
+      <a href="/dashboard">대시</a>
+      <a href="/upload">업로드</a>
+    </nav>
+  </header>
 
-{% block worker_content %}{% endblock %}
-{% endblock %}
+  <main class="container">
+    {% block worker_content %}{% endblock %}
+  </main>
+</body>
+</html>
