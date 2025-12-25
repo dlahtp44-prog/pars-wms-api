@@ -67,6 +67,7 @@ safe_include("app.routers.qr_api")
 safe_include("app.routers.qr_process")
 safe_include("app.routers.export_excel")
 safe_include("app.routers.qr_generate")
+safe_include("app.routers.admin")
 
 @app.get("/ping")
 def ping():
