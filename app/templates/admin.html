@@ -2,56 +2,29 @@
 {% block content %}
 
 <div class="container mt-4">
+  <h3>🛠️ 관리자 작업 로그 (롤백 관리)</h3>
+  <p class="text-danger">
+    ⚠️ 관리자 전용 화면입니다. 롤백 시 실제 재고가 변경됩니다.
+  </p>
 
-  <h2 class="mb-3">🛠️ 관리자 센터</h2>
-
-  <!-- 🔹 관리자 버튼 영역 -->
-  <div class="row mb-4">
-    <div class="col-md-3 mb-2">
-      <a href="/dashboard" class="btn btn-dark w-100">📊 대시보드</a>
-    </div>
-    <div class="col-md-3 mb-2">
-      <a href="/labels/product" class="btn btn-secondary w-100">
-        🏷 제품 QR 라벨
-      </a>
-    </div>
-    <div class="col-md-3 mb-2">
-      <a href="/labels/location" class="btn btn-secondary w-100">
-        📍 로케이션 QR 라벨
-      </a>
-    </div>
-    <div class="col-md-3 mb-2">
-      <a href="/export/inventory" class="btn btn-outline-primary w-100">
-        📦 재고 엑셀
-      </a>
-    </div>
-    <div class="col-md-3 mb-2">
-      <a href="/export/history" class="btn btn-outline-primary w-100">
-        🧾 이력 엑셀
-      </a>
-    </div>
+  <div class="table-responsive">
+    <table class="table table-bordered table-hover mt-3 align-middle">
+      <thead class="table-dark">
+        <tr>
+          <th>시간</th>
+          <th>구분</th>
+          <th>창고</th>
+          <th>로케이션</th>
+          <th>품번</th>
+          <th>LOT</th>
+          <th>수량</th>
+          <th>비고</th>
+          <th>기능</th>
+        </tr>
+      </thead>
+      <tbody id="logTable"></tbody>
+    </table>
   </div>
-
-  <hr>
-
-  <!-- 🔹 작업 로그 / 롤백 -->
-  <h4 class="mt-4">🧾 작업 로그 (롤백 관리)</h4>
-
-  <table class="table table-bordered table-hover mt-3">
-    <thead class="table-dark">
-      <tr>
-        <th>시간</th>
-        <th>구분</th>
-        <th>창고</th>
-        <th>로케이션</th>
-        <th>품번</th>
-        <th>LOT</th>
-        <th>수량</th>
-        <th>기능</th>
-      </tr>
-    </thead>
-    <tbody id="logTable"></tbody>
-  </table>
 </div>
 
 <script>
@@ -59,47 +32,52 @@ async function loadLogs() {
   const res = await fetch('/api/admin/logs');
   const logs = await res.json();
 
-  const html = logs.map(log => `
-    <tr>
-      <td>${log.created_at}</td>
-      <td>
-        <span class="badge ${
-          log.tx_type === 'IN' ? 'bg-primary' :
-          log.tx_type === 'OUT' ? 'bg-danger' :
-          'bg-warning'
-        }">
-          ${log.tx_type}
-        </span>
-      </td>
-      <td>${log.warehouse}</td>
-      <td>${log.location}</td>
-      <td>${log.item_code}</td>
-      <td>${log.lot_no}</td>
-      <td>${log.qty}</td>
-      <td>
-        <button class="btn btn-sm btn-warning"
-          onclick="rollback(${log.id})">
-          롤백
-        </button>
-      </td>
-    </tr>
-  `).join('');
+  const html = logs.map(log => {
+    let badge = "bg-secondary";
+    if (log.tx_type === "IN") badge = "bg-primary";
+    if (log.tx_type === "OUT") badge = "bg-danger";
+    if (log.tx_type === "MOVE") badge = "bg-warning text-dark";
 
-  document.getElementById('logTable').innerHTML = html;
+    return `
+      <tr>
+        <td>${log.created_at}</td>
+        <td><span class="badge ${badge}">${log.tx_type}</span></td>
+        <td>${log.warehouse}</td>
+        <td>${log.location}</td>
+        <td><b>${log.item_code}</b></td>
+        <td>${log.lot_no}</td>
+        <td class="text-end">${log.qty}</td>
+        <td>${log.remark || ""}</td>
+        <td>
+          <button class="btn btn-sm btn-outline-danger"
+            onclick="rollback(${log.id}, '${log.tx_type}')">
+            롤백
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join("");
+
+  document.getElementById("logTable").innerHTML = html;
 }
 
-async function rollback(id) {
-  if(!confirm('이 작업을 취소하고 재고를 원상복구 하시겠습니까?')) return;
+async function rollback(id, type) {
+  let msg = "이 작업을 롤백하시겠습니까?";
+  if (type === "MOVE") {
+    msg = "⚠️ 이동 작업입니다.\n출발/도착 재고가 모두 되돌아갑니다.\n진행할까요?";
+  }
+
+  if (!confirm(msg)) return;
 
   const res = await fetch(`/api/admin/rollback/${id}`, {
-    method: 'POST'
+    method: "POST"
   });
 
-  if(res.ok){
-    alert('✅ 롤백 완료');
+  if (res.ok) {
+    alert("✅ 롤백 완료");
     loadLogs();
   } else {
-    alert('❌ 롤백 실패');
+    alert("❌ 롤백 실패");
   }
 }
 
