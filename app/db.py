@@ -432,3 +432,29 @@ def rollback(tx_id: int):
 def admin_password_ok(pw: str) -> bool:
     admin_pw = os.getenv("ADMIN_PASSWORD", "1234")
     return (pw or "") == admin_pw
+    
+# =========================
+# 📍 로케이션 재고 조회
+# =========================
+def get_location_items(warehouse: str, location: str):
+    conn = get_conn()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT
+            item_code,
+            item_name,
+            lot_no,
+            spec,
+            qty
+        FROM inventory
+        WHERE warehouse = ?
+          AND location = ?
+          AND qty > 0
+        ORDER BY item_code
+    """, (warehouse, location))
+
+    rows = cur.fetchall()
+    conn.close()
+
+    return rows
