@@ -159,6 +159,22 @@ def subtract_inventory(item_code: str, location_code: str, lot: str, quantity: i
     conn = get_connection()
     cur = conn.cursor()
 
+    # 현재 수량 확인
+    cur.execute("""
+        SELECT quantity FROM inventory
+        WHERE item_code = ? AND location_code = ? AND lot = ?
+    """, (item_code, location_code, lot))
+    row = cur.fetchone()
+
+    if not row:
+        conn.close()
+        raise ValueError("재고가 존재하지 않습니다.")
+
+    if row["quantity"] < quantity:
+        conn.close()
+        raise ValueError("출고 수량이 재고보다 많습니다.")
+
+    # 수량 차감
     cur.execute("""
         UPDATE inventory
         SET quantity = quantity - ?
@@ -169,6 +185,7 @@ def subtract_inventory(item_code: str, location_code: str, lot: str, quantity: i
 
     conn.commit()
     conn.close()
+
 
 
 def move_inventory(item_code: str, lot: str,
