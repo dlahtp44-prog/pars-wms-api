@@ -2,33 +2,27 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>PARS WMS</title>
   <link rel="stylesheet" href="/static/app.css"/>
-  <link rel="manifest" href="/static/manifest.json"/>
-  <meta name="theme-color" content="#111827"/>
+  <link rel="manifest" href="/static/manifest.json">
 </head>
 <body>
-<header>
-  <div class="container">
-    <div class="row" style="justify-content:space-between;">
-      <div style="font-weight:900;">PARS WMS</div>
-      <div class="nav">
-        <a href="/">메인</a>
-        <a href="/worker">작업자</a>
-        <a href="/inventory-page">재고</a>
-        <a href="/history-page">이력</a>
-        <a href="/qr-page">QR</a>
-        <a href="/dashboard">대시보드</a>
-        <a href="/upload">업로드</a>
-        <a href="/admin">관리자</a>
-      </div>
-    </div>
-  </div>
-</header>
-
-<div class="container">
-  {% block content %}{% endblock %}
-</div>
+  <header class="top">
+    <div class="brand">PARS WMS</div>
+    <nav class="nav">
+      <a href="/">홈</a>
+      <a href="/worker">작업자</a>
+      <a href="/inventory-page">재고</a>
+      <a href="/history-page">이력</a>
+      <a href="/qr-page">QR</a>
+      <a href="/dashboard">대시보드</a>
+      <a href="/labels">라벨</a>
+      <a href="/admin">관리자</a>
+    </nav>
+  </header>
+  <main class="wrap">
+    {% block content %}{% endblock %}
+  </main>
 </body>
 </html>
