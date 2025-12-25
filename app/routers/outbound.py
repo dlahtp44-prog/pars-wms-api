@@ -1,23 +1,22 @@
-from fastapi import APIRouter, Form, HTTPException
+# app/routers/outbound.py
+from fastapi import APIRouter, Form
 from app.db import subtract_inventory
 
-router = APIRouter(prefix="/api/outbound", tags=["Outbound"])
+router = APIRouter(prefix="/api/outbound")
 
 @router.post("/manual")
 def outbound_manual(
-    warehouse: str = Form(...),
+    warehouse: str = Form("MAIN"),
     location: str = Form(...),
+    brand: str = Form(""),
     item_code: str = Form(...),
-    qty: float = Form(...),
-    lot_no: str = Form("")
+    item_name: str = Form(""),
+    lot_no: str = Form(...),
+    spec: str = Form(""),
+    qty: float = Form(...)
 ):
-    ok = subtract_inventory(
-        warehouse=warehouse,
-        location=location,
-        item_code=item_code,
-        lot_no=lot_no,
-        qty=qty
+    subtract_inventory(
+        warehouse, location, brand,
+        item_code, item_name, lot_no, spec, qty
     )
-    if not ok:
-        raise HTTPException(status_code=400, detail="재고 부족")
     return {"result": "OK"}
