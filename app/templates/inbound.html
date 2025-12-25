@@ -1,20 +1,46 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Inbound</title>
+  <title>입고</title>
   <link rel="stylesheet" href="/static/css/app.css">
 </head>
 <body>
-<h2>Inbound</h2>
-<form action="/api/inbound" method="post">
-  <input name="item_code" placeholder="Item Code">
-  <input name="item_name" placeholder="Item Name">
-  <input name="brand" placeholder="Brand">
-  <input name="spec" placeholder="Spec">
-  <input name="location_code" placeholder="Location">
-  <input name="lot" placeholder="LOT">
-  <input name="quantity" type="number" placeholder="Qty">
-  <button type="submit">INBOUND</button>
-</form>
+  <h2>입고</h2>
+
+  <form action="/api/inbound" method="post">
+    <table>
+      <tr>
+        <th>품목코드</th>
+        <td><input name="item_code" placeholder="품목코드"></td>
+      </tr>
+      <tr>
+        <th>제품명</th>
+        <td><input name="item_name" placeholder="제품명"></td>
+      </tr>
+      <tr>
+        <th>브랜드</th>
+        <td><input name="brand" placeholder="브랜드"></td>
+      </tr>
+      <tr>
+        <th>규격</th>
+        <td><input name="spec" placeholder="규격"></td>
+      </tr>
+      <tr>
+        <th>로케이션</th>
+        <td><input name="location_code" placeholder="로케이션"></td>
+      </tr>
+      <tr>
+        <th>LOT</th>
+        <td><input name="lot" placeholder="LOT"></td>
+      </tr>
+      <tr>
+        <th>수량</th>
+        <td><input name="quantity" type="number" placeholder="수량"></td>
+      </tr>
+    </table>
+
+    <br>
+    <button type="submit">입고 처리</button>
+  </form>
 </body>
 </html>
