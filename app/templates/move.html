@@ -1,18 +1,35 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Move</title>
+  <title>이동</title>
   <link rel="stylesheet" href="/static/css/app.css">
 </head>
 <body>
-<h2>Move</h2>
-<form action="/api/move" method="post">
-  <input name="item_code" placeholder="Item Code">
-  <input name="lot" placeholder="LOT">
-  <input name="location_from" placeholder="From">
-  <input name="location_to" placeholder="To">
-  <input name="quantity" type="number" placeholder="Qty">
-  <button type="submit">MOVE</button>
-</form>
+  <h2>재고 이동</h2>
+
+  <table>
+    <tr>
+      <th>품목코드</th>
+      <th>제품명</th>
+      <th>LOT</th>
+      <th>수량</th>
+      <th>출발지</th>
+      <th>도착지</th>
+      <th>비고</th>
+    </tr>
+    <tr>
+      <td><input name="item_code" form="moveForm"></td>
+      <td><input name="item_name" form="moveForm"></td>
+      <td><input name="lot" form="moveForm"></td>
+      <td><input name="quantity" type="number" form="moveForm"></td>
+      <td><input name="location_from" form="moveForm"></td>
+      <td><input name="location_to" form="moveForm"></td>
+      <td><input name="memo" form="moveForm" placeholder="메모"></td>
+    </tr>
+  </table>
+
+  <form id="moveForm" action="/api/move" method="post">
+    <button type="submit">이동 처리</button>
+  </form>
 </body>
 </html>
