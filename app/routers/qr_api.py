@@ -1,16 +1,15 @@
-from fastapi import APIRouter, Query
-from app.db import get_inventory, get_location_items
+from fastapi import APIRouter
+from fastapi.responses import RedirectResponse
+from urllib.parse import parse_qs
 
-router = APIRouter(prefix="/api/qr", tags=["qr-api"])
+router = APIRouter(prefix="/api/qr")
 
 @router.get("/search")
-def qr_search(q: str = Query(...)):
-    # item_code/lot/품명 등 검색
-    return get_inventory(q=q)
+def qr_search(qr: str):
+    params = parse_qs(qr)
 
-@router.get("/location-items")
-def location_items(
-    warehouse: str = Query("MAIN"),
-    location: str = Query(...)
-):
-    return get_location_items(warehouse, location)
+    if "location" in params:
+        loc = params["location"][0]
+        return RedirectResponse(f"/location/{loc}")
+
+    return {"error": "알 수 없는 QR"}
