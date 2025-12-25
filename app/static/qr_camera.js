@@ -40,11 +40,15 @@ async function startScan() {
 
 function stopScan() {
   if (!qrScanner) return;
+
   qrScanner.stop().then(() => {
     qrScanner.clear();
     qrScanner = null;
+  }).catch(() => {
+    qrScanner = null;
   });
 }
+
 
 
 function manualSend(){
