@@ -1,26 +1,22 @@
-from fastapi import APIRouter, Form, HTTPException
+from fastapi import APIRouter
 from app.db import move_inventory
 
 router = APIRouter(prefix="/api/move", tags=["Move"])
 
-@router.post("/manual")
-def move_manual(
-    warehouse: str = Form(...),
-    item_code: str = Form(...),
-    from_location: str = Form(...),
-    to_location: str = Form(...),
-    qty: float = Form(...)
+
+@router.post("")
+def move_item(
+    item_code: str,
+    lot: str,
+    location_from: str,
+    location_to: str,
+    quantity: int
 ):
-    try:
-        ok = move_inventory(
-            warehouse=warehouse,
-            item_code=item_code,
-            from_location=from_location,
-            to_location=to_location,
-            qty=qty
-        )
-        if not ok:
-            raise HTTPException(status_code=400, detail="이동 실패")
-        return {"result": "OK"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    move_inventory(
+        item_code=item_code,
+        lot=lot,
+        location_from=location_from,
+        location_to=location_to,
+        quantity=quantity
+    )
+    return {"result": "OK"}
