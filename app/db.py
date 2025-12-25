@@ -195,4 +195,19 @@ def move_inventory(warehouse, item_code, lot_no, qty, from_location, to_location
 
     conn.commit()
     conn.close()
+def get_locations():
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("""
+      SELECT DISTINCT warehouse, location
+      FROM inventory
+      ORDER BY warehouse, location
+    """)
+    rows = cur.fetchall()
+    conn.close()
+
+    return [
+        {"warehouse": r[0], "location": r[1]}
+        for r in rows
+    ]
 
