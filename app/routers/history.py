@@ -1,12 +1,9 @@
+# app/routers/history.py
 from fastapi import APIRouter
-from app.db import get_history, rollback
+from app.db import get_history
 
-router = APIRouter(prefix="/api/history")
+router = APIRouter(prefix="/api/history", tags=["history"])
 
 @router.get("")
-def history():
-    return get_history()
-
-@router.post("/rollback/{hid}")
-def history_rollback(hid: int):
-    return rollback(hid)
+def history_api():
+    return get_history(500)
