@@ -1,17 +1,22 @@
 async function loadInventory() {
   const res = await fetch("/api/inventory");
   const data = await res.json();
-  const table = document.getElementById("inventory");
-  table.innerHTML = "<tr><th>Item</th><th>Loc</th><th>LOT</th><th>Qty</th></tr>";
+
+  const tbody = document.querySelector("#inventory tbody");
+  tbody.innerHTML = "";
+
   data.forEach(r => {
-    table.innerHTML += `<tr>
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
       <td>${r.item_code}</td>
       <td>${r.location_code}</td>
       <td>${r.lot}</td>
       <td>${r.quantity}</td>
-    </tr>`;
+    `;
+    tbody.appendChild(tr);
   });
 }
+
 
 async function loadHistory() {
   const res = await fetch("/api/history");
