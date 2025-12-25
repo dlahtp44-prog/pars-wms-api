@@ -1,0 +1,12 @@
+body {
+  font-family: Arial;
+  padding: 20px;
+}
+nav a {
+  margin-right: 10px;
+}
+table, td, th {
+  border: 1px solid #333;
+  border-collapse: collapse;
+  padding: 5px;
+}
