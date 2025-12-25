@@ -97,3 +97,18 @@ function manualSend() {
   if (!v) return alert("QR 내용을 입력하세요");
   processQR(v);
 }
+function processQR(text){
+  const params = new URLSearchParams(text);
+  const warehouse = params.get("warehouse") || "MAIN";
+  const location = params.get("location");
+
+  if(location){
+    
+    // 📍 로케이션 QR
+    window.location.href =
+      `/location?warehouse=${warehouse}&location=${location}`;
+    return;
+  }
+
+  alert("알 수 없는 QR");
+}
