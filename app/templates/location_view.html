@@ -1,26 +1,35 @@
-{% extends "base.html" %}
-{% block content %}
-<h2 class="h2">📍 로케이션 재고</h2>
-<div class="card">
-  <div><b>창고:</b> {{ warehouse }} / <b>로케이션:</b> {{ location }}</div>
-</div>
+{% extends "worker_base.html" %}
+{% block worker_content %}
 
-<div class="tablewrap" style="margin-top:12px">
-  <table class="table">
-    <thead><tr>
-      <th>품번</th><th>품명</th><th>LOT</th><th>규격</th><th class="right">수량</th>
-    </tr></thead>
-    <tbody>
-    {% for r in items %}
-      <tr>
-        <td>{{ r.item_code }}</td>
-        <td>{{ r.item_name }}</td>
-        <td>{{ r.lot_no }}</td>
-        <td>{{ r.spec }}</td>
-        <td class="right"><b>{{ r.qty }}</b></td>
-      </tr>
+<h2>📍 위치 재고 : {{ location }}</h2>
+
+<table class="table">
+  <thead>
+    <tr>
+      <th>품번</th>
+      <th>품명</th>
+      <th>LOT</th>
+      <th>규격</th>
+      <th>수량</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in rows %}
+    <tr>
+      <td>{{ r[0] }}</td>
+      <td>{{ r[1] }}</td>
+      <td>{{ r[2] }}</td>
+      <td>{{ r[3] }}</td>
+      <td><b>{{ r[4] }}</b></td>
+    </tr>
+    {% else %}
+    <tr>
+      <td colspan="5">재고 없음</td>
+    </tr>
     {% endfor %}
-    </tbody>
-  </table>
-</div>
+  </tbody>
+</table>
+
+<a class="btn" href="/qr-page">← QR 스캔으로</a>
+
 {% endblock %}
