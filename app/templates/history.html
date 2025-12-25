@@ -1,28 +1,12 @@
-{% extends "worker_base.html" %}
-{% block worker_content %}
-
-<div class="card">
-  <div class="h2">🧾 재고 이력</div>
-
-  <div class="row">
-    <a class="btn" href="/api/export/history">⬇️ 이력 엑셀 다운로드</a>
-    <a class="btn" href="/admin">🛠 관리자(롤백)</a>
-  </div>
-
-  <div class="hr"></div>
-
-  <div class="tablewrap">
-    <table class="table" id="tbl">
-      <thead>
-      <tr>
-        <th>ID</th><th>구분</th><th>창고</th><th>로케이션</th><th>From</th><th>To</th>
-        <th>품번</th><th>LOT</th><th class="right">수량</th><th>비고</th><th>시간</th>
-      </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
-</div>
-
-<script src="/static/history.js"></script>
-{% endblock %}
+<!DOCTYPE html>
+<html>
+<head>
+  <title>History</title>
+  <link rel="stylesheet" href="/static/css/app.css">
+  <script src="/static/js/app.js"></script>
+</head>
+<body onload="loadHistory()">
+<h2>History</h2>
+<table id="history"></table>
+</body>
+</html>
