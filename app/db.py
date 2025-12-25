@@ -52,30 +52,32 @@ def init_db():
 # =========================
 # 공통 조회
 # =========================
-def get_inventory(q: str = ""):
+def get_inventory():
     conn = get_conn()
     cur = conn.cursor()
-
-    if q:
-        cur.execute("""
-            SELECT * FROM inventory
-            WHERE item_code LIKE ? OR item_name LIKE ? OR location LIKE ?
-            ORDER BY location
-        """, (f"%{q}%", f"%{q}%", f"%{q}%"))
-    else:
-        cur.execute("SELECT * FROM inventory ORDER BY location")
-
+    cur.execute("""
+      SELECT warehouse, location, item_code, item_name,
+             lot_no, spec, brand, qty
+      FROM inventory
+      ORDER BY item_code
+    """)
     rows = cur.fetchall()
     conn.close()
-    return rows
 
-def get_history():
-    conn = get_conn()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM history ORDER BY id DESC")
-    rows = cur.fetchall()
-    conn.close()
-    return rows
+    return [
+        {
+            "warehouse": r[0],
+            "location": r[1],
+            "item_code": r[2],
+            "item_name": r[3],
+            "lot_no": r[4],
+            "spec": r[5],
+            "brand": r[6],
+            "qty": r[7],
+        }
+        for r in rows
+    ]
+
 
 # =========================
 # 이력 기록
