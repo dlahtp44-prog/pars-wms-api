@@ -1,40 +1,55 @@
-{% extends "worker_base.html" %}
-{% block worker_content %}
+{% extends "base.html" %}
+{% block content %}
 
-<div class="card">
-  <h2>📦 재고 현황</h2>
+<h2>📦 재고 현황</h2>
 
-  <!-- ✅ 엑셀 다운로드 버튼 -->
-  <div style="margin-bottom:12px;">
-    <a class="btn" href="/api/export/inventory">📥 재고 엑셀 다운로드</a>
-  </div>
-
-  <table class="table">
-    <thead>
-      <tr>
-        <th>창고</th>
-        <th>로케이션</th>
-        <th>품번</th>
-        <th>LOT</th>
-        <th>품명</th>
-        <th>규격</th>
-        <th>수량</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for r in rows %}
-      <tr>
-        <td>{{ r.warehouse }}</td>
-        <td>{{ r.location }}</td>
-        <td>{{ r.item_code }}</td>
-        <td>{{ r.lot_no }}</td>
-        <td>{{ r.item_name }}</td>
-        <td>{{ r.spec }}</td>
-        <td>{{ r.qty }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+<div style="margin-bottom:12px;">
+  <a class="btn" href="/api/export/inventory">📥 재고 엑셀 다운로드</a>
 </div>
+
+<table class="table">
+  <thead>
+    <tr>
+      <th>창고</th>
+      <th>로케이션</th>
+      <th>브랜드</th>
+      <th>품번</th>
+      <th>품명</th>
+      <th>LOT</th>
+      <th>규격</th>
+      <th class="right">수량</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in rows %}
+    <tr>
+      <td>{{ r.warehouse }}</td>
+      <td>{{ r.location }}</td>
+      <td>{{ r.brand }}</td>
+      <td>{{ r.item_code }}</td>
+      <td>{{ r.item_name }}</td>
+      <td>{{ r.lot_no }}</td>
+      <td>{{ r.spec }}</td>
+      <td class="right">{{ r.qty }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<style>
+.table{width:100%;border-collapse:collapse}
+.table th,.table td{padding:8px;border-bottom:1px solid #e5e7eb;font-size:13px}
+.table th{background:#111827;color:#fff}
+.right{text-align:right}
+.btn{
+  display:inline-block;
+  padding:8px 12px;
+  background:#2563eb;
+  color:#fff;
+  border-radius:6px;
+  text-decoration:none;
+  font-size:14px;
+}
+</style>
 
 {% endblock %}
