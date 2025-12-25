@@ -105,12 +105,23 @@ function manualSend() {
   if (!v) return alert("QR 내용을 입력하세요");
   processQR(v);
 }
+
 function processQR(text){
   const params = new URLSearchParams(text);
+
   const warehouse = params.get("warehouse") || "MAIN";
   const location = params.get("location");
 
+  // 📍 로케이션 QR이면 → 재고 화면
   if(location){
+    window.location.href =
+      `/location?warehouse=${warehouse}&location=${location}`;
+    return;
+  }
+
+  alert("알 수 없는 QR 형식");
+}
+
     
     // 📍 로케이션 QR
     window.location.href =
