@@ -1,13 +1,14 @@
-# app/routers/inventory.py
-from fastapi import APIRouter, Query
-from app.db import get_inventory
+from fastapi import APIRouter
+from app.db import get_inventory, get_location_items
 
-router = APIRouter(prefix="/api/inventory", tags=["inventory"])
+router = APIRouter(prefix="/api/inventory", tags=["Inventory"])
+
 
 @router.get("")
-def inventory_api(
-    warehouse: str = Query(None),
-    location: str = Query(None),
-    q: str = Query(None),
-):
-    return get_inventory(warehouse=warehouse, location=location, q=q)
+def inventory_list():
+    return get_inventory()
+
+
+@router.get("/location/{location_code}")
+def inventory_by_location(location_code: str):
+    return get_location_items(location_code)
