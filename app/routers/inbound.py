@@ -1,27 +1,26 @@
-from fastapi import APIRouter, Form
+from fastapi import APIRouter
 from app.db import add_inventory
 
 router = APIRouter(prefix="/api/inbound", tags=["Inbound"])
 
-@router.post("/manual")
-def inbound_manual(
-    warehouse: str = Form(...),
-    location: str = Form(...),
-    item_code: str = Form(...),
-    qty: float = Form(...),
-    item_name: str = Form(""),
-    lot_no: str = Form(""),
-    spec: str = Form(""),
-    brand: str = Form("")
+
+@router.post("")
+def inbound_item(
+    item_code: str,
+    item_name: str,
+    brand: str,
+    spec: str,
+    location_code: str,
+    lot: str,
+    quantity: int
 ):
     add_inventory(
-        warehouse=warehouse,
-        location=location,
         item_code=item_code,
         item_name=item_name,
-        lot_no=lot_no,
-        spec=spec,
         brand=brand,
-        qty=qty
+        spec=spec,
+        location_code=location_code,
+        lot=lot,
+        quantity=quantity
     )
     return {"result": "OK"}
