@@ -47,7 +47,9 @@ async function loadHistory() {
 
 async function loadDashboard() {
   const res = await fetch("/api/dashboard");
-  const d = await res.json();
-  document.getElementById("dashboard").innerHTML =
-    `Total Inventory: ${d.total_inventory}`;
+  const data = await res.json();
+
+  document.getElementById("totalInventory").innerText =
+    data.total_inventory;
 }
+
