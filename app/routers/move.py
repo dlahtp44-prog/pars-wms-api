@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Form
 from app.db import move_inventory
 
 router = APIRouter(prefix="/api/move", tags=["Move"])
@@ -6,11 +6,11 @@ router = APIRouter(prefix="/api/move", tags=["Move"])
 
 @router.post("")
 def move_item(
-    item_code: str,
-    lot: str,
-    location_from: str,
-    location_to: str,
-    quantity: int
+    item_code: str = Form(...),
+    lot: str = Form(...),
+    location_from: str = Form(...),
+    location_to: str = Form(...),
+    quantity: int = Form(...)
 ):
     move_inventory(
         item_code=item_code,
