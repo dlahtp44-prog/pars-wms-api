@@ -5,8 +5,23 @@
   <link rel="stylesheet" href="/static/css/app.css">
   <script src="/static/js/app.js"></script>
 </head>
-<body onload="loadInventory()">
-<h2>Inventory</h2>
-<table id="inventory"></table>
+<body>
+  <h2>목록</h2>
+
+  <table id="inventory">
+    <thead>
+      <tr>
+        <th>품번</th>
+        <th>로케이션</th>
+        <th>LOT</th>
+        <th>수량</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    loadInventory();
+  </script>
 </body>
 </html>
