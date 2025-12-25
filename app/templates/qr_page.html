@@ -1,39 +1,65 @@
 {% extends "worker_base.html" %}
-{% block worker_content %}
+{% block content %}
 
-<div class="card">
-  <div class="h2">📷 QR 스캔</div>
+<h2>📷 QR 이동 처리</h2>
 
-  <div class="form">
-    <input id="manual_qr" placeholder="QR 내용 직접 입력 (type=LOCATION&location=D01-01 등)" />
-    <button class="btn" onclick="manualSearch()">직접 처리</button>
-  </div>
+<p id="state">① 제품 QR을 스캔하세요</p>
+<div id="reader" style="width:100%;max-width:360px"></div>
 
-  <div class="row">
-    <select id="action">
-      <option value="IN">입고</option>
-      <option value="OUT">출고</option>
-    </select>
-    <button class="btn primary" onclick="startScan()">카메라 시작</button>
-    <button class="btn" onclick="stopScan()">중지</button>
-    <button class="btn" onclick="resetMove()">이동 초기화</button>
-  </div>
-
-  <div id="reader" style="width:100%; max-width:360px; margin-top:10px;"></div>
-  <div id="msg" class="muted"></div>
-</div>
-
-<div id="moveBox" class="card" style="display:none;">
-  <div class="h2">🔁 로케이션 → 제품 선택 → 목적지 스캔 이동</div>
-  <div class="muted">출발: <b id="fromLoc"></b> / 목적지: <b id="toLoc"></b></div>
-  <div class="row" style="margin-top:10px;">
-    <div class="muted" id="picked">선택된 제품 없음</div>
-    <input id="qty" type="number" value="1" min="1" style="max-width:120px;">
-  </div>
-  <div id="locItems" style="margin-top:10px;"></div>
-</div>
+<button onclick="start()">📸 카메라 시작</button>
 
 <script src="https://unpkg.com/html5-qrcode"></script>
-<script src="/static/qr_camera.js"></script>
+<script>
+let step = 1;
+let item = {};
+let scanner;
+
+function parseQR(txt){
+  const p = new URLSearchParams(txt);
+  const o = {};
+  for(const [k,v] of p.entries()) o[k]=v;
+  return o;
+}
+
+function start(){
+  scanner = new Html5Qrcode("reader");
+  scanner.start(
+    { facingMode: "environment" },
+    { fps: 10, qrbox: 250 },
+    onScan
+  );
+}
+
+async function onScan(txt){
+  const d = parseQR(txt);
+
+  if(step===1 && d.type==="ITEM"){
+    item = d;
+    step = 2;
+    document.getElementById("state").innerText =
+      "② 목적지 로케이션 QR을 스캔하세요";
+    return;
+  }
+
+  if(step===2 && d.type==="LOCATION"){
+    scanner.stop();
+
+    await fetch("/api/qr/process", {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({
+        from_location: item.location || "TEMP",
+        to_location: d.location,
+        item_code: item.item_code,
+        lot_no: item.lot_no,
+        qty: Number(item.qty)
+      })
+    });
+
+    document.getElementById("state").innerText =
+      "✅ 이동 완료";
+  }
+}
+</script>
 
 {% endblock %}
