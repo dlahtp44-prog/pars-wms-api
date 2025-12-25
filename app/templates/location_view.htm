@@ -1,21 +1,16 @@
-{% extends "worker_base.html" %}
-{% block worker_content %}
+<h2>📍 로케이션 {{ loc }}</h2>
 
-<h2>📍 로케이션 {{ location }}</h2>
-
-<table class="table">
+<table border="1" width="100%">
 <tr>
-  <th>품번</th><th>LOT</th><th>품명</th><th>규격</th><th>수량</th>
+  <th>품번</th><th>품명</th><th>LOT</th><th>규격</th><th>수량</th>
 </tr>
-{% for r in rows %}
+{% for i in items %}
 <tr>
-  <td>{{ r.item_code }}</td>
-  <td>{{ r.lot_no }}</td>
-  <td>{{ r.item_name }}</td>
-  <td>{{ r.spec }}</td>
-  <td>{{ r.qty }}</td>
+  <td>{{ i[0] }}</td>
+  <td>{{ i[1] }}</td>
+  <td>{{ i[2] }}</td>
+  <td>{{ i[3] }}</td>
+  <td>{{ i[4] }}</td>
 </tr>
 {% endfor %}
 </table>
-
-{% endblock %}
