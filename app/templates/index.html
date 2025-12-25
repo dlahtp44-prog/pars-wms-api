@@ -1,15 +1,19 @@
-{% extends "base.html" %}
-{% block content %}
-<div class="grid">
-  <div class="card"><div class="label">오늘 입고</div><div class="value">{{ s.inbound_today }}</div></div>
-  <div class="card"><div class="label">오늘 출고</div><div class="value">{{ s.outbound_today }}</div></div>
-  <div class="card"><div class="label">총 재고</div><div class="value">{{ s.total_stock }}</div></div>
-  <div class="card warn"><div class="label">음수 재고 건수</div><div class="value">{{ s.negative_count }}</div></div>
-</div>
-
-<div class="actions">
-  <a class="btn" href="/worker">작업자 화면</a>
-  <a class="btn" href="/labels">라벨 출력</a>
-  <a class="btn" href="/dashboard">대시보드</a>
-</div>
-{% endblock %}
+<!DOCTYPE html>
+<html>
+<head>
+  <title>PARS WMS</title>
+  <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+  <h1>PARS WMS</h1>
+  <nav>
+    <a href="/dashboard">Dashboard</a>
+    <a href="/inbound">Inbound</a>
+    <a href="/outbound">Outbound</a>
+    <a href="/move">Move</a>
+    <a href="/inventory">Inventory</a>
+    <a href="/history">History</a>
+    <a href="/admin">Admin</a>
+  </nav>
+</body>
+</html>
