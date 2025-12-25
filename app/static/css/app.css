@@ -1,25 +1,42 @@
+/* =========================
+   기본 레이아웃
+========================= */
 body {
-  font-family: Arial;
+  font-family: Arial, sans-serif;
   padding: 20px;
 }
+
 nav a {
   margin-right: 10px;
+  text-decoration: none;
 }
-table, td, th {
-  border: 1px solid #333;
-  border-collapse: collapse;
-  padding: 5px;
-}
+
+/* =========================
+   테이블 (엑셀 시트 스타일)
+========================= */
 table {
   width: 100%;
+  border-collapse: collapse;
   margin-top: 10px;
 }
 
-th {
-  background: #f0f0f0;
+th,
+td {
+  border: 1px solid #333;
+  padding: 6px;
   text-align: center;
 }
 
-td {
-  text-align: center;
+th {
+  background-color: #f0f0f0;
+  font-weight: bold;
+}
+
+/* =========================
+   입력 필드
+========================= */
+input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 4px;
 }
