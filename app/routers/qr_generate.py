@@ -2,10 +2,10 @@ from fastapi import APIRouter, Query
 from fastapi.responses import HTMLResponse
 import urllib.parse
 
-router = APIRouter(prefix="/label", tags=["QR Label"])
+router = APIRouter(prefix="/labels", tags=["QR Label"])
 
 @router.get("/location", response_class=HTMLResponse)
-def location_label(
+def location_qr(
     warehouse: str = "MAIN",
     location: str = Query(...)
 ):
@@ -18,25 +18,15 @@ def location_label(
     <html>
     <head>
       <style>
-        @page {{
-          size: 70mm 40mm;   /* HEQ-3118 */
-          margin: 0;
-        }}
+        @page {{ size: 70mm 40mm; margin: 0; }}
         body {{
+          font-family: Arial;
+          text-align: center;
           margin: 0;
           padding: 4mm;
-          font-family: Arial, sans-serif;
-          text-align: center;
         }}
-        img {{
-          width: 28mm;
-          height: 28mm;
-        }}
-        .loc {{
-          margin-top: 2mm;
-          font-size: 14px;
-          font-weight: bold;
-        }}
+        img {{ width: 30mm; height: 30mm; }}
+        .loc {{ font-size: 14px; font-weight: bold; margin-top: 4px; }}
       </style>
     </head>
     <body>
