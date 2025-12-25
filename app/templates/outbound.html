@@ -1,34 +1,17 @@
-{% extends "worker_base.html" %}
-{% block worker_content %}
-<div class="card">
-  <div class="h2">📤 출고</div>
-  <div class="form">
-    <input id="warehouse" placeholder="창고" value="MAIN">
-    <input id="location" placeholder="로케이션">
-    <input id="item_code" placeholder="품번">
-    <input id="lot_no" placeholder="LOT">
-    <input id="qty" placeholder="수량" inputmode="decimal">
-    <button class="btn primary" onclick="submitOutbound()">출고 처리</button>
-    <div id="msg" class="muted"></div>
-  </div>
-</div>
-
-<script>
-async function submitOutbound(){
-  const body = {
-    warehouse: document.getElementById('warehouse').value || 'MAIN',
-    location: document.getElementById('location').value.trim(),
-    item_code: document.getElementById('item_code').value.trim(),
-    lot_no: document.getElementById('lot_no').value.trim(),
-    qty: parseFloat(document.getElementById('qty').value || '0')
-  };
-  const res = await fetch('/api/outbound', {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify(body)
-  });
-  const d = await res.json();
-  document.getElementById('msg').innerText = res.ok ? '✅ 출고 완료' : ('❌ ' + (d.detail || JSON.stringify(d)));
-}
-</script>
-{% endblock %}
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Outbound</title>
+  <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+<h2>Outbound</h2>
+<form action="/api/outbound" method="post">
+  <input name="item_code" placeholder="Item Code">
+  <input name="location_code" placeholder="Location">
+  <input name="lot" placeholder="LOT">
+  <input name="quantity" type="number" placeholder="Qty">
+  <button type="submit">OUTBOUND</button>
+</form>
+</body>
+</html>
