@@ -1,53 +1,109 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>관리자 - 작업 관리</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
-    <div class="container py-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h4>⚙️ 관리자 작업 로그 및 롤백</h4>
-            <a href="/api/export/history" class="btn btn-outline-success">📊 전체 이력 엑셀 출력</a>
-        </div>
+{% extends "base.html" %}
+{% block content %}
 
-        <div class="alert alert-info">실수로 입력된 입/출고 및 이동 내역을 취소(롤백)할 수 있습니다.</div>
+<div class="container mt-4">
 
-        <div class="table-responsive bg-white rounded shadow-sm">
-            <table class="table align-middle">
-                <thead class="table-dark">
-                    <tr>
-                        <th>유형</th><th>품번</th><th>수량</th><th>기존위치</th><th>변경위치</th><th>시간</th><th>관리</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for h in history %}
-                    <tr>
-                        <td>
-                            <span class="badge {{ 'bg-primary' if h.tx_type=='IN' else 'bg-danger' if h.tx_type=='OUT' else 'bg-info' }}">
-                                {{ h.tx_type }}
-                            </span>
-                        </td>
-                        <td>{{ h.item_code }}</td>
-                        <td>{{ h.qty }}</td>
-                        <td>{{ h.from_location or h.location }}</td>
-                        <td>{{ h.to_location or '-' }}</td>
-                        <td class="small">{{ h.created_at[:16] }}</td>
-                        <td>
-                            <button class="btn btn-sm btn-warning" onclick="rollback({{ h.id }})">롤백</button>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+  <h2 class="mb-3">🛠️ 관리자 센터</h2>
+
+  <!-- 🔹 관리자 버튼 영역 -->
+  <div class="row mb-4">
+    <div class="col-md-3 mb-2">
+      <a href="/dashboard" class="btn btn-dark w-100">📊 대시보드</a>
     </div>
-    <script>
-        async function rollback(id) {
-            if(!confirm("정말 이 작업을 취소하고 재고를 되돌리시겠습니까?")) return;
-            const res = await fetch(`/api/history/rollback/${id}`, {method: 'POST'});
-            if(res.ok) { alert("성공적으로 복구되었습니다."); location.reload(); }
-        }
-    </script>
-</body>
-</html>
+    <div class="col-md-3 mb-2">
+      <a href="/labels/product" class="btn btn-secondary w-100">
+        🏷 제품 QR 라벨
+      </a>
+    </div>
+    <div class="col-md-3 mb-2">
+      <a href="/labels/location" class="btn btn-secondary w-100">
+        📍 로케이션 QR 라벨
+      </a>
+    </div>
+    <div class="col-md-3 mb-2">
+      <a href="/export/inventory" class="btn btn-outline-primary w-100">
+        📦 재고 엑셀
+      </a>
+    </div>
+    <div class="col-md-3 mb-2">
+      <a href="/export/history" class="btn btn-outline-primary w-100">
+        🧾 이력 엑셀
+      </a>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- 🔹 작업 로그 / 롤백 -->
+  <h4 class="mt-4">🧾 작업 로그 (롤백 관리)</h4>
+
+  <table class="table table-bordered table-hover mt-3">
+    <thead class="table-dark">
+      <tr>
+        <th>시간</th>
+        <th>구분</th>
+        <th>창고</th>
+        <th>로케이션</th>
+        <th>품번</th>
+        <th>LOT</th>
+        <th>수량</th>
+        <th>기능</th>
+      </tr>
+    </thead>
+    <tbody id="logTable"></tbody>
+  </table>
+</div>
+
+<script>
+async function loadLogs() {
+  const res = await fetch('/api/admin/logs');
+  const logs = await res.json();
+
+  const html = logs.map(log => `
+    <tr>
+      <td>${log.created_at}</td>
+      <td>
+        <span class="badge ${
+          log.tx_type === 'IN' ? 'bg-primary' :
+          log.tx_type === 'OUT' ? 'bg-danger' :
+          'bg-warning'
+        }">
+          ${log.tx_type}
+        </span>
+      </td>
+      <td>${log.warehouse}</td>
+      <td>${log.location}</td>
+      <td>${log.item_code}</td>
+      <td>${log.lot_no}</td>
+      <td>${log.qty}</td>
+      <td>
+        <button class="btn btn-sm btn-warning"
+          onclick="rollback(${log.id})">
+          롤백
+        </button>
+      </td>
+    </tr>
+  `).join('');
+
+  document.getElementById('logTable').innerHTML = html;
+}
+
+async function rollback(id) {
+  if(!confirm('이 작업을 취소하고 재고를 원상복구 하시겠습니까?')) return;
+
+  const res = await fetch(`/api/admin/rollback/${id}`, {
+    method: 'POST'
+  });
+
+  if(res.ok){
+    alert('✅ 롤백 완료');
+    loadLogs();
+  } else {
+    alert('❌ 롤백 실패');
+  }
+}
+
+loadLogs();
+</script>
+
+{% endblock %}
