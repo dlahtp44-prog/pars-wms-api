@@ -1,35 +1,12 @@
-{% extends "base.html" %}
-{% block content %}
-<h2 class="h2">📊 대시보드</h2>
-
-<div class="grid">
-  <div class="card"><div class="label">오늘 입고</div><div class="value">{{ s.inbound_today }}</div></div>
-  <div class="card"><div class="label">오늘 출고</div><div class="value">{{ s.outbound_today }}</div></div>
-  <div class="card"><div class="label">총 재고</div><div class="value">{{ s.total_stock }}</div></div>
-  <div class="card warn"><div class="label">음수 재고</div><div class="value">{{ s.negative_count }}</div></div>
-</div>
-
-<hr class="hr"/>
-
-<h3 class="h3">최근 재고(50)</h3>
-<div class="tablewrap">
-  <table class="table">
-    <thead><tr>
-      <th>창고</th><th>로케이션</th><th>브랜드</th><th>품번</th><th>LOT</th><th class="right">수량</th><th>업데이트</th>
-    </tr></thead>
-    <tbody>
-    {% for r in rows %}
-      <tr>
-        <td>{{ r.warehouse }}</td>
-        <td>{{ r.location }}</td>
-        <td>{{ r.brand }}</td>
-        <td>{{ r.item_code }}</td>
-        <td>{{ r.lot_no }}</td>
-        <td class="right"><b>{{ r.qty }}</b></td>
-        <td>{{ r.updated_at }}</td>
-      </tr>
-    {% endfor %}
-    </tbody>
-  </table>
-</div>
-{% endblock %}
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="/static/css/app.css">
+  <script src="/static/js/app.js"></script>
+</head>
+<body onload="loadDashboard()">
+<h2>Dashboard</h2>
+<div id="dashboard"></div>
+</body>
+</html>
