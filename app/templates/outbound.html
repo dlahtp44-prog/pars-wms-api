@@ -1,17 +1,33 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Outbound</title>
+  <title>출고</title>
   <link rel="stylesheet" href="/static/css/app.css">
 </head>
 <body>
-<h2>Outbound</h2>
-<form action="/api/outbound" method="post">
-  <input name="item_code" placeholder="Item Code">
-  <input name="location_code" placeholder="Location">
-  <input name="lot" placeholder="LOT">
-  <input name="quantity" type="number" placeholder="Qty">
-  <button type="submit">OUTBOUND</button>
-</form>
+  <h2>출고</h2>
+
+  <table>
+    <tr>
+      <th>품목코드</th>
+      <th>제품명</th>
+      <th>LOT</th>
+      <th>수량</th>
+      <th>비고</th>
+    </tr>
+    <tr>
+      <td><input name="item_code" form="outForm"></td>
+      <td><input name="item_name" form="outForm"></td>
+      <td><input name="lot" form="outForm"></td>
+      <td><input name="quantity" type="number" form="outForm"></td>
+      <td><input name="memo" form="outForm" placeholder="메모"></td>
+    </tr>
+  </table>
+
+  <form id="outForm" action="/api/outbound" method="post">
+    <!-- API 필수값 -->
+    <input type="hidden" name="location_code" value="DEFAULT">
+    <button type="submit">출고 처리</button>
+  </form>
 </body>
 </html>
