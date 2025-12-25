@@ -1,22 +1,20 @@
-# app/routers/outbound.py
-from fastapi import APIRouter, Form
+from fastapi import APIRouter
 from app.db import subtract_inventory
 
-router = APIRouter(prefix="/api/outbound")
+router = APIRouter(prefix="/api/outbound", tags=["Outbound"])
 
-@router.post("/manual")
-def outbound_manual(
-    warehouse: str = Form("MAIN"),
-    location: str = Form(...),
-    brand: str = Form(""),
-    item_code: str = Form(...),
-    item_name: str = Form(""),
-    lot_no: str = Form(...),
-    spec: str = Form(""),
-    qty: float = Form(...)
+
+@router.post("")
+def outbound_item(
+    item_code: str,
+    location_code: str,
+    lot: str,
+    quantity: int
 ):
     subtract_inventory(
-        warehouse, location, brand,
-        item_code, item_name, lot_no, spec, qty
+        item_code=item_code,
+        location_code=location_code,
+        lot=lot,
+        quantity=quantity
     )
     return {"result": "OK"}
