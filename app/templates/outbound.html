@@ -1,33 +1,36 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="ko">
 <head>
-  <title>출고</title>
-  <link rel="stylesheet" href="/static/css/app.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PARS WMS - Outbound</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 16px; }
+    .wrap { max-width: 720px; margin: 0 auto; }
+    label { display:block; margin-top: 12px; font-weight: 600; }
+    input { width:100%; padding:10px; font-size:16px; box-sizing:border-box; }
+    button { margin-top: 16px; width:100%; padding:12px; font-size:16px; }
+  </style>
 </head>
 <body>
-  <h2>출고</h2>
+  <div class="wrap">
+    <h1>출고 (Outbound)</h1>
 
-  <table>
-    <tr>
-      <th>품목코드</th>
-      <th>제품명</th>
-      <th>LOT</th>
-      <th>수량</th>
-      <th>비고</th>
-    </tr>
-    <tr>
-      <td><input name="item_code" form="outForm"></td>
-      <td><input name="item_name" form="outForm"></td>
-      <td><input name="lot" form="outForm"></td>
-      <td><input name="quantity" type="number" form="outForm"></td>
-      <td><input name="memo" form="outForm" placeholder="메모"></td>
-    </tr>
-  </table>
+    <form method="post" action="/api/outbound">
+      <label for="item_code">품번 (item_code)</label>
+      <input id="item_code" name="item_code" type="text" autocomplete="off" required />
 
-  <form id="outForm" action="/api/outbound" method="post">
-    <!-- API 필수값 -->
-    <input type="hidden" name="location_code" value="DEFAULT">
-    <button type="submit">출고 처리</button>
-  </form>
+      <label for="location_code">로케이션 (location_code)</label>
+      <input id="location_code" name="location_code" type="text" autocomplete="off" required />
+
+      <label for="lot">LOT (lot)</label>
+      <input id="lot" name="lot" type="text" autocomplete="off" required />
+
+      <label for="quantity">수량 (quantity)</label>
+      <input id="quantity" name="quantity" type="number" inputmode="numeric" min="1" step="1" required />
+
+      <button type="submit">출고 등록</button>
+    </form>
+  </div>
 </body>
 </html>
