@@ -9,11 +9,6 @@ from fastapi.staticfiles import StaticFiles
 
 from app.db import init_db
 
-
-from app.pages.qr_outbound_page import router as qr_outbound_page
-app.include_router(qr_outbound_page)
-
-
 # -----------------------------
 # API Routers
 # -----------------------------
@@ -46,6 +41,7 @@ from app.pages import (
 # -----------------------------
 from app.pages.qr_move_page import router as qr_move_page
 from app.pages.qr_location_page import router as qr_location_page
+from app.pages.qr_outbound_page import router as qr_outbound_page
 
 
 # ==================================================
@@ -101,3 +97,4 @@ app.include_router(admin_page.router)
 # -----------------------------
 app.include_router(qr_move_page)
 app.include_router(qr_location_page)
+app.include_router(qr_outbound_page)
