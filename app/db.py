@@ -1,6 +1,6 @@
 # app/db.py
 # =====================================
-# PARS WMS DB - 최종 안정본
+# PARS WMS DB - FINAL STABLE
 # =====================================
 
 import sqlite3
@@ -10,7 +10,7 @@ DB_PATH = "wms.db"
 
 
 # -------------------------------------
-# DB Connection
+# CONNECTION
 # -------------------------------------
 def get_conn():
     return sqlite3.connect(DB_PATH)
@@ -23,7 +23,6 @@ def init_db():
     conn = get_conn()
     cur = conn.cursor()
 
-    # inventory
     cur.execute("""
     CREATE TABLE IF NOT EXISTS inventory (
         item_code TEXT,
@@ -37,7 +36,6 @@ def init_db():
     )
     """)
 
-    # history
     cur.execute("""
     CREATE TABLE IF NOT EXISTS history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -58,15 +56,7 @@ def init_db():
 # -------------------------------------
 # INVENTORY
 # -------------------------------------
-def add_inventory(
-    item_code,
-    item_name,
-    brand,
-    spec,
-    location_code,
-    lot,
-    quantity
-):
+def add_inventory(item_code, item_name, brand, spec, location_code, lot, quantity):
     conn = get_conn()
     cur = conn.cursor()
 
@@ -86,11 +76,9 @@ def add_inventory(
     else:
         cur.execute("""
         INSERT INTO inventory
+        (item_code, item_name, brand, spec, location_code, lot, quantity)
         VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (
-            item_code, item_name, brand, spec,
-            location_code, lot, quantity
-        ))
+        """, (item_code, item_name, brand, spec, location_code, lot, quantity))
 
     conn.commit()
     conn.close()
@@ -148,7 +136,6 @@ def get_inventory():
 
     rows = cur.fetchall()
     conn.close()
-
     return rows
 
 
@@ -161,4 +148,33 @@ def add_history(action, item_code, loc_from, loc_to, lot, quantity):
 
     cur.execute("""
     INSERT INTO history
-    (action, ite
+    (action, item_code, location_from, location_to, lot, quantity, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, (
+        action,
+        item_code,
+        loc_from,
+        loc_to,
+        lot,
+        quantity,
+        datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    ))
+
+    conn.commit()
+    conn.close()
+
+
+def get_history():
+    conn = get_conn()
+    cur = conn.cursor()
+
+    cur.execute("""
+    SELECT action, item_code, location_from, location_to,
+           lot, quantity, created_at
+    FROM history
+    ORDER BY created_at DESC
+    """)
+
+    rows = cur.fetchall()
+    conn.close()
+    return rows
