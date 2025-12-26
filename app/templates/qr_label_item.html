@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>상품 QR 라벨</title>
+
+<style>
+@page {
+  size: 99.1mm 38.1mm;
+  margin: 0;
+}
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+}
+.label {
+  width: 99.1mm;
+  height: 38.1mm;
+  display: flex;
+  align-items: center;
+  border: 1px solid #000;
+}
+.qr {
+  width: 35mm;
+  text-align: center;
+}
+.info {
+  font-size: 10px;
+  padding-left: 5px;
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+</head>
+<body>
+
+<div class="label">
+  <div class="qr" id="qr"></div>
+  <div class="info">
+    <div><b>품번</b> 728750</div>
+    <div>ASTEST</div>
+    <div>FLORIM</div>
+    <div>600×600</div>
+    <div>LOT H01</div>
+  </div>
+</div>
+
+<script>
+new QRCode(document.getElementById("qr"), {
+  text: JSON.stringify({
+    type: "ITEM",
+    item_code: "728750",
+    item_name: "ASTEST",
+    brand: "FLORIM",
+    spec: "600*600",
+    lot: "H01"
+  }),
+  width: 120,
+  height: 120
+});
+</script>
+
+</body>
+</html>
