@@ -7,6 +7,10 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
+from app.pages.qr_move_page import router as qr_move_page
+app.include_router(qr_move_page)
+
+
 from app.db import init_db
 
 # -----------------------------
