@@ -1,11 +1,37 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
+  <meta charset="UTF-8">
   <title>PARS WMS</title>
   <link rel="stylesheet" href="/static/css/app.css">
+  <style>
+    .home-buttons {
+      margin-top: 30px;
+    }
+    .qr-move-btn {
+      display: inline-block;
+      padding: 15px 25px;
+      background: #000;
+      color: #fff;
+      font-size: 18px;
+      font-weight: bold;
+      border-radius: 8px;
+      text-decoration: none;
+      margin-top: 15px;
+    }
+    .qr-move-btn:active {
+      background: #333;
+    }
+    .hint {
+      margin-top: 10px;
+      font-size: 13px;
+      color: #666;
+    }
+  </style>
 </head>
 <body>
-  <h1>PARS WMS</h1>
+
+<h1>PARS WMS</h1>
 
 <nav>
   <a href="/dashboard">대시보드</a>
@@ -16,6 +42,28 @@
   <a href="/history">내역</a>
   <a href="/admin">관리자</a>
 </nav>
+
+<div class="home-buttons">
+
+  <!-- 📱 모바일 전용 QR 이동 버튼 -->
+  <a id="qrMoveBtn" class="qr-move-btn" href="/qr/move">
+    📦 QR 이동 처리
+  </a>
+
+  <div id="pcHint" class="hint">
+    ※ QR 이동은 모바일에서만 사용 가능합니다.
+  </div>
+
+</div>
+
+<script>
+  // PC에서는 QR 이동 버튼 숨김
+  if (!/Mobi|Android/i.test(navigator.userAgent)) {
+    document.getElementById("qrMoveBtn").style.display = "none";
+  } else {
+    document.getElementById("pcHint").style.display = "none";
+  }
+</script>
 
 </body>
 </html>
