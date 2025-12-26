@@ -40,7 +40,11 @@ from app.pages import (
 # QR Page Router
 # -----------------------------
 from app.pages.qr_move_page import router as qr_move_page
-
+# ==================================================
+#Page Router import + include
+# ==================================================
+from app.pages.qr_location_page import router as qr_location_page
+app.include_router(qr_location_page)
 
 # ==================================================
 # APP
