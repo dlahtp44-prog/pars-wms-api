@@ -1,30 +1,27 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-  <title>재고 조회</title>
+  <meta charset="UTF-8">
+  <title>재고 목록</title>
   <link rel="stylesheet" href="/static/css/app.css">
-  <script src="/static/js/app.js"></script>
 </head>
-<body>
-  <h2>재고 목록</h2>
+<body onload="loadInventory()">
 
-  <table id="inventory-table">
-    <thead>
-      <tr>
-        <th>품번</th>
-        <th>품명</th>
-        <th>브랜드</th>
-        <th>규격</th>
-        <th>로케이션</th>
-        <th>LOT</th>
-        <th>수량</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+<h2>재고 목록</h2>
 
-  <script>
-    loadInventory();
-  </script>
+<table>
+  <thead>
+    <tr>
+      <th>품번</th>
+      <th>로케이션</th>
+      <th>LOT</th>
+      <th>수량</th>
+    </tr>
+  </thead>
+  <tbody id="inventoryBody"></tbody>
+</table>
+
+<script src="/static/js/inventory.js"></script>
+
 </body>
 </html>
