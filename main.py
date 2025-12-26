@@ -9,15 +9,6 @@ from fastapi.staticfiles import StaticFiles
 
 from app.db import init_db
 
-
-from app.pages.report_page import router as report_page
-app.include_router(report_page)
-
-from app.routers import report
-app.include_router(report.router)
-
-
-
 # -----------------------------
 # API Routers
 # -----------------------------
@@ -28,7 +19,8 @@ from app.routers import (
     inventory,
     history,
     dashboard,
-    admin
+    admin,
+    report          # ✅ 통합 리포트 API
 )
 
 # -----------------------------
@@ -46,11 +38,12 @@ from app.pages import (
 )
 
 # -----------------------------
-# QR Page Routers (import만)
+# QR / Report Page Routers
 # -----------------------------
 from app.pages.qr_move_page import router as qr_move_page
 from app.pages.qr_location_page import router as qr_location_page
 from app.pages.qr_outbound_page import router as qr_outbound_page
+from app.pages.report_page import router as report_page
 
 
 # ==================================================
@@ -87,6 +80,7 @@ app.include_router(inventory.router)
 app.include_router(history.router)
 app.include_router(dashboard.router)
 app.include_router(admin.router)
+app.include_router(report.router)        # ✅ 통합 리포트 API
 
 
 # ==================================================
@@ -100,6 +94,8 @@ app.include_router(inventory_page.router)
 app.include_router(history_page.router)
 app.include_router(dashboard_page.router)
 app.include_router(admin_page.router)
+app.include_router(report_page)           # ✅ 통합 리포트 페이지
+
 
 # -----------------------------
 # QR PAGES
