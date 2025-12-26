@@ -1,99 +1,40 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <title>QR 이동</title>
-  <link rel="stylesheet" href="/static/css/app.css" />
-
-  <!-- html5-qrcode CDN -->
+  <meta charset="UTF-8">
+  <title>QR 이동 처리</title>
+  <link rel="stylesheet" href="/static/css/app.css">
   <script src="https://unpkg.com/html5-qrcode"></script>
-
-  <!-- 전용 JS -->
-  <script src="/static/js/qr_move.js"></script>
-
-  <style>
-    /* QR 화면 전용 (기존 app.css 유지 + 최소 보강) */
-    .box { border:1px solid #333; padding:10px; margin-top:10px; }
-    .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-    .row > div { flex:1; min-width:220px; }
-    .big { font-size:18px; font-weight:bold; }
-    .ok { padding:8px; border:1px solid #2e7d32; background:#e8f5e9; }
-    .err { padding:8px; border:1px solid #c62828; background:#ffebee; }
-    button { padding:10px 14px; }
-    input { padding:10px; font-size:16px; }
-    #reader { width: 360px; max-width: 100%; }
-  </style>
 </head>
+<body onload="initMoveQR()">
 
-<body onload="qrMoveInit()">
-  <h2>QR 이동 처리</h2>
+<h2>QR 이동 처리</h2>
 
-  <div class="box">
-    <div class="big">스캔 순서</div>
-    <ol>
-      <li><b>출발지 로케이션 QR</b> 스캔</li>
-      <li><b>상품 QR</b> 스캔 (품번+LOT)</li>
-      <li><b>수량</b> 입력</li>
-      <li><b>도착지 로케이션 QR</b> 스캔 → <b>자동 이동 처리</b></li>
-    </ol>
+<div class="box">
+  <div id="reader" style="width:300px;"></div>
+  <button onclick="startScan()">스캔 시작</button>
+  <button onclick="stopScan()">중지</button>
+</div>
 
-    <div style="margin-top:8px; font-size:13px;">
-      <b>지원 QR 형식</b><br/>
-      • 로케이션 QR(JSON): {"type":"LOCATION","location_code":"D01-01"}<br/>
-      • 로케이션 QR(텍스트): LOCATION|D01-01 또는 D01-01<br/>
-      • 상품 QR(JSON): {"type":"ITEM","item_code":"728750","lot":"H01"}<br/>
-      • 상품 QR(텍스트): ITEM|728750|H01 또는 728750|H01
-    </div>
-  </div>
+<div class="box">
+  <p>출발지: <strong id="fromLoc">-</strong></p>
+  <p>상품: <strong id="itemInfo">-</strong></p>
+  <p>도착지: <strong id="toLoc">-</strong></p>
+</div>
 
-  <div class="box">
-    <div class="row">
-      <div>
-        <div class="big">카메라</div>
-        <div id="reader"></div>
+<div class="box">
+  <button onclick="resetAll()">초기화</button>
+</div>
 
-        <div class="row" style="margin-top:8px;">
-          <div>
-            <button type="button" onclick="qrMoveStart()">스캔 시작</button>
-            <button type="button" onclick="qrMoveStop()">스캔 중지</button>
-          </div>
-          <div>
-            <button type="button" onclick="qrMoveSwitchCamera()">전/후면 전환</button>
-          </div>
-        </div>
+<script src="/static/js/qr_move.js"></script>
 
-        <div style="margin-top:8px;">
-          <input id="manualInput" placeholder="QR 내용 수동 입력 (붙여넣기 가능)" />
-          <button type="button" onclick="qrMoveManual()">수동 적용</button>
-        </div>
-      </div>
+<!-- PC에서는 접근 불가 -->
+<script>
+  if (!/Mobi|Android/i.test(navigator.userAgent)) {
+    alert("QR 이동은 모바일에서만 사용 가능합니다.");
+    window.location.href = "/";
+  }
+</script>
 
-      <div>
-        <div class="big">현재 선택 값</div>
-        <table>
-          <tr><th>출발지(FROM)</th><td id="fromLoc">-</td></tr>
-          <tr><th>품번</th><td id="itemCode">-</td></tr>
-          <tr><th>LOT</th><td id="lot">-</td></tr>
-          <tr><th>수량</th>
-            <td>
-              <input id="qty" type="number" min="1" value="1" />
-            </td>
-          </tr>
-          <tr><th>도착지(TO)</th><td id="toLoc">-</td></tr>
-        </table>
-
-        <div class="row" style="margin-top:10px;">
-          <div>
-            <button type="button" onclick="qrMoveReset()">초기화</button>
-          </div>
-          <div>
-            <button type="button" onclick="qrMoveSubmitManual()">이동 처리(수동 버튼)</button>
-          </div>
-        </div>
-
-        <div id="msg" style="margin-top:10px;"></div>
-      </div>
-    </div>
-  </div>
 </body>
 </html>
