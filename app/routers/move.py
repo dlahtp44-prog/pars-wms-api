@@ -10,8 +10,7 @@ def move_item(
     from_location: str = Form(...),
     to_location: str = Form(...),
     lot: str = Form(...),
-    quantity: int = Form(...),
-    memo: str = Form("")
+    quantity: int = Form(...)
 ):
     try:
         move_inventory(
