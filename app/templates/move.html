@@ -1,35 +1,39 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="ko">
 <head>
-  <title>이동</title>
-  <link rel="stylesheet" href="/static/css/app.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PARS WMS - Move</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 16px; }
+    .wrap { max-width: 720px; margin: 0 auto; }
+    label { display:block; margin-top: 12px; font-weight: 600; }
+    input { width:100%; padding:10px; font-size:16px; box-sizing:border-box; }
+    button { margin-top: 16px; width:100%; padding:12px; font-size:16px; }
+  </style>
 </head>
 <body>
-  <h2>재고 이동</h2>
+  <div class="wrap">
+    <h1>이동 (Move)</h1>
 
-  <table>
-    <tr>
-      <th>품목코드</th>
-      <th>제품명</th>
-      <th>LOT</th>
-      <th>수량</th>
-      <th>출발지</th>
-      <th>도착지</th>
-      <th>비고</th>
-    </tr>
-    <tr>
-      <td><input name="item_code" form="moveForm"></td>
-      <td><input name="item_name" form="moveForm"></td>
-      <td><input name="lot" form="moveForm"></td>
-      <td><input name="quantity" type="number" form="moveForm"></td>
-      <td><input name="location_from" form="moveForm"></td>
-      <td><input name="location_to" form="moveForm"></td>
-      <td><input name="memo" form="moveForm" placeholder="메모"></td>
-    </tr>
-  </table>
+    <form method="post" action="/api/move">
+      <label for="item_code">품번 (item_code)</label>
+      <input id="item_code" name="item_code" type="text" autocomplete="off" required />
 
-  <form id="moveForm" action="/api/move" method="post">
-    <button type="submit">이동 처리</button>
-  </form>
+      <label for="from_location">출발 로케이션 (from_location)</label>
+      <input id="from_location" name="from_location" type="text" autocomplete="off" required />
+
+      <label for="to_location">도착 로케이션 (to_location)</label>
+      <input id="to_location" name="to_location" type="text" autocomplete="off" required />
+
+      <label for="lot">LOT (lot)</label>
+      <input id="lot" name="lot" type="text" autocomplete="off" required />
+
+      <label for="quantity">수량 (quantity)</label>
+      <input id="quantity" name="quantity" type="number" inputmode="numeric" min="1" step="1" required />
+
+      <button type="submit">이동 등록</button>
+    </form>
+  </div>
 </body>
 </html>
