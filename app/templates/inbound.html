@@ -1,46 +1,48 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="ko">
 <head>
-  <title>입고</title>
-  <link rel="stylesheet" href="/static/css/app.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PARS WMS - Inbound</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 16px; }
+    .wrap { max-width: 720px; margin: 0 auto; }
+    label { display:block; margin-top: 12px; font-weight: 600; }
+    input { width:100%; padding:10px; font-size:16px; box-sizing:border-box; }
+    button { margin-top: 16px; width:100%; padding:12px; font-size:16px; }
+    .hint { color:#666; font-size: 13px; margin-top: 6px; }
+  </style>
 </head>
 <body>
-  <h2>입고</h2>
+  <div class="wrap">
+    <h1>입고 (Inbound)</h1>
 
-  <form action="/api/inbound" method="post">
-    <table>
-      <tr>
-        <th>품목코드</th>
-        <td><input name="item_code" placeholder="품목코드"></td>
-      </tr>
-      <tr>
-        <th>제품명</th>
-        <td><input name="item_name" placeholder="제품명"></td>
-      </tr>
-      <tr>
-        <th>브랜드</th>
-        <td><input name="brand" placeholder="브랜드"></td>
-      </tr>
-      <tr>
-        <th>규격</th>
-        <td><input name="spec" placeholder="규격"></td>
-      </tr>
-      <tr>
-        <th>로케이션</th>
-        <td><input name="location_code" placeholder="로케이션"></td>
-      </tr>
-      <tr>
-        <th>LOT</th>
-        <td><input name="lot" placeholder="LOT"></td>
-      </tr>
-      <tr>
-        <th>수량</th>
-        <td><input name="quantity" type="number" placeholder="수량"></td>
-      </tr>
-    </table>
+    <!-- ✅ action과 name이 FastAPI Form 파라미터와 정확히 일치해야 422가 안 납니다 -->
+    <form method="post" action="/api/inbound">
+      <label for="item_code">품번 (item_code)</label>
+      <input id="item_code" name="item_code" type="text" autocomplete="off" required />
 
-    <br>
-    <button type="submit">입고 처리</button>
-  </form>
+      <label for="item_name">품명 (item_name)</label>
+      <input id="item_name" name="item_name" type="text" autocomplete="off" required />
+
+      <label for="brand">브랜드 (brand)</label>
+      <input id="brand" name="brand" type="text" autocomplete="off" required />
+
+      <label for="spec">규격 (spec)</label>
+      <input id="spec" name="spec" type="text" autocomplete="off" required />
+
+      <label for="location_code">로케이션 (location_code)</label>
+      <input id="location_code" name="location_code" type="text" autocomplete="off" required />
+
+      <label for="lot">LOT (lot)</label>
+      <input id="lot" name="lot" type="text" autocomplete="off" required />
+
+      <label for="quantity">수량 (quantity)</label>
+      <input id="quantity" name="quantity" type="number" inputmode="numeric" min="1" step="1" required />
+
+      <button type="submit">입고 등록</button>
+      <div class="hint">※ 422 에러가 뜨면, 화면 input의 <b>name</b>이 API 기준과 다른 경우입니다.</div>
+    </form>
+  </div>
 </body>
 </html>
