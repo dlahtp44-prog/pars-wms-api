@@ -1,55 +1,45 @@
-# ==================================================
-# IMPORTS
-# ==================================================
-from fastapi import APIRouter, Form
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+from app.db import get_db
 
-from app.db import subtract_inventory
+router = APIRouter(prefix="/api/outbound")
 
+class OutboundReq(BaseModel):
+    item_code: str
+    location: str
+    lot: str
+    quantity: int
 
-# ==================================================
-# ROUTER SETUP
-# ==================================================
-router = APIRouter(
-    prefix="/api/outbound",
-    tags=["Outbound"]
-)
-
-
-# ==================================================
-# OUTBOUND API
-# ==================================================
 @router.post("")
-def outbound_item(
-    item_code: str = Form(...),        # 품목코드
-    location_code: str = Form(...),    # 로케이션
-    lot: str = Form(...),              # LOT
-    quantity: int = Form(...)          # 출고 수량
-):
-    """
-    출고 처리 API
-    - 재고 존재 여부 확인
-    - 수량 부족 시 에러 반환
-    """
+def outbound(req: OutboundReq):
+    db = get_db()
+    cur = db.cursor()
 
-    try:
-        # ------------------------------
-        # 출고 처리
-        # ------------------------------
-        subtract_inventory(
-            item_code=item_code,
-            location_code=location_code,
-            lot=lot,
-            quantity=quantity
-        )
+    cur.execute("""
+        SELECT quantity FROM inventory
+        WHERE item_code=? AND location=? AND lot=?
+    """, (req.item_code, req.location, req.lot))
 
-        return {"result": "OK"}
+    row = cur.fetchone()
+    if not row:
+        raise HTTPException(400, "재고가 존재하지 않습니다.")
 
-    except ValueError as e:
-        # ------------------------------
-        # 업무 에러 (재고 없음, 수량 부족 등)
-        # ------------------------------
-        return JSONResponse(
-            status_code=400,
-            content={"error": str(e)}
-        )
+    if row[0] < req.quantity:
+        raise HTTPException(400, "출고 수량이 재고보다 많습니다.")
+
+    # 재고 차감
+    cur.execute("""
+        UPDATE inventory
+        SET quantity = quantity - ?
+        WHERE item_code=? AND location=? AND lot=?
+    """, (req.quantity, req.item_code, req.location, req.lot))
+
+    # 이력
+    cur.execute("""
+        INSERT INTO history
+        (action, item_code, location_from, lot, quantity)
+        VALUES ('OUTBOUND', ?, ?, ?, ?)
+    """, (req.item_code, req.location, req.lot, req.quantity))
+
+    db.commit()
+    return {"result": "ok"}
