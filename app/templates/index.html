@@ -8,20 +8,29 @@
     .home-buttons {
       margin-top: 30px;
     }
-    .qr-move-btn {
+
+    .qr-btn {
       display: inline-block;
-      padding: 15px 25px;
-      background: #000;
-      color: #fff;
+      width: 100%;
+      max-width: 320px;
+      padding: 16px;
+      margin-top: 12px;
       font-size: 18px;
       font-weight: bold;
+      text-align: center;
       border-radius: 8px;
       text-decoration: none;
-      margin-top: 15px;
+      color: #fff;
     }
-    .qr-move-btn:active {
-      background: #333;
+
+    .qr-move {
+      background: #000;
     }
+
+    .qr-outbound {
+      background: #b71c1c;
+    }
+
     .hint {
       margin-top: 10px;
       font-size: 13px;
@@ -39,27 +48,34 @@
   <a href="/outbound">출고</a>
   <a href="/move">이동</a>
   <a href="/inventory">재고</a>
-  <a href="/history">내역</a>
+  <a href="/history">이력</a>
   <a href="/admin">관리자</a>
 </nav>
 
 <div class="home-buttons">
 
-  <!-- 📱 모바일 전용 QR 이동 버튼 -->
-  <a id="qrMoveBtn" class="qr-move-btn" href="/qr/move">
+  <!-- 📱 모바일 전용 QR 이동 -->
+  <a id="qrMoveBtn" class="qr-btn qr-move" href="/qr/move">
     📦 QR 이동 처리
   </a>
 
+  <!-- 📱 모바일 전용 QR 출고 -->
+  <a id="qrOutboundBtn" class="qr-btn qr-outbound" href="/qr/outbound">
+    🚚 QR 출고 처리
+  </a>
+
+  <!-- 💻 PC 안내 -->
   <div id="pcHint" class="hint">
-    ※ QR 이동은 모바일에서만 사용 가능합니다.
+    ※ QR 이동 / 출고는 모바일에서만 사용 가능합니다.
   </div>
 
 </div>
 
 <script>
-  // PC에서는 QR 이동 버튼 숨김
+  // PC에서는 QR 버튼 숨김
   if (!/Mobi|Android/i.test(navigator.userAgent)) {
     document.getElementById("qrMoveBtn").style.display = "none";
+    document.getElementById("qrOutboundBtn").style.display = "none";
   } else {
     document.getElementById("pcHint").style.display = "none";
   }
