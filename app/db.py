@@ -1,180 +1,161 @@
 # app/db.py
-# =====================================
-# PARS WMS DB - FINAL STABLE
-# =====================================
+# =========================================
+# PARS WMS - DB FINAL (Single Source of Truth)
+# =========================================
 
 import sqlite3
+from contextlib import contextmanager
 from datetime import datetime
 
 DB_PATH = "wms.db"
 
+# -------------------------------------------------
+# DB Connection
+# -------------------------------------------------
+def get_connection():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
 
-# -------------------------------------
-# CONNECTION
-# -------------------------------------
-def get_conn():
-    return sqlite3.connect(DB_PATH)
+@contextmanager
+def get_db():
+    conn = get_connection()
+    try:
+        yield conn
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
-
-# -------------------------------------
+# -------------------------------------------------
 # INIT
-# -------------------------------------
+# -------------------------------------------------
 def init_db():
-    conn = get_conn()
-    cur = conn.cursor()
+    with get_db() as conn:
+        c = conn.cursor()
 
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS inventory (
-        item_code TEXT,
-        item_name TEXT,
-        brand TEXT,
-        spec TEXT,
-        location_code TEXT,
-        lot TEXT,
-        quantity INTEGER,
-        PRIMARY KEY (item_code, location_code, lot)
-    )
-    """)
+        # INVENTORY
+        c.execute("""
+        CREATE TABLE IF NOT EXISTS inventory (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            item_code TEXT,
+            item_name TEXT,
+            brand TEXT,
+            spec TEXT,
+            location TEXT,
+            lot TEXT,
+            quantity INTEGER
+        )
+        """)
 
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS history (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        action TEXT,
-        item_code TEXT,
-        location_from TEXT,
-        location_to TEXT,
-        lot TEXT,
-        quantity INTEGER,
-        created_at TEXT
-    )
-    """)
+        # HISTORY
+        c.execute("""
+        CREATE TABLE IF NOT EXISTS history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            action TEXT,
+            item_code TEXT,
+            location_from TEXT,
+            location_to TEXT,
+            lot TEXT,
+            quantity INTEGER,
+            created_at TEXT
+        )
+        """)
 
-    conn.commit()
-    conn.close()
-
-
-# -------------------------------------
+# -------------------------------------------------
 # INVENTORY
-# -------------------------------------
-def add_inventory(item_code, item_name, brand, spec, location_code, lot, quantity):
-    conn = get_conn()
-    cur = conn.cursor()
+# -------------------------------------------------
+def add_inventory(
+    item_code,
+    item_name,
+    brand,
+    spec,
+    location,
+    lot,
+    quantity
+):
+    with get_db() as conn:
+        c = conn.cursor()
 
-    cur.execute("""
-    SELECT quantity FROM inventory
-    WHERE item_code=? AND location_code=? AND lot=?
-    """, (item_code, location_code, lot))
+        c.execute("""
+        SELECT id, quantity FROM inventory
+        WHERE item_code=? AND location=? AND lot=?
+        """, (item_code, location, lot))
 
-    row = cur.fetchone()
+        row = c.fetchone()
 
-    if row:
-        cur.execute("""
-        UPDATE inventory
-        SET quantity = quantity + ?
-        WHERE item_code=? AND location_code=? AND lot=?
-        """, (quantity, item_code, location_code, lot))
-    else:
-        cur.execute("""
-        INSERT INTO inventory
-        (item_code, item_name, brand, spec, location_code, lot, quantity)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (item_code, item_name, brand, spec, location_code, lot, quantity))
+        if row:
+            c.execute("""
+            UPDATE inventory
+            SET quantity = quantity + ?
+            WHERE id=?
+            """, (quantity, row["id"]))
+        else:
+            c.execute("""
+            INSERT INTO inventory
+            (item_code, item_name, brand, spec, location, lot, quantity)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (
+                item_code, item_name, brand,
+                spec, location, lot, quantity
+            ))
 
-    conn.commit()
-    conn.close()
+# -------------------------------------------------
+# SUBTRACT (OUTBOUND / MOVE)
+# -------------------------------------------------
+def subtract_inventory(item_code, location, lot, quantity):
+    with get_db() as conn:
+        c = conn.cursor()
 
+        c.execute("""
+        SELECT id, quantity FROM inventory
+        WHERE item_code=? AND location=? AND lot=?
+        """, (item_code, location, lot))
 
-def subtract_inventory(item_code, location_code, lot, quantity):
-    conn = get_conn()
-    cur = conn.cursor()
+        row = c.fetchone()
 
-    cur.execute("""
-    SELECT quantity FROM inventory
-    WHERE item_code=? AND location_code=? AND lot=?
-    """, (item_code, location_code, lot))
+        if not row:
+            raise ValueError("재고가 존재하지 않습니다.")
 
-    row = cur.fetchone()
-    if not row:
-        raise ValueError("재고가 존재하지 않습니다.")
+        if row["quantity"] < quantity:
+            raise ValueError("출고 수량이 재고보다 많습니다.")
 
-    if row[0] < quantity:
-        raise ValueError("출고 수량이 재고보다 많습니다.")
+        new_qty = row["quantity"] - quantity
 
-    cur.execute("""
-    UPDATE inventory
-    SET quantity = quantity - ?
-    WHERE item_code=? AND location_code=? AND lot=?
-    """, (quantity, item_code, location_code, lot))
+        if new_qty == 0:
+            c.execute("DELETE FROM inventory WHERE id=?", (row["id"],))
+        else:
+            c.execute("""
+            UPDATE inventory
+            SET quantity=?
+            WHERE id=?
+            """, (new_qty, row["id"]))
 
-    conn.commit()
-    conn.close()
-
-
-def move_inventory(item_code, from_loc, to_loc, lot, quantity):
-    subtract_inventory(item_code, from_loc, lot, quantity)
-    add_inventory(
-        item_code=item_code,
-        item_name="",
-        brand="",
-        spec="",
-        location_code=to_loc,
-        lot=lot,
-        quantity=quantity
-    )
-
-
-def get_inventory():
-    conn = get_conn()
-    cur = conn.cursor()
-
-    cur.execute("""
-    SELECT item_code, item_name, brand, spec,
-           location_code, lot, quantity
-    FROM inventory
-    ORDER BY item_code, location_code
-    """)
-
-    rows = cur.fetchall()
-    conn.close()
-    return rows
-
-
-# -------------------------------------
+# -------------------------------------------------
 # HISTORY
-# -------------------------------------
-def add_history(action, item_code, loc_from, loc_to, lot, quantity):
-    conn = get_conn()
-    cur = conn.cursor()
-
-    cur.execute("""
-    INSERT INTO history
-    (action, item_code, location_from, location_to, lot, quantity, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-    """, (
-        action,
-        item_code,
-        loc_from,
-        loc_to,
-        lot,
-        quantity,
-        datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    ))
-
-    conn.commit()
-    conn.close()
-
-
-def get_history():
-    conn = get_conn()
-    cur = conn.cursor()
-
-    cur.execute("""
-    SELECT action, item_code, location_from, location_to,
-           lot, quantity, created_at
-    FROM history
-    ORDER BY created_at DESC
-    """)
-
-    rows = cur.fetchall()
-    conn.close()
-    return rows
+# -------------------------------------------------
+def add_history(
+    action,
+    item_code,
+    location_from,
+    location_to,
+    lot,
+    quantity
+):
+    with get_db() as conn:
+        c = conn.cursor()
+        c.execute("""
+        INSERT INTO history
+        (action, item_code, location_from, location_to, lot, quantity, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (
+            action,
+            item_code,
+            location_from,
+            location_to,
+            lot,
+            quantity,
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        ))
