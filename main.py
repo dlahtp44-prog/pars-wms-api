@@ -9,6 +9,11 @@ from fastapi.staticfiles import StaticFiles
 
 from app.db import init_db
 
+
+from app.pages.report_page import router as report_page
+app.include_router(report_page)
+
+
 # -----------------------------
 # API Routers
 # -----------------------------
