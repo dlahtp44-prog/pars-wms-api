@@ -61,4 +61,36 @@ app.mount(
 # ==================================================
 # STARTUP
 # ==================================================
-@app.on_event("star_
+@app.on_event("startup")
+def startup():
+    init_db()
+
+
+# ==================================================
+# API ROUTERS
+# ==================================================
+app.include_router(inbound.router)
+app.include_router(outbound.router)
+app.include_router(move.router)
+app.include_router(inventory.router)
+app.include_router(history.router)
+app.include_router(dashboard.router)
+app.include_router(admin.router)
+
+
+# ==================================================
+# PAGE ROUTERS
+# ==================================================
+app.include_router(index_page.router)
+app.include_router(inbound_page.router)
+app.include_router(outbound_page.router)
+app.include_router(move_page.router)
+app.include_router(inventory_page.router)
+app.include_router(history_page.router)
+app.include_router(dashboard_page.router)
+app.include_router(admin_page.router)
+
+# -----------------------------
+# QR MOVE PAGE
+# -----------------------------
+app.include_router(qr_move_page)
