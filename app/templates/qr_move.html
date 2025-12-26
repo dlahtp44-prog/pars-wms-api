@@ -19,6 +19,13 @@
 <div class="box">
   <p>출발지: <strong id="fromLoc">-</strong></p>
   <p>상품: <strong id="itemInfo">-</strong></p>
+
+  <!-- 🔢 수량 선택 -->
+  <p>
+    수량:
+    <input id="qty" type="number" min="1" value="1" style="width:80px;">
+  </p>
+
   <p>도착지: <strong id="toLoc">-</strong></p>
 </div>
 
@@ -28,7 +35,7 @@
 
 <script src="/static/js/qr_move.js"></script>
 
-<!-- PC에서는 접근 불가 -->
+<!-- PC 차단 -->
 <script>
   if (!/Mobi|Android/i.test(navigator.userAgent)) {
     alert("QR 이동은 모바일에서만 사용 가능합니다.");
