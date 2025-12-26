@@ -1,33 +1,29 @@
 # app/db.py
 # =====================================
-# PARS WMS - DB Final
+# PARS WMS DB - 최종 안정본
 # =====================================
 
 import sqlite3
 from datetime import datetime
 
-DB_PATH = "WMS.db"
+DB_PATH = "wms.db"
 
 
-# =====================================
+# -------------------------------------
 # DB Connection
-# =====================================
+# -------------------------------------
 def get_conn():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+    return sqlite3.connect(DB_PATH)
 
 
-# =====================================
+# -------------------------------------
 # INIT
-# =====================================
+# -------------------------------------
 def init_db():
     conn = get_conn()
     cur = conn.cursor()
 
-    # -----------------------------
-    # Inventory
-    # -----------------------------
+    # inventory
     cur.execute("""
     CREATE TABLE IF NOT EXISTS inventory (
         item_code TEXT,
@@ -41,9 +37,7 @@ def init_db():
     )
     """)
 
-    # -----------------------------
-    # History
-    # -----------------------------
+    # history
     cur.execute("""
     CREATE TABLE IF NOT EXISTS history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -61,9 +55,9 @@ def init_db():
     conn.close()
 
 
-# =====================================
+# -------------------------------------
 # INVENTORY
-# =====================================
+# -------------------------------------
 def add_inventory(
     item_code,
     item_name,
@@ -92,7 +86,6 @@ def add_inventory(
     else:
         cur.execute("""
         INSERT INTO inventory
-        (item_code, item_name, brand, spec, location_code, lot, quantity)
         VALUES (?, ?, ?, ?, ?, ?, ?)
         """, (
             item_code, item_name, brand, spec,
@@ -116,7 +109,7 @@ def subtract_inventory(item_code, location_code, lot, quantity):
     if not row:
         raise ValueError("재고가 존재하지 않습니다.")
 
-    if row["quantity"] < quantity:
+    if row[0] < quantity:
         raise ValueError("출고 수량이 재고보다 많습니다.")
 
     cur.execute("""
@@ -131,57 +124,41 @@ def subtract_inventory(item_code, location_code, lot, quantity):
 
 def move_inventory(item_code, from_loc, to_loc, lot, quantity):
     subtract_inventory(item_code, from_loc, lot, quantity)
+    add_inventory(
+        item_code=item_code,
+        item_name="",
+        brand="",
+        spec="",
+        location_code=to_loc,
+        lot=lot,
+        quantity=quantity
+    )
 
+
+def get_inventory():
     conn = get_conn()
     cur = conn.cursor()
 
     cur.execute("""
-    SELECT item_name, brand, spec
+    SELECT item_code, item_name, brand, spec,
+           location_code, lot, quantity
     FROM inventory
-    WHERE item_code=? AND lot=?
-    """, (item_code, lot))
-    info = cur.fetchone()
+    ORDER BY item_code, location_code
+    """)
 
-    cur.execute("""
-    INSERT INTO inventory
-    (item_code, item_name, brand, spec, location_code, lot, quantity)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-    ON CONFLICT(item_code, location_code, lot)
-    DO UPDATE SET quantity = quantity + excluded.quantity
-    """, (
-        item_code,
-        info["item_name"],
-        info["brand"],
-        info["spec"],
-        to_loc,
-        lot,
-        quantity
-    ))
-
-    conn.commit()
+    rows = cur.fetchall()
     conn.close()
 
+    return rows
 
-# =====================================
+
+# -------------------------------------
 # HISTORY
-# =====================================
-def add_history(action, item_code, location_from, location_to, lot, quantity):
+# -------------------------------------
+def add_history(action, item_code, loc_from, loc_to, lot, quantity):
     conn = get_conn()
     cur = conn.cursor()
 
     cur.execute("""
     INSERT INTO history
-    (action, item_code, location_from, location_to, lot, quantity, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-    """, (
-        action,
-        item_code,
-        location_from,
-        location_to,
-        lot,
-        quantity,
-        datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    ))
-
-    conn.commit()
-    conn.close()
+    (action, ite
