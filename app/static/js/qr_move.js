@@ -16,7 +16,7 @@ function initMoveQR() {
 }
 
 // ================================
-// QR PARSER
+// QR PARSER (STEP 3 표준)
 // ================================
 function parseQR(raw) {
   if (!raw) return null;
@@ -26,7 +26,6 @@ function parseQR(raw) {
       return JSON.parse(raw);
     } catch {}
   }
-
   return null;
 }
 
@@ -51,15 +50,14 @@ async function onScan(text) {
     itemCode = data.item_code;
     lot = data.lot;
     document.getElementById("itemInfo").innerText =
-      `${itemCode} / ${lot}`;
+      `${itemCode} / LOT ${lot}`;
     return;
   }
 
-  // 3️⃣ 도착지
+  // 3️⃣ 도착지 → 이동 실행
   if (data.type === "LOCATION" && fromLocation && itemCode && !toLocation) {
     toLocation = data.location_code;
     document.getElementById("toLoc").innerText = toLocation;
-
     await submitMove();
   }
 }
@@ -71,6 +69,14 @@ async function submitMove() {
   scanning = false;
   await qr.stop();
 
+  const qty = parseInt(document.getElementById("qty").value, 10);
+
+  if (!qty || qty < 1) {
+    alert("수량은 1 이상이어야 합니다.");
+    startScan();
+    return;
+  }
+
   const res = await fetch("/api/move", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -79,17 +85,18 @@ async function submitMove() {
       lot: lot,
       from_location: fromLocation,
       to_location: toLocation,
-      quantity: 1
+      quantity: qty
     })
   });
 
   if (res.ok) {
-    alert("이동 처리 완료");
+    alert(`이동 완료 (수량 ${qty})`);
     resetAll();
     startScan();
   } else {
     const err = await res.json();
     alert(err.error || "이동 실패");
+    startScan();
   }
 }
 
@@ -122,4 +129,5 @@ function resetAll() {
   document.getElementById("fromLoc").innerText = "-";
   document.getElementById("itemInfo").innerText = "-";
   document.getElementById("toLoc").innerText = "-";
+  document.getElementById("qty").value = 1;
 }
