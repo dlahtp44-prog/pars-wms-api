@@ -8,7 +8,7 @@
 </head>
 <body onload="initOutboundQR()">
 
-<h2>QR 출고 처리</h2>
+<h2>QR 출고 처리 (로케이션 선택)</h2>
 
 <div class="box">
   <div id="reader" style="width:300px;"></div>
@@ -18,9 +18,26 @@
 
 <div class="box">
   <p>상품: <strong id="itemInfo">-</strong></p>
+</div>
 
+<div class="box">
+  <h3>출고 로케이션 선택</h3>
+  <table id="locTable">
+    <thead>
+      <tr>
+        <th>선택</th>
+        <th>로케이션</th>
+        <th>LOT</th>
+        <th>재고수량</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<div class="box">
   <p>
-    수량:
+    출고 수량:
     <input id="qty" type="number" min="1" value="1" style="width:80px;">
   </p>
 
@@ -33,7 +50,6 @@
 
 <script src="/static/js/qr_outbound.js"></script>
 
-<!-- PC 차단 -->
 <script>
   if (!/Mobi|Android/i.test(navigator.userAgent)) {
     alert("QR 출고는 모바일에서만 사용 가능합니다.");
