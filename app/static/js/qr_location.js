@@ -3,6 +3,9 @@ let scanning = false;
 
 function initLocationQR() {
   qr = new Html5Qrcode("reader");
+
+  // 🔥 페이지 로드시 자동 카메라 시작 (TEST용)
+  startScan();
 }
 
 function parseLocation(raw) {
