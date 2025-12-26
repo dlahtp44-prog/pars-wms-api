@@ -11,21 +11,19 @@ async def inbound(
     item_name: str = Form(...),
     brand: str = Form(...),
     spec: str = Form(...),
-    location_code: str = Form(...),   # ✅ 핵심 수정
+    location_code: str = Form(...),
     lot: str = Form(...),
     quantity: int = Form(...)
 ):
     if quantity <= 0:
-        raise HTTPException(status_code=400, detail="수량은 1 이상이어야 합니다")
+        raise HTTPException(status_code=400, detail="quantity must be >= 1")
 
     conn = get_db()
     cursor = conn.cursor()
 
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # -------------------------------------------------
-    # 1️⃣ 기존 재고 확인
-    # -------------------------------------------------
+    # 1️⃣ 재고 확인
     cursor.execute("""
         SELECT id, quantity
         FROM inventory
@@ -37,18 +35,13 @@ async def inbound(
     row = cursor.fetchone()
 
     if row:
-        # ▶ 기존 재고 있음 → 수량 누적
         inventory_id, old_qty = row
-        new_qty = old_qty + quantity
-
         cursor.execute("""
             UPDATE inventory
             SET quantity = ?, updated_at = ?
             WHERE id = ?
-        """, (new_qty, now, inventory_id))
-
+        """, (old_qty + quantity, now, inventory_id))
     else:
-        # ▶ 신규 재고 → INSERT
         cursor.execute("""
             INSERT INTO inventory (
                 item_code, item_name, brand, spec,
@@ -61,17 +54,11 @@ async def inbound(
             now, now
         ))
 
-    # -------------------------------------------------
-    # 2️⃣ 이력 기록 (history)
-    # -------------------------------------------------
+    # 2️⃣ 이력 기록
     cursor.execute("""
         INSERT INTO history (
-            action_type,
-            item_code,
-            location_code,
-            lot,
-            quantity,
-            created_at
+            action_type, item_code, location_code,
+            lot, quantity, created_at
         ) VALUES (?, ?, ?, ?, ?, ?)
     """, (
         "INBOUND",
@@ -86,4 +73,10 @@ async def inbound(
     conn.close()
 
     return {
-        "status": "suc
+        "status": "success",
+        "message": "입고 처리 완료",
+        "item_code": item_code,
+        "location_code": location_code,
+        "lot": lot,
+        "quantity": quantity
+    }
