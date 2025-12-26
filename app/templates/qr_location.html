@@ -1,46 +1,39 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8">
   <title>로케이션 QR 재고 조회</title>
   <link rel="stylesheet" href="/static/css/app.css">
-
   <script src="https://unpkg.com/html5-qrcode"></script>
-  <script src="/static/js/qr_location.js"></script>
-
-  <style>
-    #reader { width:360px; }
-    .box { border:1px solid #333; padding:10px; margin-top:10px; }
-    .big { font-size:18px; font-weight:bold; }
-  </style>
 </head>
-
 <body onload="initLocationQR()">
 
 <h2>로케이션 QR 재고 조회</h2>
 
 <div class="box">
-  <div class="big">로케이션 QR 스캔</div>
-  <div id="reader"></div>
+  <h3>로케이션 QR 스캔</h3>
 
-  <div style="margin-top:8px;">
-    <button onclick="startScan()">스캔 시작</button>
-    <button onclick="stopScan()">중지</button>
-  </div>
+  <!-- 📱 모바일 전용 -->
+  <div id="reader" style="width:300px;"></div>
 
-  <div style="margin-top:8px;">
-    <input id="manual" placeholder="로케이션 코드 수동 입력">
-    <button onclick="manualApply()">조회</button>
-  </div>
+  <button onclick="startScan()">스캔 시작</button>
+  <button onclick="stopScan()">중지</button>
+
+  <p class="hint">
+    ※ PC에서는 로케이션 코드를 직접 입력해 조회하세요.
+  </p>
+
+  <input id="manual" placeholder="로케이션 코드 수동 입력">
+  <button type="button" onclick="manualApply()">조회</button>
 </div>
 
 <div class="box">
-  <div class="big">선택 로케이션</div>
-  <div id="locationText">-</div>
+  <h3>선택 로케이션</h3>
+  <strong id="locationText">-</strong>
 </div>
 
 <div class="box">
-  <div class="big">재고 목록</div>
+  <h3>재고 목록</h3>
   <table id="invTable">
     <thead>
       <tr>
@@ -55,6 +48,15 @@
     <tbody></tbody>
   </table>
 </div>
+
+<script src="/static/js/qr_location.js"></script>
+
+<!-- 💻 PC에서는 카메라 영역 숨김 -->
+<script>
+  if (!/Mobi|Android/i.test(navigator.userAgent)) {
+    document.getElementById("reader").style.display = "none";
+  }
+</script>
 
 </body>
 </html>
