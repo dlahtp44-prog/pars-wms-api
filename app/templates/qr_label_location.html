@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>로케이션 QR 라벨</title>
+
+<style>
+@page {
+  size: 99.1mm 140mm;
+  margin: 0;
+}
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+}
+.label {
+  width: 99.1mm;
+  height: 140mm;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid #000;
+}
+.loc {
+  font-size: 32px;
+  font-weight: bold;
+  margin-top: 10px;
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+</head>
+<body>
+
+<div class="label">
+  <div id="qr"></div>
+  <div class="loc" id="locText"></div>
+</div>
+
+<script>
+const locationCode = "D01-01"; // ← 출력 시 변경
+
+new QRCode(document.getElementById("qr"), {
+  text: JSON.stringify({
+    type: "LOCATION",
+    location_code: locationCode
+  }),
+  width: 250,
+  height: 250
+});
+
+document.getElementById("locText").innerText = locationCode;
+</script>
+
+</body>
+</html>
