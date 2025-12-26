@@ -1,37 +1,61 @@
 # app/db.py
-# ==================================================
-# PARS WMS - DB Layer (FINAL)
-# ==================================================
+# =========================================
+# PARS WMS - A안 기준 단일 DB 완성본
+# 전체 교체용 (copy & paste 전용)
+# 기준점: 이 파일이 "유일한 정답"
+# =========================================
 
 import sqlite3
 from datetime import datetime
+from typing import List, Dict, Optional
 
-DB_PATH = "wms.db"
+DB_PATH = "WMS.db"
 
 
 # ==================================================
-# DB Connection
+# DB CONNECTION
 # ==================================================
-def get_conn():
-    return sqlite3.connect(DB_PATH, check_same_thread=False)
+def get_connection():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
 
 
 # ==================================================
 # INIT DB
 # ==================================================
 def init_db():
-    conn = get_conn()
+    conn = get_connection()
     cur = conn.cursor()
 
-    # --------------------------
-    # INVENTORY TABLE
-    # --------------------------
+    # -----------------------------
+    # ITEMS (제품 마스터)
+    # -----------------------------
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS items (
+        item_code TEXT PRIMARY KEY,
+        item_name TEXT,
+        brand TEXT,
+        spec TEXT
+    )
+    """)
+
+    # -----------------------------
+    # LOCATIONS
+    # -----------------------------
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS locations (
+        location_code TEXT PRIMARY KEY,
+        warehouse TEXT
+    )
+    """)
+
+    # -----------------------------
+    # INVENTORY
+    # -----------------------------
     cur.execute("""
     CREATE TABLE IF NOT EXISTS inventory (
         item_code TEXT,
-        item_name TEXT,
-        brand TEXT,
-        spec TEXT,
         location_code TEXT,
         lot TEXT,
         quantity INTEGER,
@@ -39,9 +63,9 @@ def init_db():
     )
     """)
 
-    # --------------------------
-    # HISTORY TABLE
-    # --------------------------
+    # -----------------------------
+    # HISTORY
+    # -----------------------------
     cur.execute("""
     CREATE TABLE IF NOT EXISTS history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -55,248 +79,195 @@ def init_db():
     )
     """)
 
+    # -----------------------------
+    # ADMIN
+    # -----------------------------
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS admin (
+        username TEXT PRIMARY KEY,
+        password TEXT
+    )
+    """)
+
+    # 기본 관리자 계정
+    cur.execute("""
+    INSERT OR IGNORE INTO admin (username, password)
+    VALUES ('admin', 'admin123')
+    """)
+
     conn.commit()
     conn.close()
 
 
 # ==================================================
-# INVENTORY - ADD (INBOUND)
+# INVENTORY CORE FUNCTIONS (A안 기준)
 # ==================================================
-def add_inventory(
-    item_code,
-    item_name,
-    brand,
-    spec,
-    location_code,
-    lot,
-    quantity
-):
-    conn = get_conn()
+def get_inventory() -> List[Dict]:
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT i.item_code, it.item_name, it.brand, it.spec,
+               i.location_code, i.lot, i.quantity
+        FROM inventory i
+        LEFT JOIN items it ON i.item_code = it.item_code
+        ORDER BY i.location_code
+    """)
+    rows = cur.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def get_location_items(location_code: str) -> List[Dict]:
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT i.item_code, it.item_name, it.brand, it.spec,
+               i.lot, i.quantity
+        FROM inventory i
+        LEFT JOIN items it ON i.item_code = it.item_code
+        WHERE i.location_code = ?
+    """, (location_code,))
+    rows = cur.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def add_inventory(item_code: str, item_name: str, brand: str,
+                  spec: str, location_code: str, lot: str, quantity: int):
+    conn = get_connection()
     cur = conn.cursor()
 
     cur.execute("""
-    SELECT quantity FROM inventory
-    WHERE item_code=? AND location_code=? AND lot=?
-    """, (item_code, location_code, lot))
+        INSERT OR IGNORE INTO items (item_code, item_name, brand, spec)
+        VALUES (?, ?, ?, ?)
+    """, (item_code, item_name, brand, spec))
 
-    row = cur.fetchone()
+    cur.execute("""
+        INSERT INTO inventory (item_code, location_code, lot, quantity)
+        VALUES (?, ?, ?, ?)
+        ON CONFLICT(item_code, location_code, lot)
+        DO UPDATE SET quantity = quantity + ?
+    """, (item_code, location_code, lot, quantity, quantity))
 
-    if row:
-        cur.execute("""
+    _add_history("INBOUND", item_code, None, location_code, lot, quantity, cur)
+
+    conn.commit()
+    conn.close()
+
+
+def subtract_inventory(item_code: str, location_code: str, lot: str, quantity: int):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
         UPDATE inventory
-        SET quantity = quantity + ?
-        WHERE item_code=? AND location_code=? AND lot=?
-        """, (quantity, item_code, location_code, lot))
-    else:
-        cur.execute("""
-        INSERT INTO inventory
-        (item_code, item_name, brand, spec, location_code, lot, quantity)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (
-            item_code, item_name, brand, spec,
-            location_code, lot, quantity
-        ))
-
-    # history
-    cur.execute("""
-    INSERT INTO history
-    (action, item_code, location_from, location_to, lot, quantity, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-    """, (
-        "INBOUND",
-        item_code,
-        None,
-        location_code,
-        lot,
-        quantity,
-        datetime.now().isoformat(sep=" ", timespec="seconds")
-    ))
-
-    conn.commit()
-    conn.close()
-
-
-# ==================================================
-# INVENTORY - SUBTRACT (OUTBOUND)
-# ==================================================
-def subtract_inventory(
-    item_code,
-    location_code,
-    lot,
-    quantity
-):
-    conn = get_conn()
-    cur = conn.cursor()
-
-    cur.execute("""
-    SELECT quantity FROM inventory
-    WHERE item_code=? AND location_code=? AND lot=?
-    """, (item_code, location_code, lot))
-
-    row = cur.fetchone()
-
-    if not row:
-        conn.close()
-        raise ValueError("재고가 존재하지 않습니다.")
-
-    if row[0] < quantity:
-        conn.close()
-        raise ValueError("출고 수량이 재고보다 많습니다.")
-
-    cur.execute("""
-    UPDATE inventory
-    SET quantity = quantity - ?
-    WHERE item_code=? AND location_code=? AND lot=?
+        SET quantity = quantity - ?
+        WHERE item_code = ? AND location_code = ? AND lot = ?
     """, (quantity, item_code, location_code, lot))
 
-    # history
-    cur.execute("""
-    INSERT INTO history
-    (action, item_code, location_from, location_to, lot, quantity, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-    """, (
-        "OUTBOUND",
-        item_code,
-        location_code,
-        None,
-        lot,
-        quantity,
-        datetime.now().isoformat(sep=" ", timespec="seconds")
-    ))
+    _add_history("OUTBOUND", item_code, location_code, None, lot, quantity, cur)
 
     conn.commit()
     conn.close()
 
 
-# ==================================================
-# INVENTORY - MOVE
-# ==================================================
-def move_inventory(
-    item_code,
-    from_location,
-    to_location,
-    lot,
-    quantity
-):
-    conn = get_conn()
+def move_inventory(item_code: str, lot: str,
+                   location_from: str, location_to: str, quantity: int):
+    conn = get_connection()
     cur = conn.cursor()
 
-    # source check
+    # FROM 차감
     cur.execute("""
-    SELECT quantity FROM inventory
-    WHERE item_code=? AND location_code=? AND lot=?
-    """, (item_code, from_location, lot))
-
-    row = cur.fetchone()
-
-    if not row:
-        conn.close()
-        raise ValueError("출발지 재고가 없습니다.")
-
-    if row[0] < quantity:
-        conn.close()
-        raise ValueError("이동 수량이 재고보다 많습니다.")
-
-    # subtract source
-    cur.execute("""
-    UPDATE inventory
-    SET quantity = quantity - ?
-    WHERE item_code=? AND location_code=? AND lot=?
-    """, (quantity, item_code, from_location, lot))
-
-    # add destination
-    cur.execute("""
-    SELECT quantity FROM inventory
-    WHERE item_code=? AND location_code=? AND lot=?
-    """, (item_code, to_location, lot))
-
-    if cur.fetchone():
-        cur.execute("""
         UPDATE inventory
-        SET quantity = quantity + ?
-        WHERE item_code=? AND location_code=? AND lot=?
-        """, (quantity, item_code, to_location, lot))
-    else:
-        cur.execute("""
-        INSERT INTO inventory
-        (item_code, item_name, brand, spec, location_code, lot, quantity)
-        SELECT item_code, item_name, brand, spec, ?, lot, ?
-        FROM inventory
-        WHERE item_code=? AND location_code=? AND lot=?
-        """, (to_location, quantity, item_code, from_location, lot))
+        SET quantity = quantity - ?
+        WHERE item_code = ? AND location_code = ? AND lot = ?
+    """, (quantity, item_code, location_from, lot))
 
-    # history
+    # TO 증가
     cur.execute("""
-    INSERT INTO history
-    (action, item_code, location_from, location_to, lot, quantity, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-    """, (
-        "MOVE",
-        item_code,
-        from_location,
-        to_location,
-        lot,
-        quantity,
-        datetime.now().isoformat(sep=" ", timespec="seconds")
-    ))
+        INSERT INTO inventory (item_code, location_code, lot, quantity)
+        VALUES (?, ?, ?, ?)
+        ON CONFLICT(item_code, location_code, lot)
+        DO UPDATE SET quantity = quantity + ?
+    """, (item_code, location_to, lot, quantity, quantity))
+
+    _add_history("MOVE", item_code, location_from, location_to, lot, quantity, cur)
 
     conn.commit()
     conn.close()
 
 
 # ==================================================
-# GET INVENTORY
+# HISTORY
 # ==================================================
-def get_inventory():
-    conn = get_conn()
+def get_history() -> List[Dict]:
+    conn = get_connection()
     cur = conn.cursor()
-
     cur.execute("""
-    SELECT item_code, item_name, brand, spec,
-           location_code, lot, quantity
-    FROM inventory
-    WHERE quantity > 0
-    ORDER BY item_code, location_code
+        SELECT * FROM history
+        ORDER BY id DESC
     """)
-
     rows = cur.fetchall()
     conn.close()
+    return [dict(r) for r in rows]
 
-    return rows
+
+def _add_history(action: str, item_code: str,
+                 location_from: Optional[str],
+                 location_to: Optional[str],
+                 lot: str, quantity: int, cur):
+    cur.execute("""
+        INSERT INTO history (
+            action, item_code, location_from,
+            location_to, lot, quantity, created_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, (
+        action,
+        item_code,
+        location_from,
+        location_to,
+        lot,
+        quantity,
+        datetime.now().isoformat()
+    ))
 
 
 # ==================================================
-# GET INVENTORY BY LOCATION
+# DASHBOARD
 # ==================================================
-def get_inventory_by_location(location_code):
-    conn = get_conn()
+def dashboard_summary() -> Dict:
+    conn = get_connection()
     cur = conn.cursor()
 
-    cur.execute("""
-    SELECT item_code, item_name, brand, spec, lot, quantity
-    FROM inventory
-    WHERE location_code=? AND quantity > 0
-    """, (location_code,))
-
-    rows = cur.fetchall()
-    conn.close()
-    return rows
-
-
-# ==================================================
-# GET HISTORY
-# ==================================================
-def get_history():
-    conn = get_conn()
-    cur = conn.cursor()
+    cur.execute("SELECT SUM(quantity) FROM inventory")
+    total_qty = cur.fetchone()[0] or 0
 
     cur.execute("""
-    SELECT action, item_code, location_from,
-           location_to, lot, quantity, created_at
-    FROM history
-    ORDER BY id DESC
+        SELECT action, COUNT(*) as cnt
+        FROM history
+        GROUP BY action
     """)
+    actions = {row["action"]: row["cnt"] for row in cur.fetchall()}
 
-    rows = cur.fetchall()
     conn.close()
-    return rows
+
+    return {
+        "total_inventory": total_qty,
+        "actions": actions
+    }
+
+
+# ==================================================
+# ADMIN
+# ==================================================
+def admin_password_ok(username: str, password: str) -> bool:
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT 1 FROM admin
+        WHERE username = ? AND password = ?
+    """, (username, password))
+    row = cur.fetchone()
+    conn.close()
+    return row is not None
