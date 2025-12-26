@@ -13,6 +13,10 @@ from app.db import init_db
 from app.pages.report_page import router as report_page
 app.include_router(report_page)
 
+from app.routers import report
+app.include_router(report.router)
+
+
 
 # -----------------------------
 # API Routers
