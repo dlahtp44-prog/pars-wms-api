@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>QR 출고 처리</title>
+  <link rel="stylesheet" href="/static/css/app.css">
+  <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body onload="initOutboundQR()">
+
+<h2>QR 출고 처리</h2>
+
+<div class="box">
+  <div id="reader" style="width:300px;"></div>
+  <button onclick="startScan()">스캔 시작</button>
+  <button onclick="stopScan()">중지</button>
+</div>
+
+<div class="box">
+  <p>상품: <strong id="itemInfo">-</strong></p>
+
+  <p>
+    수량:
+    <input id="qty" type="number" min="1" value="1" style="width:80px;">
+  </p>
+
+  <button onclick="submitOutbound()">출고 처리</button>
+</div>
+
+<div class="box">
+  <button onclick="resetAll()">초기화</button>
+</div>
+
+<script src="/static/js/qr_outbound.js"></script>
+
+<!-- PC 차단 -->
+<script>
+  if (!/Mobi|Android/i.test(navigator.userAgent)) {
+    alert("QR 출고는 모바일에서만 사용 가능합니다.");
+    window.location.href = "/";
+  }
+</script>
+
+</body>
+</html>
