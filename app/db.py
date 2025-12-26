@@ -28,11 +28,20 @@ def init_db():
     conn = get_connection()
     cur = conn.cursor()
 
-    # -----------------------------
-    # ITEMS (제품 마스터)
-    # -----------------------------
+    # ==================================================
+    # ⚠️ 개발 단계: 기존 테이블 강제 삭제
+    # ==================================================
+    cur.execute("DROP TABLE IF EXISTS inventory")
+    cur.execute("DROP TABLE IF EXISTS history")
+    cur.execute("DROP TABLE IF EXISTS items")
+    cur.execute("DROP TABLE IF EXISTS locations")
+    cur.execute("DROP TABLE IF EXISTS admin")
+
+    # ==================================================
+    # ITEMS (품목 마스터)
+    # ==================================================
     cur.execute("""
-    CREATE TABLE IF NOT EXISTS items (
+    CREATE TABLE items (
         item_code TEXT PRIMARY KEY,
         item_name TEXT,
         brand TEXT,
@@ -40,21 +49,21 @@ def init_db():
     )
     """)
 
-    # -----------------------------
+    # ==================================================
     # LOCATIONS
-    # -----------------------------
+    # ==================================================
     cur.execute("""
-    CREATE TABLE IF NOT EXISTS locations (
+    CREATE TABLE locations (
         location_code TEXT PRIMARY KEY,
         warehouse TEXT
     )
     """)
 
-    # -----------------------------
+    # ==================================================
     # INVENTORY
-    # -----------------------------
+    # ==================================================
     cur.execute("""
-    CREATE TABLE IF NOT EXISTS inventory (
+    CREATE TABLE inventory (
         item_code TEXT,
         location_code TEXT,
         lot TEXT,
@@ -63,11 +72,11 @@ def init_db():
     )
     """)
 
-    # -----------------------------
+    # ==================================================
     # HISTORY
-    # -----------------------------
+    # ==================================================
     cur.execute("""
-    CREATE TABLE IF NOT EXISTS history (
+    CREATE TABLE history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         action TEXT,
         item_code TEXT,
@@ -79,24 +88,24 @@ def init_db():
     )
     """)
 
-    # -----------------------------
+    # ==================================================
     # ADMIN
-    # -----------------------------
+    # ==================================================
     cur.execute("""
-    CREATE TABLE IF NOT EXISTS admin (
+    CREATE TABLE admin (
         username TEXT PRIMARY KEY,
         password TEXT
     )
     """)
 
-    # 기본 관리자 계정
     cur.execute("""
-    INSERT OR IGNORE INTO admin (username, password)
+    INSERT INTO admin (username, password)
     VALUES ('admin', 'admin123')
     """)
 
     conn.commit()
     conn.close()
+
 
 
 # ==================================================
