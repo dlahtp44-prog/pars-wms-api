@@ -7,10 +7,6 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from app.pages.qr_move_page import router as qr_move_page
-app.include_router(qr_move_page)
-
-
 from app.db import init_db
 
 # -----------------------------
@@ -40,10 +36,17 @@ from app.pages import (
     admin_page
 )
 
+# -----------------------------
+# QR Page Router
+# -----------------------------
+from app.pages.qr_move_page import router as qr_move_page
+
+
 # ==================================================
 # APP
 # ==================================================
 app = FastAPI(title="PARS WMS")
+
 
 # ==================================================
 # STATIC
@@ -54,32 +57,8 @@ app.mount(
     name="static"
 )
 
+
 # ==================================================
 # STARTUP
 # ==================================================
-@app.on_event("startup")
-def startup():
-    init_db()
-
-# ==================================================
-# API ROUTERS
-# ==================================================
-app.include_router(inbound.router)
-app.include_router(outbound.router)
-app.include_router(move.router)
-app.include_router(inventory.router)
-app.include_router(history.router)
-app.include_router(dashboard.router)
-app.include_router(admin.router)
-
-# ==================================================
-# PAGE ROUTERS
-# ==================================================
-app.include_router(index_page.router)
-app.include_router(inbound_page.router)
-app.include_router(outbound_page.router)
-app.include_router(move_page.router)
-app.include_router(inventory_page.router)
-app.include_router(history_page.router)
-app.include_router(dashboard_page.router)
-app.include_router(admin_page.router)
+@app.on_event("star_
